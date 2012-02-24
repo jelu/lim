@@ -54,7 +54,7 @@ sub new {
         croak __PACKAGE__, ': No key file specified or not found';
     }
 
-    $self->{tls_ctx} = AnyEvent::TLS->new(method => 'SSLv3', cert_file => $args{key});
+    $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
 
     if (defined $args{host}) {
         $self->{host} = $args{host};
