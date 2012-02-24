@@ -3,16 +3,84 @@
 use common::sense;
 use Getopt::Long ();
 use Pod::Usage ();
+use Log::Log4perl ();
 
-my $man = 0;
+use EV ();
+use AnyEvent ();
+
+use Lim::Server ();
+
 my $help = 0;
+my $host = "0.0.0.0";
+my $port = 5353;
+my $key;
+my $log4perl;
+my $html = '/usr/share/lim/html';
 
-GetOptions(
+Getopt::Long::GetOptions(
 	'help|?' => \$help,
-	man => \$man
-) or pod2usage(2);
-pod2usage(1) if $help;
-pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+	'host:s' => \$host,
+	'port:i' => \$port,
+    'key=s' => \$key,
+    'log4perl:s' => \$log4perl,
+    'html:s' => \$html
+) or Pod::Usage::pod2usage(2);
+Pod::Usage::pod2usage(1) if $help;
+
+unless (-d $html) {
+    print STDERR 'Path to HTML directory invalid or non existing: ', $html, "\n";
+    exit(1);
+}
+
+if (defined $log4perl and -f $log4perl) {
+    Log::Log4perl->init($log4perl);
+}
+else {
+    Log::Log4perl->init( \q(
+    log4perl.logger                = DEBUG, Lim
+    log4perl.appender.Lim          = Log::Log4perl::Appender::Screen
+    log4perl.appender.Lim.stderr   = 0
+    log4perl.appender.Lim.layout   = Log::Log4perl::Layout::PatternLayout
+    log4perl.appender.Lim.layout.ConversionPattern = %d %F [%L] %p: %m%n
+    ) );
+}
+
+my $cv = AnyEvent->condvar;
+my @watchers;
+
+push(@watchers,
+# TODO Implement config files
+#    AnyEvent->signal(signal => "HUP", cb => sub {
+#        if (defined($server)) {
+#            $server->reload;
+#        }
+#    }),
+    AnyEvent->signal(signal => "INT", cb => sub {
+        $cv->send;
+    }),
+    AnyEvent->signal(signal => "QUIT", cb => sub {
+        $cv->send;
+    }),
+    AnyEvent->signal(signal => "TERM", cb => sub {
+        $cv->send;
+    }),
+);
+
+$html =~ s/\/*$//o;
+
+my $server = Lim::Server->new(
+    host => $host,
+    port => $port,
+    key => $key,
+    html => $html
+);
+
+if (defined $server) {
+    push(@watchers, $server);
+    $cv->recv;
+}
+
+@watchers = ();
 
 __END__
 
@@ -22,23 +90,27 @@ lim-server - Lim Server
 
 =head1 SYNOPSIS
 
-sample [options] [file ...]
-
-Options:
- --help           brief help message
- --man            full documentation
+lim-server [options]
 
 =head1 OPTIONS
 
 =over 8
 
-=item B<-help>
+=item B<--host <ip>>
+
+Specify the host/IP to bind to (default 0.0.0.0)
+
+=item B<--port <port>>
+
+Specify the port to listen on (default 5353)
+
+=item B<--key <key>>
+
+Specify the SSL/TLS key to use for HTTPS
+
+=item B<--help>
 
 Print a brief help message and exits.
-
-=item B<-man>
-
-Prints the manual page and exits.
 
 =back
 

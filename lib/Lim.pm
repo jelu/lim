@@ -1,8 +1,6 @@
 package Lim;
 
-use 5.006;
-use strict;
-use warnings;
+use common::sense;
 
 =head1 NAME
 
@@ -16,22 +14,9 @@ Version 0.01
 
 our $VERSION = '0.01';
 
-
 =head1 SYNOPSIS
 
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
-    use Lim;
-
-    my $foo = Lim->new();
-    ...
-
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
+...
 
 =head1 SUBROUTINES/METHODS
 
@@ -39,15 +24,11 @@ if you don't export anything, such as for a purely object-oriented module.
 
 =cut
 
-sub function1 {
-}
+sub OBJ_DEBUG (){ 1 }
+sub DEBUG (){ 1 }
+sub INFO (){ 1 }
 
-=head2 function2
-
-=cut
-
-sub function2 {
-}
+sub SRV_LISTEN (){ 10 }
 
 =head1 AUTHOR
 

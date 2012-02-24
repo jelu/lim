@@ -1,11 +1,17 @@
 package Lim::Server;
 
 use common::sense;
+use Carp;
+
+use Log::Log4perl ();
+use Scalar::Util qw(weaken);
 
 use AnyEvent ();
-use Log::Log4perl ();
+use AnyEvent::Socket ();
+use AnyEvent::TLS ();
 
 use Lim ();
+use Lim::Server::Client ();
 
 =head1 NAME
  
@@ -17,7 +23,7 @@ See L<Lim> for version.
  
 =cut
 
-out $VERSION = $Lim::VERSION;
+our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
  
@@ -35,11 +41,65 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        host => '0.0.0.0',
+        port => 5353,
+        html => '/usr/share/lim/html',
+        client => {}
     };
     bless $self, $class;
+    my $real_self = $self;
+    weaken($self);
+    
+    unless (defined $args{key} and -f $args{key}) {
+        croak __PACKAGE__, ': No key file specified or not found';
+    }
+
+    $self->{tls_ctx} = AnyEvent::TLS->new(method => 'SSLv3', cert_file => $args{key});
+
+    if (defined $args{host}) {
+        $self->{host} = $args{host};
+    }
+    if (defined $args{port}) {
+        $self->{port} = $args{port};
+    }
+    if (defined $args{html}) {
+        $self->{html} = $args{html};
+    }
+    
+    $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
+        my ($fh, $host, $port) = @_;
+        
+        my $handle;
+        $handle = Lim::Server::Client->new(
+            fh => $fh,
+            tls_ctx => $self->{tls_ctx},
+            html => $self->{html},
+            on_error => sub {
+                my ($handle, $fatal, $message) = @_;
+                
+                $self->{logger}->warn($handle, ' Error: ', $message);
+                
+                delete $self->{client}->{$handle};
+            },
+            on_eof => sub {
+                my ($handle) = @_;
+                
+                $self->{logger}->warn($handle, ' EOF');
+                
+                delete $self->{client}->{$handle};
+            });
+        
+        $self->{client}->{$handle} = $handle;
+    }, sub {
+        my (undef, $host, $port) = @_;
+        
+        Lim::DEBUG and $self->{logger}->debug(__PACKAGE__, ' ', $self, ' ready at ', $host, ':', $port);
+        
+        Lim::SRV_LISTEN;
+    };
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
+    $real_self;
 }
 
 sub DESTROY {
