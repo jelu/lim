@@ -1,4 +1,4 @@
-package Lim::Server;
+package Lim::Agent;
 
 use common::sense;
 use Carp;
@@ -11,7 +11,7 @@ use AnyEvent::Socket ();
 use AnyEvent::TLS ();
 
 use Lim ();
-use Lim::Server::Client ();
+use Lim::Server ();
 
 =head1 NAME
 
@@ -41,6 +41,9 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        host => '0.0.0.0',
+        port => 5353,
+        html => '/usr/share/lim/html',
         client => {}
     };
     bless $self, $class;
@@ -50,54 +53,25 @@ sub new {
     unless (defined $args{key} and -f $args{key}) {
         croak __PACKAGE__, ': No key file specified or not found';
     }
-    unless (defined $args{host}) {
-        croak __PACKAGE__, ': No host specified';
+    $self->{key} = $args{key};
+
+    if (defined $args{host}) {
+        $self->{host} = $args{host};
     }
-    unless (defined $args{port}) {
-        croak __PACKAGE__, ': No port specified';
+    if (defined $args{port}) {
+        $self->{port} = $args{port};
     }
-    unless (defined $args{html}) {
-        croak __PACKAGE__, ': No html specified';
+    if (defined $args{html}) {
+        $self->{html} = $args{html};
     }
     
-    $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
-
-    $self->{host} = $args{host};
-    $self->{port} = $args{port};
-    $self->{html} = $args{html};
+    $self->{server} = Lim::Server->new(
+        host => $self->{host},
+        port => $self->{port},
+        html => $self->{html},
+        key => $self->{key}
+    );
     
-    $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
-        my ($fh, $host, $port) = @_;
-        
-        my $handle;
-        $handle = Lim::Server::Client->new(
-            fh => $fh,
-            tls_ctx => $self->{tls_ctx},
-            html => $self->{html},
-            on_error => sub {
-                my ($handle, $fatal, $message) = @_;
-                
-                $self->{logger}->warn($handle, ' Error: ', $message);
-                
-                delete $self->{client}->{$handle};
-            },
-            on_eof => sub {
-                my ($handle) = @_;
-                
-                $self->{logger}->warn($handle, ' EOF');
-                
-                delete $self->{client}->{$handle};
-            });
-        
-        $self->{client}->{$handle} = $handle;
-    }, sub {
-        my (undef, $host, $port) = @_;
-        
-        Lim::DEBUG and $self->{logger}->debug(__PACKAGE__, ' ', $self, ' ready at ', $host, ':', $port);
-        
-        Lim::SRV_LISTEN;
-    };
-
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
 }
@@ -106,8 +80,7 @@ sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     
-    delete $self->{client};
-    delete $self->{socket};
+    delete $self->{server};
 }
 
 =head2 function2
@@ -173,4 +146,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Server
+1; # End of Lim::Agent

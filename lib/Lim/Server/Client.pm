@@ -123,18 +123,38 @@ sub new {
                 
                 Lim::DEBUG and $self->{logger}->debug('Request recieved for ', $uri);
                 
-                if ($uri =~ /^\/soap/o) {
-                    
+                if ($uri =~ /^\/rpc/o) {
                 }
-                elsif ($uri =~ /^\/([^\/]*)$/o) {
-                    my $file = $1;
+                elsif ($uri =~ /^\//o) {
+                    my $file = $self->{html};
                     
-                    if (!$file) {
-                        $file = 'index.html';
+                    if ($uri eq '/') {
+                        $uri = '/index.html';
+                    }
+
+                    $uri =~ s/\///o;
+                    foreach my $path (split(/\//o, $uri)) {
+                        if ($path eq '.' or $path eq '..') {
+                            undef($file);
+                            last;
+                        }
+                        if (-d $file.'/'.$path) {
+                            $file .= '/'.$path;
+                        }
+                        elsif (-f $file.'/'.$path) {
+                            $file .= '/'.$path;
+                            last;
+                        }
+                        else {
+                            undef($file);
+                            last;
+                        }
                     }
                     
-                    if (open(FILE, $self->{html}.'/'.$file)) {
+                    if (defined $file and open(FILE, $file)) {
                         my ($read, $buffer, $content) = (0, '', '');
+
+                        Lim::DEBUG and $self->{logger}->debug('Sending file ', $file);
                         
                         while (($read = read(FILE, $buffer, 64*1024))) {
                             $content .= $buffer;
@@ -144,6 +164,13 @@ sub new {
                         }
                         else {
                             $response->content($content);
+                            
+                            if ($file =~ /\.js$/o) {
+                                $response->header('Content-Type' => 'text/javascript');
+                            }
+                            elsif ($file =~ /\.css$/o) {
+                                $response->header('Content-Type' => 'text/css');
+                            }
                         }
                         close(FILE);
                     }
@@ -154,47 +181,6 @@ sub new {
                 else {
                     $response->code(HTTP_NOT_FOUND);
                 }
-                
-#                my $query;
-#                if ($request->header('Content-Type') eq 'application/x-www-form-urlencoded') {
-#                    my $query_str = $request->content;
-#                    $query_str =~ s/[\r\n]+$//o;
-#                    
-#                    my $uri = URI->new;
-#                    $uri->query($query_str);
-#                    
-#                    $query = $uri->query_form_hash;
-#                }
-#                else {
-#                    $query = $request->uri->query_form_hash;
-#                }
-#                
-#                if (!defined $query->{method}) {
-#                    $response->code(HTTP_BAD_REQUEST);
-#                    $response->content('No Method');
-#                }
-#                elsif ($query->{method} =~ /\W/o) {
-#                    $response->code(HTTP_BAD_REQUEST);
-#                    $response->content('Invalid Method');
-#                }
-#                else {
-#                    my ($r, $errno, $errstr);
-#
-#                    
-#                    if (defined $errno) {
-#                        $response->code(HTTP_INTERNAL_SERVER_ERROR);
-#                        if (defined $errstr) {
-#                            $response->content($errno.' '.$errstr);
-#                        }
-#                        else {
-#                            $response->content($errno);
-#                        }
-#                    }
-#                    else {
-#                        $response->header('Content-Type' => 'application/json; charset=utf-8');
-#                        $response->content((defined $r ? $r : ''));
-#                    }
-#                }
                 
                 unless ($response->code) {
                     $response->code(HTTP_OK);
@@ -214,14 +200,6 @@ sub new {
                     $response->protocol('HTTP/1.1');
                 }
                 
-#                if (Lim::DEBUG) {
-#                    $self->{logger}->debug("\n".
-#                    $response->protocol.' '.$response->code.' '.HTTP::Status::status_message($response->code)."\n".
-#                    $response->headers_as_string("\n").
-#                    "\n".
-#                    $response->content);
-#                }
-                
                 $handle->push_write($response->protocol.' '.$response->code.' '.HTTP::Status::status_message($response->code)."\r\n");
                 $handle->push_write($response->headers_as_string("\r\n"));
                 $handle->push_write("\r\n");
@@ -230,17 +208,19 @@ sub new {
             }
         });
     
-    Lim::OBJ_DEBUG and Log::Log4perl->get_logger->debug('new ', __PACKAGE__, ' ', $self);
+    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
 
     $self;
 }
 
 sub DESTROY {
-    Lim::OBJ_DEBUG and Log::Log4perl->get_logger->debug('destroy ', __PACKAGE__, ' ', $_[0]);
+    my ($self) = @_;
+    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     
-    if (defined $_[0]->{handle}) {
-        $_[0]->{handle}->push_shutdown;
+    if (defined $self->{handle}) {
+        $self->{handle}->push_shutdown;
     }
+    delete $self->{handle};
 }
 
 sub handle {
