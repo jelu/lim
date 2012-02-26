@@ -13,3 +13,5 @@ Lim-*
 .DS_Store
 *.pem
 *.xcworkspace
+.project
+.includepath
