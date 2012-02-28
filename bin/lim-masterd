@@ -8,7 +8,8 @@ use Log::Log4perl ();
 use EV ();
 use AnyEvent ();
 
-use Lim::Master ();
+use Lim ();
+use Lim::Server ();
 
 my $help = 0;
 my $host = "0.0.0.0";
@@ -68,15 +69,16 @@ push(@watchers,
 
 $html =~ s/\/*$//o;
 
-my $master = Lim::Master->new(
+my $server = Lim::Server->new(
     host => $host,
     port => $port,
     key => $key,
     html => $html
 );
+$server->serve(Lim->new());
 
-if (defined $master) {
-    push(@watchers, $master);
+if (defined $server) {
+    push(@watchers, $server);
     $cv->recv;
 }
 

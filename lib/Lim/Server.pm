@@ -41,7 +41,8 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        client => {}
+        client => {},
+        module => {}
     };
     bless $self, $class;
     my $real_self = $self;
@@ -71,6 +72,7 @@ sub new {
         
         my $handle;
         $handle = Lim::Server::Client->new(
+            server => $self,
             fh => $fh,
             tls_ctx => $self->{tls_ctx},
             html => $self->{html},
@@ -113,6 +115,19 @@ sub DESTROY {
 =head2 function2
 
 =cut
+
+sub serve
+{
+    my ($self) = shift;
+    
+    foreach my $module (@_) {
+        if ($module->isa('Lim::RPC')) {
+            my $name = $module->Module;
+            
+            $self->{module}->{$name} = $module;
+        }
+    }
+}
 
 =head1 AUTHOR
 

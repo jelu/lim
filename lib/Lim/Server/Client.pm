@@ -62,6 +62,9 @@ sub new {
     unless (defined $args{html}) {
         croak __PACKAGE__, ': Missing hmtl (Path to HTML files)';
     }
+    unless (defined $args{server}) {
+        croak __PACKAGE__, ': Missing server object';
+    }
 
     if (exists $args{on_error} and ref($args{on_error}) eq 'CODE') {
         $self->{on_error} = $args{on_error};
@@ -75,6 +78,7 @@ sub new {
     }
 
     $self->{html} = $args{html};
+    $self->{server} = $args{server};
     $self->{handle} = AnyEvent::Handle->new(
         fh => $args{fh},
         tls => 'accept',
@@ -120,10 +124,35 @@ sub new {
                 $response->request($request);
                 $response->protocol($request->protocol);
                 my $uri = $request->uri;
+
+use Data::Dumper;
+print Dumper($request),"\n";
                 
                 Lim::DEBUG and $self->{logger}->debug('Request recieved for ', $uri);
                 
-                if ($uri =~ /^\/rpc/o) {
+                if ($uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z]+)\/{0,1}(.*)/o) {
+                    my ($module, $function, $parameters) = ($1, $2, $3);
+                    my ($method, $call, @parameters);
+                    
+                    $method = lc($request->method);
+                    $module = lc($module);
+                    $function = lc($function);
+                    $call = ucfirst($method).ucfirst($function);
+                    
+                    if (defined $parameters) {
+                        foreach my $parameter (split(/\//o, $parameters)) {
+                            # TODO urldecode $parameter
+                            push(@parameters, $parameter);
+                        }
+                    }
+                    
+                    if (exists $self->{server}->{module}->{$module}) {
+                        my $moduleObj = $self->{server}->{module}->{$module};
+                        
+                        if ($moduleObj->can($call)) {
+                            #$moduleObj->$call($request, $response, @parameters);
+                        }
+                    }
                 }
                 elsif ($uri =~ /^\//o) {
                     my $file = $self->{html};

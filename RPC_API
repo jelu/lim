@@ -1,0 +1,19 @@
+RESTful
+
+JSON-RPC v2+
+
+	GET/POST /<module>/<function>/<parameters ...>
+	<data>
+	
+SOAP 1.1
+
+	WSDL: /<module>/wsdl
+	EndPoint: /<module>/soap
+	
+	Function name conversion:
+	(Get/Post)<Function>(<parameters ...>)
+	<data>
+
+	Example:
+	/lim/soap
+	GetVersion()
