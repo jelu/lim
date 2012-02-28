@@ -2,8 +2,10 @@ RESTful
 
 JSON-RPC v2+
 
-	GET/POST /<module>/<function>/<parameters ...>
+	HTTP GET/POST /<module>/<function>/<parameters ...>
 	<data>
+
+	Module->(Get/Post)<Function>(<data>, <parameters ...>)
 	
 SOAP 1.1
 
@@ -11,9 +13,8 @@ SOAP 1.1
 	EndPoint: /<module>/soap
 	
 	Function name conversion:
-	(Get/Post)<Function>(<parameters ...>)
-	<data>
+	Module->(Get/Post)<Function>(<data>)
 
 	Example:
 	/lim/soap
-	GetVersion()
+	Lim->GetVersion()

@@ -28,6 +28,15 @@ sub Module
     croak 'Module not overloaded';
 }
 
+=head2 function1
+
+=cut
+
+sub GetIndex
+{
+    croak 'GetIndex not overloaded';
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

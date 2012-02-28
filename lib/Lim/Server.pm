@@ -10,6 +10,8 @@ use AnyEvent ();
 use AnyEvent::Socket ();
 use AnyEvent::TLS ();
 
+use SOAP::Transport::HTTP ();
+
 use Lim ();
 use Lim::Server::Client ();
 
@@ -66,7 +68,9 @@ sub new {
     $self->{host} = $args{host};
     $self->{port} = $args{port};
     $self->{html} = $args{html};
-    
+
+    $self->{soap} = SOAP::Transport::HTTP::Server->new;
+        
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
         
@@ -122,9 +126,10 @@ sub serve
     
     foreach my $module (@_) {
         if ($module->isa('Lim::RPC')) {
-            my $name = $module->Module;
+            my $name = lc($module->Module);
             
             $self->{module}->{$name} = $module;
+            $self->{soap}->dispatch_to($module);
         }
     }
 }

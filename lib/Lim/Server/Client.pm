@@ -15,6 +15,8 @@ use HTTP::Response ();
 use URI ();
 use URI::QueryParam ();
 
+use JSON::XS ();
+
 use Lim ();
 
 =head1 NAME
@@ -28,6 +30,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our $JSON = JSON::XS->new->ascii;
 
 sub MAX_REQUEST_LEN     (){ 64 * 1024 }
 
@@ -79,6 +82,7 @@ sub new {
 
     $self->{html} = $args{html};
     $self->{server} = $args{server};
+    weaken($self->{server});
     $self->{handle} = AnyEvent::Handle->new(
         fh => $args{fh},
         tls => 'accept',
@@ -125,18 +129,61 @@ sub new {
                 $response->protocol($request->protocol);
                 my $uri = $request->uri;
 
-use Data::Dumper;
-print Dumper($request),"\n";
-                
                 Lim::DEBUG and $self->{logger}->debug('Request recieved for ', $uri);
                 
-                if ($uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z]+)\/{0,1}(.*)/o) {
+                if ($uri =~ /^\/soap/o) {
+                    my $server = $self->{server}; # make a copy of server ref to make it strong
+                    if (defined $server) {
+                        $server->{soap}->request($request);
+                        $server->{soap}->handle;
+                        $response = $server->{soap}->response;
+                        
+                        use Data::Dumper;
+                        print Dumper($response);
+                    }
+                    undef($server);
+                }
+                elsif ($uri =~ /^\/wsdl\/([a-zA-Z]+)/o) {
+                    my ($wsdl) = ($1);
+                    
+                    if (-f $self->{wsdl}.'/'.$wsdl and open(FILE, $self->{wsdl}.'/'.$wsdl)) {
+                        my ($read, $buffer, $content) = (0, '', '');
+
+                        Lim::DEBUG and $self->{logger}->debug('Sending wsdl ', $wsdl);
+                        
+                        while (($read = read(FILE, $buffer, 64*1024))) {
+                            $content .= $buffer;
+                        }
+                        close(FILE);
+                        
+                        unless (defined $read) {
+                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                        }
+                        else {
+                            $response->content($content);
+                            $response->header('Content-Type' => 'text/xml');
+                            $response->code(HTTP_OK);
+                        }
+                    }
+                    else {
+                        $response->code(HTTP_NOT_FOUND);
+                    }
+                }
+                elsif ($uri =~ /^\/([a-zA-Z]+)(?:\/([a-zA-Z]+)\/{0,1}(.*)){0,1}/o) {
                     my ($module, $function, $parameters) = ($1, $2, $3);
                     my ($method, $call, @parameters);
                     
                     $method = lc($request->method);
                     $module = lc($module);
-                    $function = lc($function);
+                    unless (defined($function)) {
+                        $function = 'index';
+                    }
+                    else {
+                        $function = lc($function);
+                    }
+                    
+                    Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $function, '()');
+                    
                     $call = ucfirst($method).ucfirst($function);
                     
                     if (defined $parameters) {
@@ -146,15 +193,26 @@ print Dumper($request),"\n";
                         }
                     }
                     
-                    if (exists $self->{server}->{module}->{$module}) {
-                        my $moduleObj = $self->{server}->{module}->{$module};
-                        
-                        if ($moduleObj->can($call)) {
-                            #$moduleObj->$call($request, $response, @parameters);
+                    my $server = $self->{server}; # make a copy of server ref to make it strong
+                    if (defined $server and exists $server->{module}->{$module}) {
+                        if ($server->{module}->{$module}->can($call)) {
+                            my $result = $server->{module}->{$module}->$call($request, $response, @parameters);
+                            
+                            if (ref($result) eq 'HASH' or ref($result) eq 'ARRAY') {
+                                $response->content($JSON->encode($result));
+                                $response->header('Content-Type' => 'application/json');
+                                $response->code(HTTP_OK);
+                            }
+                            else
+                            {
+                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                            }
                         }
                     }
+                    undef($server);
                 }
-                elsif ($uri =~ /^\//o) {
+                
+                if (!$response->code and $uri =~ /^\//o) {
                     my $file = $self->{html};
                     
                     if ($uri eq '/') {
@@ -188,6 +246,8 @@ print Dumper($request),"\n";
                         while (($read = read(FILE, $buffer, 64*1024))) {
                             $content .= $buffer;
                         }
+                        close(FILE);
+                        
                         unless (defined $read) {
                             $response->code(HTTP_INTERNAL_SERVER_ERROR);
                         }
@@ -200,19 +260,16 @@ print Dumper($request),"\n";
                             elsif ($file =~ /\.css$/o) {
                                 $response->header('Content-Type' => 'text/css');
                             }
+                            $response->code(HTTP_OK);
                         }
-                        close(FILE);
                     }
                     else {
                         $response->code(HTTP_NOT_FOUND);
                     }
                 }
-                else {
-                    $response->code(HTTP_NOT_FOUND);
-                }
                 
                 unless ($response->code) {
-                    $response->code(HTTP_OK);
+                    $response->code(HTTP_NOT_FOUND);
                 }
                 
                 if ($response->code != HTTP_OK and !length($response->content)) {

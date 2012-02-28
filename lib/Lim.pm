@@ -63,9 +63,24 @@ sub Module
 
 =cut
 
+sub GetIndex
+{
+    {
+        'lim' => {
+            'version' => $VERSION
+        }
+    };
+}
+
+=head2 function1
+
+=cut
+
 sub GetVersion
 {
-    $VERSION;
+    {
+        'version' => $VERSION
+    };
 }
 
 =head1 AUTHOR
