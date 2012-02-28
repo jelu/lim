@@ -17,6 +17,7 @@ my $port = 5353;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
+my $wsdl = '/usr/share/lim/wsdl';
 
 Getopt::Long::GetOptions(
 	'help|?' => \$help,
@@ -24,7 +25,8 @@ Getopt::Long::GetOptions(
 	'port:i' => \$port,
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
-    'html:s' => \$html
+    'html:s' => \$html,
+    'wsdl:s' => \$wsdl
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -73,7 +75,8 @@ my $server = Lim::Server->new(
     host => $host,
     port => $port,
     key => $key,
-    html => $html
+    html => $html,
+    wsdl => $wsdl
 );
 $server->serve(Lim->new());
 

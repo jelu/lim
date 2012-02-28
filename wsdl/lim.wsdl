@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<definitions name="Lim"
+	targetNamespace="http://yourdomain.com/Lim"
+	xmlns:tns="http://yourdomain.com/Lim"
+	xmlns:xsd="http://www.w3.org/2000/10/XMLSchema"
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+	<message name="GetVersionInput" />
+
+	<message name="GetVersionOutput">
+		<part name="version" type="xsd:string" />
+	</message>
+
+	<portType name="LimPortType">
+		<operation name="GetVersion">
+			<input message="tns:GetVersionInput" />
+			<output message="tns:GetVersionOutput" />
+		</operation>
+	</portType>
+
+	<binding name="LimBinding" type="tns:LimPortType">
+		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http" />
+		<operation name="GetVersion">
+			<soap:operation soapAction="http://yourdomain.com/Lim/GetVersion" />
+			<input>
+				<soap:body use="encoded" namespace="http://yourdomain.com/Lim" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+			</input>
+			<output>
+				<soap:body use="encoded" namespace="http://yourdomain.com/Lim" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+			</output>
+		</operation>
+	</binding>
+
+	<service name="LimService">
+		<port name="LimPort" binding="tns:LimBinding">
+			<soap:address location="@SOAP_LOCATION@/soap/lim" />
+		</port>
+	</service>
+</definitions>

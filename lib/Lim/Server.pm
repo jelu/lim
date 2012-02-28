@@ -62,12 +62,16 @@ sub new {
     unless (defined $args{html}) {
         croak __PACKAGE__, ': No html specified';
     }
+    unless (defined $args{wsdl}) {
+        croak __PACKAGE__, ': No wsdl specified';
+    }
     
     $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
 
     $self->{host} = $args{host};
     $self->{port} = $args{port};
     $self->{html} = $args{html};
+    $self->{wsdl} = $args{wsdl};
 
     $self->{soap} = SOAP::Transport::HTTP::Server->new;
         
@@ -80,6 +84,7 @@ sub new {
             fh => $fh,
             tls_ctx => $self->{tls_ctx},
             html => $self->{html},
+            wsdl => $self->{wsdl},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
                 

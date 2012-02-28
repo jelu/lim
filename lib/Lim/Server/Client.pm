@@ -5,6 +5,7 @@ use Carp;
 
 use Log::Log4perl ();
 use Scalar::Util qw(weaken);
+use Socket;
 
 use AnyEvent ();
 use AnyEvent::Handle ();
@@ -50,7 +51,7 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        rbuf => ''
+        headers => ''
     };
     bless $self, $class;
     my $real_self = $self;
@@ -64,6 +65,9 @@ sub new {
     }
     unless (defined $args{html}) {
         croak __PACKAGE__, ': Missing hmtl (Path to HTML files)';
+    }
+    unless (defined $args{wsdl}) {
+        croak __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
     }
     unless (defined $args{server}) {
         croak __PACKAGE__, ': Missing server object';
@@ -80,7 +84,11 @@ sub new {
         };
     }
 
+    my ($port, $host) = sockaddr_in(getsockname($args{fh}));
+
+    $self->{uri} = 'https://'.inet_ntoa($host).':'.$args{server}->{port};
     $self->{html} = $args{html};
+    $self->{wsdl} = $args{wsdl};
     $self->{server} = $args{server};
     weaken($self->{server});
     $self->{handle} = AnyEvent::Handle->new(
@@ -119,37 +127,61 @@ sub new {
                 return;
             }
             
-            $self->{rbuf} .= $handle->{rbuf};
+            unless (exists $self->{content}) {
+                $self->{headers} .= $handle->{rbuf};
+                
+                if ($self->{headers} =~ /\r\n\r\n/o) {
+                    my ($headers, $content) = split(/\r\n\r\n/o, $self->{headers}, 2);
+                    $self->{headers} = $headers;
+                    $self->{content} = $content;
+                    $self->{request} = HTTP::Request->parse($self->{headers});
+                }
+            }
+            else {
+                $self->{content} .= $handle->{rbuf};
+            }
             $handle->{rbuf} = '';
             
-            if ($self->{rbuf} =~ /\r\n\r\n$/o) {
-                my $request = HTTP::Request->parse($self->{rbuf});
+            if (length($self->{content}) == $self->{request}->header('Content-Length')) {
+                my $request = $self->{request};
+                $request->content($self->{content});
+                delete $self->{request};
+                delete $self->{content};
+                $self->{headers} = '';
+                
                 my $response = HTTP::Response->new;
                 $response->request($request);
                 $response->protocol($request->protocol);
+                
                 my $uri = $request->uri;
 
                 Lim::DEBUG and $self->{logger}->debug('Request recieved for ', $uri);
                 
-                if ($uri =~ /^\/soap/o) {
+                if ($uri =~ /^\/soap\/([a-zA-Z]+)/o) {
                     my $server = $self->{server}; # make a copy of server ref to make it strong
                     if (defined $server) {
-                        $server->{soap}->request($request);
-                        $server->{soap}->handle;
-                        $response = $server->{soap}->response;
+                        eval {
+                            $server->{soap}->request($request);
+                            $server->{soap}->handle;
+                            $response = $server->{soap}->response;
+                        };
                         
-                        use Data::Dumper;
-                        print Dumper($response);
+                        if ($@) {
+                            use Data::Dumper;
+                            print "$@\n", Dumper($request), "\n\n", Dumper($response), "\n";
+                        }
                     }
                     undef($server);
                 }
                 elsif ($uri =~ /^\/wsdl\/([a-zA-Z]+)/o) {
                     my ($wsdl) = ($1);
+                    my $file = $self->{wsdl}.'/'.$wsdl.'.wsdl';
+
+                    Lim::DEBUG and $self->{logger}->debug('Sending wsdl ', $file);
                     
-                    if (-f $self->{wsdl}.'/'.$wsdl and open(FILE, $self->{wsdl}.'/'.$wsdl)) {
+                    if (-f $file and open(FILE, $file)) {
                         my ($read, $buffer, $content) = (0, '', '');
 
-                        Lim::DEBUG and $self->{logger}->debug('Sending wsdl ', $wsdl);
                         
                         while (($read = read(FILE, $buffer, 64*1024))) {
                             $content .= $buffer;
@@ -160,6 +192,7 @@ sub new {
                             $response->code(HTTP_INTERNAL_SERVER_ERROR);
                         }
                         else {
+                            $content =~ s/\@SOAP_LOCATION\@/$self->{uri}/go;
                             $response->content($content);
                             $response->header('Content-Type' => 'text/xml');
                             $response->code(HTTP_OK);
@@ -199,12 +232,13 @@ sub new {
                             my $result = $server->{module}->{$module}->$call($request, $response, @parameters);
                             
                             if (ref($result) eq 'HASH' or ref($result) eq 'ARRAY') {
-                                $response->content($JSON->encode($result));
+                                eval {
+                                    $response->content($JSON->encode($result));
+                                };
                                 $response->header('Content-Type' => 'application/json');
                                 $response->code(HTTP_OK);
                             }
-                            else
-                            {
+                            else {
                                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
                             }
                         }
