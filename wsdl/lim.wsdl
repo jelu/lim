@@ -6,10 +6,31 @@
 	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 	xmlns="http://schemas.xmlsoap.org/wsdl/">
 
-	<message name="GetVersionInput" />
+	<types>
+		<schema targetNamespace="http://yourdomain.com/Lim" xmlns="http://www.w3.org/2000/10/XMLSchema">
+			<element name="GetVersionInputMessage">
+				<complexType>
+					<sequence>
+						<element name="test" type="string" />
+					</sequence>
+				</complexType>
+			</element>
+			<element name="GetVersionOutputMessage">
+				<complexType>
+					<sequence>
+						<element name="version" type="string" />
+					</sequence>
+				</complexType>
+			</element>
+		</schema>
+	</types>
+	
+	<message name="GetVersionInput">
+		<part name="GetVersionInputMessage" type="xsd:string" />
+	</message>
 
 	<message name="GetVersionOutput">
-		<part name="version" type="xsd:string" />
+		<part name="GetVersionOutputMessage" type="xsd:string" />
 	</message>
 
 	<portType name="LimPortType">
