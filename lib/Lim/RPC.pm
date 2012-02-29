@@ -3,6 +3,8 @@ package Lim::RPC;
 use common::sense;
 use Carp;
 
+use SOAP::Lite ();
+
 =head1 NAME
 
 ...
@@ -35,6 +37,118 @@ sub Module
 sub GetIndex
 {
     croak 'GetIndex not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub isSoap
+{
+    $_[0]->{__rpc_isSoap} = $_[1] if (defined $_[1]);
+    
+    $_[0]->{__rpc_isSoap};
+}
+
+=head2 function1
+
+=cut
+
+sub __result
+{
+    my @a;
+    
+    if (defined $_[2] and exists $_[2]->{$_[0]}) {
+        foreach my $k (@{$_[2]->{$_[0]}}) {
+            if (exists $_[1]->{$k}) {
+                if (ref($_[1]->{$k}) eq 'ARRAY') {
+                    foreach my $v (@{$_[1]->{$k}}) {
+                        if (ref($v) eq 'HASH') {
+                            push(@a,
+                                SOAP::Data->new->name($k)
+                                ->value(Lim::RPC::__result($_[0].'.'.$k, $v, $_[2]))
+                                ->prefix('lim1')
+                                );
+                        }
+                        else {
+                            push(@a,
+                                SOAP::Data->new->name($k)
+                                ->value($v)
+                                );
+                        }
+                    }
+                }
+                elsif (ref($_[1]->{$k}) eq 'HASH') {
+                    push(@a,
+                        SOAP::Data->new->name($k)
+                        ->value(Lim::RPC::__result($_[0].'.'.$k, $_[1]->{$k}, $_[2]))
+                        ->prefix('lim1')
+                        );
+                }
+                else {
+                    push(@a,
+                        SOAP::Data->new->name($k)
+                        ->value($_[1]->{$k})
+                        );
+                }
+            }
+        }
+    }
+    else {
+        foreach my $k (keys %{$_[1]}) {
+            if (ref($_[1]->{$k}) eq 'ARRAY') {
+                foreach my $v (@{$_[1]->{$k}}) {
+                    if (ref($v) eq 'HASH') {
+                        push(@a,
+                            SOAP::Data->new->name($k)
+                            ->value(Lim::RPC::__result($_[0].'.'.$k, $v, $_[2]))
+                            ->prefix('lim1')
+                            );
+                    }
+                    else {
+                        push(@a,
+                            SOAP::Data->new->name($k)
+                            ->value($v)
+                            );
+                    }
+                }
+            }
+            elsif (ref($_[1]->{$k}) eq 'HASH') {
+                push(@a,
+                    SOAP::Data->new->name($k)
+                    ->value(Lim::RPC::__result($_[0].'.'.$k, $_[1]->{$k}, $_[2]))
+                    ->prefix('lim1')
+                    );
+            }
+            else {
+                push(@a,
+                    SOAP::Data->new->name($k)
+                    ->value($_[1]->{$k})
+                    );
+            }
+        }
+    }
+
+    if ($_[0] eq 'base') {
+        return @a;
+    }
+    else {
+        return \@a;
+    }
+}
+
+sub R
+{
+    if ($_[0]->{__rpc_isSoap}) {
+        if (ref($_[1]) eq 'HASH') {
+            return SOAP::Data->value(Lim::RPC::__result('base', $_[1], $_[2]));
+        }
+        else {
+            return SOAP::Data->value($_[1]);
+        }
+    }
+    
+    $_[1];
 }
 
 =head1 AUTHOR

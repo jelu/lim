@@ -142,7 +142,7 @@ sub new {
             }
             $handle->{rbuf} = '';
             
-            if (length($self->{content}) == $self->{request}->header('Content-Length')) {
+            if (defined $self->{request} and length($self->{content}) == $self->{request}->header('Content-Length')) {
                 my $request = $self->{request};
                 $request->content($self->{content});
                 delete $self->{request};
@@ -158,17 +158,30 @@ sub new {
                 Lim::DEBUG and $self->{logger}->debug('Request recieved for ', $uri);
                 
                 if ($uri =~ /^\/soap\/([a-zA-Z]+)/o) {
+                    my $module = lc($1);
                     my $server = $self->{server}; # make a copy of server ref to make it strong
                     if (defined $server) {
-                        eval {
-                            $server->{soap}->request($request);
-                            $server->{soap}->handle;
-                            $response = $server->{soap}->response;
-                        };
-                        
-                        if ($@) {
-                            use Data::Dumper;
-                            print "$@\n", Dumper($request), "\n\n", Dumper($response), "\n";
+                        if (exists $server->{module}->{$module}) {
+                            $server->{module}->{$module}->isSoap(1);
+                            eval {
+                                $server->{soap}->request($request);
+                                $server->{soap}->handle;
+                                $response = $server->{soap}->response;
+                            };
+                            $server->{module}->{$module}->isSoap(0);
+                            
+                            if ($@) {
+                                use Data::Dumper;
+                                print "$@\n", Dumper($request), "\n\n", Dumper($response), "\n";
+                            }
+                            
+                            $response->header(
+                                'Cache-Control' => 'no-cache',
+                                'Pragma' => 'no-cache'
+                                );
+                        }
+                        else {
+                            $response->code(HTTP_NOT_FOUND);
                         }
                     }
                     undef($server);
@@ -194,7 +207,11 @@ sub new {
                         else {
                             $content =~ s/\@SOAP_LOCATION\@/$self->{uri}/go;
                             $response->content($content);
-                            $response->header('Content-Type' => 'text/xml');
+                            $response->header(
+                                'Content-Type' => 'text/xml; charset=utf-8',
+                                'Cache-Control' => 'no-cache',
+                                'Pragma' => 'no-cache'
+                                );
                             $response->code(HTTP_OK);
                         }
                     }
@@ -202,45 +219,100 @@ sub new {
                         $response->code(HTTP_NOT_FOUND);
                     }
                 }
-                elsif ($uri =~ /^\/([a-zA-Z]+)(?:\/([a-zA-Z]+)\/{0,1}(.*)){0,1}/o) {
+                elsif ($uri =~ /^\/([a-zA-Z]+)(?:\/([a-zA-Z]+)\/{0,1}([^\?]*)){0,1}/o) {
                     my ($module, $function, $parameters) = ($1, $2, $3);
-                    my ($method, $call, @parameters);
                     
-                    $method = lc($request->method);
                     $module = lc($module);
-                    unless (defined($function)) {
-                        $function = 'index';
-                    }
-                    else {
-                        $function = lc($function);
-                    }
-                    
-                    Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $function, '()');
-                    
-                    $call = ucfirst($method).ucfirst($function);
-                    
-                    if (defined $parameters) {
-                        foreach my $parameter (split(/\//o, $parameters)) {
-                            # TODO urldecode $parameter
-                            push(@parameters, $parameter);
-                        }
-                    }
-                    
                     my $server = $self->{server}; # make a copy of server ref to make it strong
                     if (defined $server and exists $server->{module}->{$module}) {
-                        if ($server->{module}->{$module}->can($call)) {
-                            my $result = $server->{module}->{$module}->$call($request, $response, @parameters);
+                        my ($method, $call);
+                        
+                        $method = lc($request->method);
+                        unless (defined($function)) {
+                            $function = 'index';
+                        }
+                        else {
+                            $function = lc($function);
+                        }
+                        $call = ucfirst($method).ucfirst($function);
+                    
+                        Lim::DEBUG and $self->{logger}->debug('API call ', $server->{module}->{$module}->Module, '->', $call, '()');
                             
+                        if ($server->{module}->{$module}->can($call)) {
+                            my ($query, @parameters);
+
+                            if (defined $parameters) {
+                                foreach my $parameter (split(/\//o, $parameters)) {
+                                    # TODO urldecode $parameter
+                                    push(@parameters, $parameter);
+                                }
+                            }
+                        
+                            if ($request->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
+                                my $query_str = $request->content;
+                                $query_str =~ s/[\r\n]+$//o;
+    
+                                my $uri = URI->new;
+                                $uri->query($query_str);
+    
+                                $query = $uri->query_form_hash;
+                            }
+                            else {
+                                $query = $request->uri->query_form_hash;
+                            }
+                            
+                            if (ref($query) eq 'ARRAY' or ref($query) eq 'HASH') {
+                                my @process = ($query);
+                                
+                                foreach my $process (shift(@process)) {
+                                    if (ref($process) eq 'ARRAY') {
+                                        push(@process, @$process);
+                                    }
+                                    elsif (ref($process) eq 'HASH') {
+                                        foreach my $key (keys %$process) {
+                                            if ($key =~ /^([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]$/o) {
+                                                my ($hname, $hkey) = ($1, $2);
+                                                
+                                                $process->{$hname}->{$hkey} = $process->{$key};
+                                                delete $process->{$key};
+                                                push(@process, $process->{$hname}->{$hkey});
+                                            }
+                                            elsif ($key =~ /^([a-zA-Z0-9_]+)\[\]$/o) {
+                                                my $aname = $1;
+                                                
+                                                if (ref($process->{$key}) eq 'ARRAY') {
+                                                    push(@{$process->{$aname}}, @{$process->{$key}});
+                                                    push(@process, @{$process->{$key}});
+                                                }
+                                                else {
+                                                    push(@{$process->{$aname}}, $process->{$key});
+                                                    push(@process, $process->{$key});
+                                                }
+                                                delete $process->{$key};
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            my $result = $server->{module}->{$module}->$call($query, @parameters);
                             if (ref($result) eq 'HASH' or ref($result) eq 'ARRAY') {
                                 eval {
                                     $response->content($JSON->encode($result));
                                 };
-                                $response->header('Content-Type' => 'application/json');
+                                $response->header(
+                                    'Content-Type' => 'application/json; charset=utf-8',
+                                    'Cache-Control' => 'no-cache',
+                                    'Pragma' => 'no-cache'
+                                    );
                                 $response->code(HTTP_OK);
                             }
                             else {
                                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
                             }
+                        }
+                        else {
+                            $response->code(HTTP_NOT_FOUND);
                         }
                     }
                     undef($server);
@@ -289,11 +361,15 @@ sub new {
                             $response->content($content);
                             
                             if ($file =~ /\.js$/o) {
-                                $response->header('Content-Type' => 'text/javascript');
+                                $response->header('Content-Type' => 'text/javascript; charset=utf-8');
                             }
                             elsif ($file =~ /\.css$/o) {
-                                $response->header('Content-Type' => 'text/css');
+                                $response->header('Content-Type' => 'text/css; charset=utf-8');
                             }
+                            $response->header(
+                                'Cache-Control' => 'no-cache',
+                                'Pragma' => 'no-cache'
+                                );
                             $response->code(HTTP_OK);
                         }
                     }
@@ -310,10 +386,10 @@ sub new {
                     $response->content($response->code.' '.HTTP::Status::status_message($response->code)."\r\n");
                 }
                 
-                $response->header('Connection' => 'close');
+                #$response->header('Connection' => 'close');
                 $response->header('Content-Length' => length($response->content));
                 unless (defined $response->header('Content-Type')) {
-                    $response->header('Content-Type' => 'text/html');
+                    $response->header('Content-Type' => 'text/html; charset=utf-8');
                 }
                 
                 unless ($response->protocol) {
@@ -324,7 +400,7 @@ sub new {
                 $handle->push_write($response->headers_as_string("\r\n"));
                 $handle->push_write("\r\n");
                 $handle->push_write($response->content);
-                $handle->push_shutdown;
+                #$handle->push_shutdown;
             }
         });
     

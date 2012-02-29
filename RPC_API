@@ -18,3 +18,8 @@ SOAP 1.1
 	Example:
 	/lim/soap
 	Lim->GetVersion()
+
+
+Limitations
+	- No starting arrays
+	- No arrays in arrays

@@ -65,11 +65,11 @@ sub Module
 
 sub GetIndex
 {
-    {
+    $_[0]->R({
         'lim' => {
             'version' => $VERSION
         }
-    };
+    });
 }
 
 =head2 function1
@@ -78,9 +78,9 @@ sub GetIndex
 
 sub GetVersion
 {
-    {
+    $_[0]->R({
         'version' => $VERSION
-    };
+    });
 }
 
 =head1 AUTHOR

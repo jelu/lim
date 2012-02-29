@@ -1,7 +1,23 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>LIM - Gluing your DNS/DNSSEC stuff together since 2012</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title>LIM - Gluing your DNS/DNSSEC stuff together since 2012</title>
+		<link type="text/css" href="css/smoothness/jquery-ui-1.8.18.custom.css" rel="stylesheet" />	
+		<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+		<script type="text/javascript" src="js/jquery-ui-1.8.18.custom.min.js"></script>
+		<script type="text/javascript">
+			$(document).ready(function(){
+				$.ajax({
+					url: '/lim/version',
+					data: 'test',
+					success: function (data) {
+						alert(data.version);
+					},
+					type: 'GET'
+				});
+			});
+		</script>
     </head>
     <body>
         Hello

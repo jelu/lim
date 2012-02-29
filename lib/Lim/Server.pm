@@ -74,7 +74,9 @@ sub new {
     $self->{wsdl} = $args{wsdl};
 
     $self->{soap} = SOAP::Transport::HTTP::Server->new;
-        
+    $self->{soap}->serializer->ns('urn:Lim', 'lim1');
+    $self->{soap}->serializer->autotype(0);
+
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
         
