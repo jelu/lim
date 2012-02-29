@@ -4,14 +4,9 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
-
-use AnyEvent ();
-use AnyEvent::Socket ();
-use AnyEvent::TLS ();
 
 use Lim ();
-use Lim::Server ();
+use base qw(Lim::RPC);
 
 =head1 NAME
 
@@ -41,51 +36,35 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        host => '0.0.0.0',
-        port => 5353,
-        html => '/usr/share/lim/html',
-        client => {}
     };
     bless $self, $class;
-    my $real_self = $self;
-    weaken($self);
-    
-    unless (defined $args{key} and -f $args{key}) {
-        croak __PACKAGE__, ': No key file specified or not found';
-    }
-    $self->{key} = $args{key};
-
-    if (defined $args{host}) {
-        $self->{host} = $args{host};
-    }
-    if (defined $args{port}) {
-        $self->{port} = $args{port};
-    }
-    if (defined $args{html}) {
-        $self->{html} = $args{html};
-    }
-    
-    $self->{server} = Lim::Server->new(
-        host => $self->{host},
-        port => $self->{port},
-        html => $self->{html},
-        key => $self->{key}
-    );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $real_self;
+    $self;
 }
 
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    delete $self->{server};
 }
 
 =head2 function2
 
 =cut
+
+sub Module
+{
+    'Master';
+}
+
+=head2 function1
+
+=cut
+
+sub GetIndex
+{
+    $_[0]->R;
+}
 
 =head1 AUTHOR
 

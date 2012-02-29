@@ -10,6 +10,7 @@ use AnyEvent ();
 
 use Lim ();
 use Lim::Server ();
+use Lim::Master ();
 
 my $help = 0;
 my $host = "0.0.0.0";
@@ -78,7 +79,10 @@ my $server = Lim::Server->new(
     html => $html,
     wsdl => $wsdl
 );
-$server->serve(Lim->new());
+$server->serve(
+    Lim->new,
+    Lim::Master->new
+    );
 
 if (defined $server) {
     push(@watchers, $server);
@@ -91,11 +95,11 @@ __END__
 
 =head1 NAME
 
-lim-server - Lim Server
+lim-masterd - Lim Master Daemon
 
 =head1 SYNOPSIS
 
-lim-server [options]
+lim-masterd [options]
 
 =head1 OPTIONS
 

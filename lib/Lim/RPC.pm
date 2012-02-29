@@ -147,8 +147,11 @@ sub R
             return SOAP::Data->value($_[1]);
         }
     }
-    
-    $_[1];
+
+    if (ref($_[1]) eq 'ARRAY' or ref($_[1]) eq 'HASH') {
+        return $_[1];
+    }
+    [ $_[1] ];
 }
 
 =head1 AUTHOR
