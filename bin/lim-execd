@@ -10,11 +10,11 @@ use AnyEvent ();
 
 use Lim ();
 use Lim::Server ();
-use Lim::Agent ();
+use Lim::Executer ();
 
 my $help = 0;
-my $host = "0.0.0.0";
-my $port = 5354;
+my $host = "127.0.0.1";
+my $port = 5355;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
@@ -81,7 +81,7 @@ my $server = Lim::Server->new(
 );
 $server->serve(
     Lim->new,
-    Lim::Agent->new
+    Lim::Executer->new
     );
 
 if (defined $server) {
@@ -95,11 +95,11 @@ __END__
 
 =head1 NAME
 
-lim-agentd - Lim Agent Daemon
+lim-execd - Lim Executer Daemon
 
 =head1 SYNOPSIS
 
-lim-agentd [options]
+lim-execd [options]
 
 =head1 OPTIONS
 
@@ -107,11 +107,11 @@ lim-agentd [options]
 
 =item B<--host <ip>>
 
-Specify the host/IP to bind to (default 0.0.0.0)
+Specify the host/IP to bind to (default 127.0.0.1)
 
 =item B<--port <port>>
 
-Specify the port to listen on (default 5354)
+Specify the port to listen on (default 5355)
 
 =item B<--key <key>>
 

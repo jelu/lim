@@ -1,6 +1,6 @@
 RESTful
 
-JSON-RPC v2+
+JSON
 
 	HTTP GET/POST /<module>/<function>/<parameters ...>
 	<data>
@@ -9,8 +9,10 @@ JSON-RPC v2+
 	
 SOAP 1.1
 
-	WSDL: /<module>/wsdl
-	EndPoint: /<module>/soap
+	- All WSDL's/Request/Response XML has been verified with SoapUI
+
+	WSDL: /wsdl/<module>
+	EndPoint: /soap/<module>
 	
 	Function name conversion:
 	Module->(Get/Post)<Function>(<data>)
@@ -19,7 +21,11 @@ SOAP 1.1
 	/lim/soap
 	Lim->GetVersion()
 
-
 Limitations
 	- No starting arrays
 	- No arrays in arrays
+
+Ports/Services
+	Master tcp/5353
+	Agent tcp/5354
+	Executer tcp/5355
