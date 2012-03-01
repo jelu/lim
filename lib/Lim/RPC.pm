@@ -178,7 +178,7 @@ sub R
         }
     }
     
-    if ($_[0]->{__rpc_isSoap}) {
+    if (exists $_[0]->{__rpc_isSoap} and $_[0]->{__rpc_isSoap}) {
         if (ref($_[1]) eq 'HASH') {
             $_[0]->{__rpc_isSoap} = 0;
             return SOAP::Data->value(Lim::RPC::__result('base', $_[1], $_[2]));
