@@ -1,11 +1,16 @@
 RESTful
 
+	GET = Get request
+	POST = Partial update of an object
+	PUT = Create new object
+	DELETE = Delete object
+	
 JSON
 
-	HTTP GET/POST /<module>/<function>/<parameters ...>
+	HTTP GET/POST/PUT/DELETE /<module>/<function>/<parameters ...>
 	<data>
 
-	Module->(Get/Post)<Function>(<data>, <parameters ...>)
+	Module->(Get/Post/Put/Delete)<Function>(<data>, <parameters ...>)
 	
 SOAP 1.1
 
@@ -13,13 +18,19 @@ SOAP 1.1
 
 	WSDL: /wsdl/<module>
 	EndPoint: /soap/<module>
-	
+
+	RESTful to CRUD name conversion:
+	GET => READ
+	POST => UPDATE
+	PUT => CREATE
+	DELETE => DELETE
+		
 	Function name conversion:
-	Module->(Get/Post)<Function>(<data>)
+	Module->(Create/Read/Update/Delete)<Function>(<data>)
 
 	Example:
 	/lim/soap
-	Lim->GetVersion()
+	Lim->ReadVersion()
 
 Limitations
 	- No starting arrays

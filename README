@@ -49,6 +49,28 @@ AUTHENTICATION
 	- API key only available for Master and Executer, Agent does not have
 	  access to that information
 
+REQUIRED PERL MODULES
+
+    common::sense
+    Carp
+    Getopt::Long
+    Pod::Usage
+    Log::Log4perl
+    EV
+    AnyEvent
+    AnyEvent::Socket
+    AnyEvent::Handle
+    Socket
+    Scalar::Util
+    HTTP::Status
+    HTTP::Request
+    HTTP::Response
+    URI
+    URI::QueryParam
+    JSON::XS
+    SOAP::Lite
+    SOAP::Transport::HTTP
+
 INSTALLATION
 
 To install this module, run the following commands:

@@ -6,7 +6,9 @@ use Carp;
 use Log::Log4perl ();
 
 use Lim ();
-use base qw(Lim::RPC);
+use Lim::DB::Agent ();
+
+use base qw(Lim::RPC SOAP::Server::Parameters);
 
 =head1 NAME
 
@@ -39,6 +41,16 @@ sub new {
     };
     bless $self, $class;
     
+    unless (defined $args{server}) {
+        croak __PACKAGE__, ': Missing server';
+    }
+    
+    $self->{db_agent} = Lim::DB::Agent->new;
+    
+    $args{server}->serve(
+        $self->{db_agent}
+    );
+    
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -55,15 +67,6 @@ sub DESTROY {
 sub Module
 {
     'Master';
-}
-
-=head2 function1
-
-=cut
-
-sub GetIndex
-{
-    $_[0]->R;
 }
 
 =head1 AUTHOR

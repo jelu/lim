@@ -9,12 +9,12 @@
 		<script type="text/javascript">
 			$(document).ready(function(){
 				$.ajax({
-					url: '/lim/version',
-					data: 'test',
+					url: '/master/agent',
+					data: { Agent: { agent_name: 'testPost', agent_host: 'localhost', agent_port: 9999 } },
 					success: function (data) {
-						alert(data.version);
+						alert(data);
 					},
-					type: 'GET'
+					type: 'POST'
 				});
 			});
 		</script>

@@ -5,6 +5,8 @@ use Carp;
 
 use SOAP::Lite ();
 
+use Lim::DB ();
+
 =head1 NAME
 
 ...
@@ -34,9 +36,9 @@ sub Module
 
 =cut
 
-sub GetIndex
+sub WSDL
 {
-    croak 'GetIndex not overloaded';
+    $_[0]->Module;
 }
 
 =head2 function1
@@ -48,6 +50,27 @@ sub isSoap
     $_[0]->{__rpc_isSoap} = $_[1] if (defined $_[1]);
     
     $_[0]->{__rpc_isSoap};
+}
+
+=head2 function1
+
+=cut
+
+sub F
+{
+    if (ref($_[scalar @_ - 2]) eq 'SOAP::SOM') {
+        my $valueof = pop;
+        my $som = pop;
+        $_[0]->{__rpc_isSoap} = 1;
+        if (defined $valueof) {
+            $_[1] = $som->valueof($valueof);
+        }
+    }
+    else {
+        pop;
+    }
+    
+    @_;
 }
 
 =head2 function1
@@ -74,6 +97,7 @@ sub __result
                             push(@a,
                                 SOAP::Data->new->name($k)
                                 ->value($v)
+                                ->prefix('lim1')
                                 );
                         }
                     }
@@ -89,6 +113,7 @@ sub __result
                     push(@a,
                         SOAP::Data->new->name($k)
                         ->value($_[1]->{$k})
+                        ->prefix('lim1')
                         );
                 }
             }
@@ -109,6 +134,7 @@ sub __result
                         push(@a,
                             SOAP::Data->new->name($k)
                             ->value($v)
+                            ->prefix('lim1')
                             );
                     }
                 }
@@ -124,6 +150,7 @@ sub __result
                 push(@a,
                     SOAP::Data->new->name($k)
                     ->value($_[1]->{$k})
+                    ->prefix('lim1')
                     );
             }
         }
@@ -139,11 +166,25 @@ sub __result
 
 sub R
 {
+    if (ref($_[1]) and ref($_[1]) ne 'HASH' and ref($_[1]) ne 'ARRAY') {
+        if ($_[1]->isa('DBIx::Class::ResultSet')) {
+            my @r;
+            my $c = $_[1]->result_source->source_name;
+            foreach ($_[1]->all) {
+                my %r = $_->get_columns;
+                push(@r, \%r);
+            }
+            $_[1] = { $c => \@r };
+        }
+    }
+    
     if ($_[0]->{__rpc_isSoap}) {
         if (ref($_[1]) eq 'HASH') {
+            $_[0]->{__rpc_isSoap} = 0;
             return SOAP::Data->value(Lim::RPC::__result('base', $_[1], $_[2]));
         }
         else {
+            $_[0]->{__rpc_isSoap} = 0;
             return SOAP::Data->value($_[1]);
         }
     }

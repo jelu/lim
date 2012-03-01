@@ -9,37 +9,68 @@
 
 	<wsdl:types>
 		<xsd:schema targetNamespace="urn:Lim">
-			<xsd:element name="GetVersion" />
-			<xsd:element name="GetVersionResponse">
+			<xsd:element name="version" type="xsd:string" />
+			<xsd:element name="type" type="xsd:string" />
+			<xsd:element name="ReadVersion" />
+			<xsd:element name="ReadVersionResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element name="version" type="xsd:string" />
+						<xsd:element ref="tns:version" />
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="ReadType" />
+			<xsd:element name="ReadTypeResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element ref="tns:Type" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
 		</xsd:schema>
 	</wsdl:types>
 	
-	<wsdl:message name="GetVersionRequest">
-		<wsdl:part element="tns:GetVersion" name="parameters" />
+	<wsdl:message name="ReadVersionRequest">
+		<wsdl:part element="tns:ReadVersion" name="parameters" />
 	</wsdl:message>
 	
-	<wsdl:message name="GetVersionResponse">
-		<wsdl:part element="tns:GetVersionResponse" name="parameters" />
+	<wsdl:message name="ReadVersionResponse">
+		<wsdl:part element="tns:ReadVersionResponse" name="parameters" />
+	</wsdl:message>
+	
+	<wsdl:message name="ReadTypeRequest">
+		<wsdl:part element="tns:ReadType" name="parameters" />
+	</wsdl:message>
+	
+	<wsdl:message name="ReadTypeResponse">
+		<wsdl:part element="tns:ReadTypeResponse" name="parameters" />
 	</wsdl:message>
 	
 	<wsdl:portType name="Lim">
-		<wsdl:operation name="GetVersion">
-			<wsdl:input message="tns:GetVersionRequest" />
-			<wsdl:output message="tns:GetVersionResponse" />
+		<wsdl:operation name="ReadVersion">
+			<wsdl:input message="tns:ReadVersionRequest" />
+			<wsdl:output message="tns:ReadVersionResponse" />
+		</wsdl:operation>
+		<wsdl:operation name="ReadType">
+			<wsdl:input message="tns:ReadTypeRequest" />
+			<wsdl:output message="tns:ReadTypeResponse" />
 		</wsdl:operation>
 	</wsdl:portType>
 	
 	<wsdl:binding name="LimSOAP" type="tns:Lim">
 		<soap:binding style="document"
 			transport="http://schemas.xmlsoap.org/soap/http" />
-		<wsdl:operation name="GetVersion">
-			<soap:operation soapAction="urn:Lim#GetVersion" />
+		<wsdl:operation name="ReadVersion">
+			<soap:operation soapAction="urn:Lim#ReadVersion" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="ReadType">
+			<soap:operation soapAction="urn:Lim#ReadType" />
 			<wsdl:input>
 				<soap:body use="literal" />
 			</wsdl:input>

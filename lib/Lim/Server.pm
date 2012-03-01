@@ -44,7 +44,10 @@ sub new {
     my $self = {
         logger => Log::Log4perl->get_logger,
         client => {},
-        module => {}
+        modules => [],
+        module_name => {},
+        module_name_call => {},
+        wsdl_module => {}
     };
     bless $self, $class;
     my $real_self = $self;
@@ -59,18 +62,17 @@ sub new {
     unless (defined $args{port}) {
         croak __PACKAGE__, ': No port specified';
     }
-    unless (defined $args{html}) {
-        croak __PACKAGE__, ': No html specified';
-    }
     unless (defined $args{wsdl}) {
-        croak __PACKAGE__, ': No wsdl specified';
+        croak __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
     }
     
     $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
 
     $self->{host} = $args{host};
     $self->{port} = $args{port};
-    $self->{html} = $args{html};
+    if (defined $args{html}) {
+        $self->{html} = $args{html};
+    }
     $self->{wsdl} = $args{wsdl};
 
     $self->{soap} = SOAP::Transport::HTTP::Server->new;
@@ -85,7 +87,6 @@ sub new {
             server => $self,
             fh => $fh,
             tls_ctx => $self->{tls_ctx},
-            html => $self->{html},
             wsdl => $self->{wsdl},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
@@ -101,6 +102,10 @@ sub new {
                 
                 delete $self->{client}->{$handle};
             });
+        
+        if (exists $self->{html}) {
+            $handle->set_html($self->{html});
+        }
         
         $self->{client}->{$handle} = $handle;
     }, sub {
@@ -121,6 +126,10 @@ sub DESTROY {
     
     delete $self->{client};
     delete $self->{socket};
+    delete $self->{modules};
+    delete $self->{module_name};
+    delete $self->{module_name_call};
+    delete $self->{wsdl};
 }
 
 =head2 function2
@@ -134,11 +143,19 @@ sub serve
     foreach my $module (@_) {
         if ($module->isa('Lim::RPC')) {
             my $name = lc($module->Module);
+            my $wsdl = lc($module->WSDL);
             
-            $self->{module}->{$name} = $module;
-            $self->{soap}->dispatch_to($module);
+            Lim::DEBUG and $self->{logger}->debug('serving ', $name, ' [wsdl: ', $wsdl, ']');
+            
+            push(@{$self->{module_name}->{$name}}, $module);
+            push(@{$self->{modules}}, $module);
+            $self->{wsdl_module}->{$wsdl} = $module;
         }
     }
+    
+    $self->{soap}->dispatch_to(@{$self->{modules}});
+    
+    $self;
 }
 
 =head1 AUTHOR

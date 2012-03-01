@@ -9,6 +9,7 @@ use EV ();
 use AnyEvent ();
 
 use Lim ();
+use Lim::DB ();
 use Lim::Server ();
 use Lim::Master ();
 
@@ -19,6 +20,7 @@ my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
 my $wsdl = '/usr/share/lim/wsdl';
+my $dsn;
 
 Getopt::Long::GetOptions(
 	'help|?' => \$help,
@@ -27,12 +29,25 @@ Getopt::Long::GetOptions(
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
     'html:s' => \$html,
-    'wsdl:s' => \$wsdl
+    'wsdl:s' => \$wsdl,
+    'dsn=s' => \$dsn
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
 unless (-d $html) {
     print STDERR 'Path to HTML directory invalid or non existing: ', $html, "\n";
+    exit(1);
+}
+unless (-d $wsdl) {
+    print STDERR 'Path to WSDL directory invalid or non existing: ', $wsdl, "\n";
+    exit(1);
+}
+
+eval {
+    Lim::DB->schema->connection($dsn);
+};
+if ($@) {
+    print STDERR 'Unable to connect to database ', $dsn, ': ', $@, "\n";
     exit(1);
 }
 
@@ -80,8 +95,8 @@ my $server = Lim::Server->new(
     wsdl => $wsdl
 );
 $server->serve(
-    Lim->new,
-    Lim::Master->new
+    Lim->new(type => 'master'),
+    Lim::Master->new(server => $server)
     );
 
 if (defined $server) {
@@ -116,6 +131,18 @@ Specify the port to listen on (default 5353)
 =item B<--key <key>>
 
 Specify the SSL/TLS key to use for HTTPS
+
+=item B<--html <key>>
+
+Specify the HTML directory (default /usr/share/lim/html)
+
+=item B<--wsdl <key>>
+
+Specify the WSDL directory (default /usr/share/lim/wsdl)
+
+=item B<--dsn <key>>
+
+Specify the DBI DSN for connecting to the database
 
 =item B<--help>
 

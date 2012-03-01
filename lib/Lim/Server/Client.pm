@@ -32,6 +32,12 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 our $JSON = JSON::XS->new->ascii;
+our %REST_CRUD = (
+    GET => 'READ',
+    POST => 'UPDATE',
+    PUT => 'CREATE',
+    DELETE => 'DELETE'
+);
 
 sub MAX_REQUEST_LEN     (){ 64 * 1024 }
 
@@ -63,9 +69,6 @@ sub new {
     unless (defined $args{tls_ctx}) {
         croak __PACKAGE__, ': Missing tls_ctx (TLS context)';
     }
-    unless (defined $args{html}) {
-        croak __PACKAGE__, ': Missing hmtl (Path to HTML files)';
-    }
     unless (defined $args{wsdl}) {
         croak __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
     }
@@ -87,7 +90,9 @@ sub new {
     my ($port, $host) = sockaddr_in(getsockname($args{fh}));
 
     $self->{uri} = 'https://'.inet_ntoa($host).':'.$args{server}->{port};
-    $self->{html} = $args{html};
+    if (defined $args{html}) {
+        $self->{html} = $args{html};
+    }
     $self->{wsdl} = $args{wsdl};
     $self->{server} = $args{server};
     weaken($self->{server});
@@ -161,14 +166,12 @@ sub new {
                     my $module = lc($1);
                     my $server = $self->{server}; # make a copy of server ref to make it strong
                     if (defined $server) {
-                        if (exists $server->{module}->{$module}) {
-                            $server->{module}->{$module}->isSoap(1);
+                        if (exists $server->{module_name}->{$module}) {
                             eval {
                                 $server->{soap}->request($request);
                                 $server->{soap}->handle;
                                 $response = $server->{soap}->response;
                             };
-                            $server->{module}->{$module}->isSoap(0);
                             
                             if ($@) {
                                 use Data::Dumper;
@@ -184,50 +187,64 @@ sub new {
                             $response->code(HTTP_NOT_FOUND);
                         }
                     }
+                    else {
+                        $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                    }
                     undef($server);
                 }
-                elsif ($uri =~ /^\/wsdl\/([a-zA-Z]+)/o) {
-                    my ($wsdl) = ($1);
-                    my $file = $self->{wsdl}.'/'.$wsdl.'.wsdl';
+                elsif ($uri =~ /^\/wsdl\/([a-zA-Z_]+)/o) {
+                    my $wsdl = lc($1);
+                    my $server = $self->{server}; # make a copy of server ref to make it strong
+                    if (defined $server) {
+                        my $file = $self->{wsdl}.'/'.$wsdl.'.wsdl';
 
-                    Lim::DEBUG and $self->{logger}->debug('Sending wsdl ', $file);
-                    
-                    if (-f $file and open(FILE, $file)) {
-                        my ($read, $buffer, $content) = (0, '', '');
+                        if (exists $server->{wsdl_module}->{$wsdl} and -f $file and open(FILE, $file)) {
+                            my ($read, $buffer, $content) = (0, '', '');
 
-                        
-                        while (($read = read(FILE, $buffer, 64*1024))) {
-                            $content .= $buffer;
-                        }
-                        close(FILE);
-                        
-                        unless (defined $read) {
-                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                            Lim::DEBUG and $self->{logger}->debug('Sending wsdl ', $file);
+                            
+                            while (($read = read(FILE, $buffer, 64*1024))) {
+                                $content .= $buffer;
+                            }
+                            close(FILE);
+                            
+                            unless (defined $read) {
+                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                            }
+                            else {
+                                $content =~ s/\@SOAP_LOCATION\@/$self->{uri}/go;
+                                $response->content($content);
+                                $response->header(
+                                    'Content-Type' => 'text/xml; charset=utf-8',
+                                    'Cache-Control' => 'no-cache',
+                                    'Pragma' => 'no-cache'
+                                    );
+                                $response->code(HTTP_OK);
+                            }
                         }
                         else {
-                            $content =~ s/\@SOAP_LOCATION\@/$self->{uri}/go;
-                            $response->content($content);
-                            $response->header(
-                                'Content-Type' => 'text/xml; charset=utf-8',
-                                'Cache-Control' => 'no-cache',
-                                'Pragma' => 'no-cache'
-                                );
-                            $response->code(HTTP_OK);
+                            $response->code(HTTP_NOT_FOUND);
                         }
                     }
                     else {
-                        $response->code(HTTP_NOT_FOUND);
+                        $response->code(HTTP_INTERNAL_SERVER_ERROR);
                     }
+                    undef($server);
                 }
                 elsif ($uri =~ /^\/([a-zA-Z]+)(?:\/([a-zA-Z]+)\/{0,1}([^\?]*)){0,1}/o) {
                     my ($module, $function, $parameters) = ($1, $2, $3);
                     
                     $module = lc($module);
                     my $server = $self->{server}; # make a copy of server ref to make it strong
-                    if (defined $server and exists $server->{module}->{$module}) {
+                    if (defined $server and exists $server->{module_name}->{$module}) {
                         my ($method, $call);
                         
-                        $method = lc($request->method);
+                        if (exists $REST_CRUD{$request->method}) {
+                            $method = lc($REST_CRUD{$request->method});
+                        }
+                        else {
+                            $method = lc($request->method);
+                        }
                         unless (defined($function)) {
                             $function = 'index';
                         }
@@ -235,12 +252,26 @@ sub new {
                             $function = lc($function);
                         }
                         $call = ucfirst($method).ucfirst($function);
-                    
-                        Lim::DEBUG and $self->{logger}->debug('API call ', $server->{module}->{$module}->Module, '->', $call, '()');
+                        
+                        if (exists $server->{module_name_call}->{$module}->{$call}) {
+                            $module = $server->{module_name_call}->{$module}->{$call};
+                        }
+                        else {
+                            foreach (@{$server->{module_name}->{$module}}) {
+                                if ($_->can($call)) {
+                                    $module =
+                                        $server->{module_name_call}->{$module}->{$call} =
+                                        $_;
+                                    last;
+                                }
+                            }
+                        }
                             
-                        if ($server->{module}->{$module}->can($call)) {
+                        if (defined $module and ref($module)) {
                             my ($query, @parameters);
 
+                            Lim::DEBUG and $self->{logger}->debug('API call ', $module->Module, '->', $call, '()');
+                            
                             if (defined $parameters) {
                                 foreach my $parameter (split(/\//o, $parameters)) {
                                     # TODO urldecode $parameter
@@ -295,7 +326,7 @@ sub new {
                                 }
                             }
                             
-                            my $result = $server->{module}->{$module}->$call($query, @parameters);
+                            my $result = $module->$call($query, @parameters);
                             if (ref($result) eq 'HASH' or ref($result) eq 'ARRAY') {
                                 eval {
                                     $response->content($JSON->encode($result));
@@ -318,7 +349,7 @@ sub new {
                     undef($server);
                 }
                 
-                if (!$response->code and $uri =~ /^\//o) {
+                if (!$response->code and exists $self->{html} and $uri =~ /^\//o) {
                     my $file = $self->{html};
                     
                     if ($uri eq '/') {
@@ -419,6 +450,10 @@ sub DESTROY {
     delete $self->{handle};
 }
 
+=head2 function2
+
+=cut
+
 sub handle {
     $_[0]->{handle};
 }
@@ -432,6 +467,16 @@ sub set_handle {
 =head2 function2
 
 =cut
+
+sub html {
+    $_[0]->{html};
+}
+
+sub set_html {
+    $_[0]->{html} = $_[1] if (defined $_[1]);
+    
+    $_[0];
+}
 
 =head1 AUTHOR
 
