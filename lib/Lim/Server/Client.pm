@@ -266,7 +266,7 @@ sub new {
                                 }
                             }
                         }
-                            
+                        
                         if (defined $module and ref($module)) {
                             my ($query, @parameters);
 

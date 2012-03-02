@@ -1,25 +1,65 @@
 <!DOCTYPE html>
 <html>
-    <head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-		<title>LIM - Gluing your DNS/DNSSEC stuff together since 2012</title>
-		<link type="text/css" href="css/smoothness/jquery-ui-1.8.18.custom.css" rel="stylesheet" />	
-		<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
-		<script type="text/javascript" src="js/jquery-ui-1.8.18.custom.min.js"></script>
-		<script type="text/javascript">
-			$(document).ready(function(){
-				$.ajax({
-					url: '/master/agent',
-					data: { Agent: { agent_name: 'testPost', agent_host: 'localhost', agent_port: 9999 } },
-					success: function (data) {
-						alert(data);
-					},
-					type: 'POST'
-				});
-			});
-		</script>
-    </head>
-    <body>
-        Hello
-    </body>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>LIM - Gluing your DNS/DNSSEC stuff together since 2012</title>
+	<link type="text/css" href="css/base/jquery-ui.min.css" rel="stylesheet" />
+	<link type="text/css" href="css/Aristo/Aristo.css" rel="stylesheet" />
+	<link type="text/css" href="css/lim.css" rel="stylesheet" />
+	<script type="text/javascript" src="js/jquery-1.7.1.min.js"></script>
+	<script type="text/javascript" src="js/jquery.cookie.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.9pre.js"></script>
+	<script type="text/javascript" src="js/lim.js"></script>
+	<script type="text/javascript">
+	$(function () {
+		Lim.ready({
+			menubar: $('#menubar').menubar(),
+			console: $('#console').dialog({
+				position: [ 'left', 'bottom' ]
+			}),
+			dialog: {
+				connect: $('#connectDialog').dialog({
+					autoOpen: false,
+					height: 300,
+					width: 350,
+					modal: true
+				}),
+			}
+		});
+	});
+	</script>
+</head>
+<body>
+	<div>
+		<ul id="menubar" class="menubar">
+			<li>
+				<a href="#">Lim</a>
+				<ul>
+					<li><a href="#" action="toggleConsole">Toggle Console</a></li>
+					<li><a href="#" action="preference">Preference</a></li>
+					<li><a href="#" action="about">About</a></li>
+				</ul>
+			</li>
+			<li>
+				<a href="#">Master</a>
+				<ul>
+					<li><a href="#" action="connect">Connect</a></li>
+				</ul>
+			</li>
+		</ul>
+	</div>
+	<div>
+		<div id="console" title="Console">
+		</div>
+		<div id="connectDialog" title="Connect to a Lim Master" style="display: none;">
+			<p class="validateTips">All form fields are required.</p>
+			<form>
+				<fieldset>
+					<label for="uri">URI</label>
+					<input type="text" name="uri" id="uri" class="text ui-widget-content ui-corner-all" />
+				</fieldset>
+			</form>
+		</div>
+	</div>
+</body>
 </html>

@@ -1,0 +1,51 @@
+* {
+	background: none repeat scroll 0 0 transparent;
+	font-size: 100%;
+	font-weight: normal;
+	margin: 0;
+	padding: 0;
+	border: 0 none;
+	outline: 0 none;
+}
+
+body {
+	background-color: #f0f0f0;
+	font: 62.5% Verdana, Arial, sans-serif !important;
+}
+
+label, input {
+	display:block;
+}
+
+input.text {
+	margin-bottom: 12px;
+	width: 95%;
+	padding: .4em;
+}
+
+fieldset {
+	padding: 0;
+	border: 0;
+	margin-top: 25px;
+}
+
+#menubar {
+	margin: 0 0 4em;
+}
+
+#console {
+	padding: 2px;
+}
+
+.ui-menu {
+	border-radius: 0;
+}
+.ui-menu-item > .ui-corner-all {
+	border-radius: 0;
+}
+.ui-dialog .ui-dialog-titlebar {
+	padding: 0.5em 0.5em 0.25em;
+}
+.ui-dialog .ui-dialog-titlebar-close {
+	top: 58%;
+}
