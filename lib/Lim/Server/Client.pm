@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
+use Scalar::Util qw(weaken blessed);
 use Socket;
 
 use AnyEvent ();
@@ -267,7 +267,7 @@ sub new {
                             }
                         }
                         
-                        if (defined $module and ref($module)) {
+                        if (blessed($module)) {
                             my ($query, @parameters);
 
                             Lim::DEBUG and $self->{logger}->debug('API call ', $module->Module, '->', $call, '()');

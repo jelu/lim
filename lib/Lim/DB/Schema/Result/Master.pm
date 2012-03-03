@@ -1,18 +1,8 @@
-package Lim::Agent;
+package Lim::DB::Schema::Result::Master;
 
 use common::sense;
-use Carp;
 
-use Log::Log4perl ();
-
-use Lim ();
-use Lim::DB::Master ();
-
-use base qw(
-    Lim::RPC
-    Lim::Notification
-    SOAP::Server::Parameters
-    );
+use base qw(DBIx::Class::Core);
 
 =head1 NAME
 
@@ -22,66 +12,15 @@ use base qw(
 
 See L<Lim> for version.
 
-=cut
-
-our $VERSION = $Lim::VERSION;
-
 =head1 SYNOPSIS
 
 ...
 
-=head1 SUBROUTINES/METHODS
-
-=head2 function1
-
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
-    };
-    bless $self, $class;
-    
-    unless (defined $args{server}) {
-        croak __PACKAGE__, ': Missing server';
-    }
-    
-    $self->{db_master} = Lim::DB::Master->new
-        ->AddNotify($self, 'CreateMaster', 'UpdateMaster', 'DeleteMaster');
-    
-    $args{server}->serve(
-        $self->{db_master}
-    );
-    
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-=head2 function2
-
-=cut
-
-sub Module
-{
-    'Agent';
-}
-
-=head2 function2
-
-=cut
-
-sub Notification
-{
-    my ($self, $object, $what, @parameters) = @_;
-}
+__PACKAGE__->table('master');
+__PACKAGE__->add_columns(qw(master_id master_name master_host master_port));
+__PACKAGE__->set_primary_key('master_id');
 
 =head1 AUTHOR
 
@@ -142,4 +81,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Agent
+1; # End of Lim::DB::Schema::Result::Master

@@ -1,4 +1,4 @@
-package Lim::DB::Agent;
+package Lim::DB::Master;
 
 use common::sense;
 use Carp;
@@ -68,21 +68,21 @@ sub Module
 
 sub WSDL
 {
-    'db_agent';
+    'db_master';
 }
 
 =head2 function1
 
 =cut
 
-sub ReadAgents
+sub ReadMasters
 {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R(
-        Lim::DB->schema->resultset('Agent'),
+        Lim::DB->schema->resultset('Master'),
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -90,28 +90,28 @@ sub ReadAgents
 
 =cut
 
-sub ReadAgent
+sub ReadMaster
 {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//ReadAgent/');
+    my ($self, $q, $id) = Lim::RPC::F(@_, '//ReadMaster/');
     my $r = {};
 
     if (defined $id) {
-        if (($_ = Lim::DB->schema->resultset('Agent')->find($id))) {
+        if (($_ = Lim::DB->schema->resultset('Master')->find($id))) {
             my %r = $_->get_columns;
-            $r->{Agent} = [ \%r ];
+            $r->{Master} = [ \%r ];
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{Master}) {
+            if (ref($q->{Master}) eq 'HASH') {
+                $q->{Master} = [ $q->{Master} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{Master}) eq 'ARRAY') {
+                foreach (@{$q->{Master}}) {
                     if (ref($_) eq 'HASH') {
-                        foreach (Lim::DB->schema->resultset('Agent')->search($_)) {
+                        foreach (Lim::DB->schema->resultset('Master')->search($_)) {
                             my %r = $_->get_columns;
-                            push(@{$r->{Agent}}, \%r);
+                            push(@{$r->{Master}}, \%r);
                         }
                     }
                 }
@@ -121,7 +121,7 @@ sub ReadAgent
     
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -129,23 +129,23 @@ sub ReadAgent
 
 =cut
 
-sub CreateAgent
+sub CreateMaster
 {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//CreateAgent/');
+    my ($self, $q, $id) = Lim::RPC::F(@_, '//CreateMaster/');
     my $r = {};
     
     if (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{Master}) {
+            if (ref($q->{Master}) eq 'HASH') {
+                $q->{Master} = [ $q->{Master} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{Master}) eq 'ARRAY') {
+                foreach (@{$q->{Master}}) {
                     if (ref($_) eq 'HASH') {
-                        if (($_ = Lim::DB->schema->resultset('Agent')->new($_))) {
+                        if (($_ = Lim::DB->schema->resultset('Master')->new($_))) {
                             $_->insert;
                             my %r = $_->get_columns;
-                            push(@{$r->{Agent}}, \%r);
+                            push(@{$r->{Master}}, \%r);
                         }
                     }
                 }
@@ -155,7 +155,7 @@ sub CreateAgent
 
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -163,32 +163,32 @@ sub CreateAgent
 
 =cut
 
-sub UpdateAgent
+sub UpdateMaster
 {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//UpdateAgent/');
+    my ($self, $q, $id) = Lim::RPC::F(@_, '//UpdateMaster/');
     my $r = {};
 
     if (defined $id) {
-        if (($_ = Lim::DB->schema->resultset('Agent')->find($id))) {
+        if (($_ = Lim::DB->schema->resultset('Master')->find($id))) {
             $_->update($q);
             my %r = $_->get_columns;
-            $r->{Agent} = [ \%r ];
+            $r->{Master} = [ \%r ];
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{Master}) {
+            if (ref($q->{Master}) eq 'HASH') {
+                $q->{Master} = [ $q->{Master} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{Master}) eq 'ARRAY') {
+                foreach (@{$q->{Master}}) {
                     if (ref($_) eq 'HASH') {
-                        if (exists $_->{agent_id}) {
-                            $id = delete $_->{agent_id};
-                            if ((my $o = Lim::DB->schema->resultset('Agent')->find($id))) {
+                        if (exists $_->{master_id}) {
+                            $id = delete $_->{master_id};
+                            if ((my $o = Lim::DB->schema->resultset('Master')->find($id))) {
                                 $o->update($_);
                                 my %r = $o->get_columns;
-                                push(@{$r->{Agent}}, \%r);
+                                push(@{$r->{Master}}, \%r);
                             }
                         }
                     }
@@ -199,7 +199,7 @@ sub UpdateAgent
 
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -207,32 +207,32 @@ sub UpdateAgent
 
 =cut
 
-sub DeleteAgent
+sub DeleteMaster
 {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//DeleteAgent/');
+    my ($self, $q, $id) = Lim::RPC::F(@_, '//DeleteMaster/');
     my $r = {};
 
     if (defined $id) {
-        if (($_ = Lim::DB->schema->resultset('Agent')->find($id))) {
+        if (($_ = Lim::DB->schema->resultset('Master')->find($id))) {
             $_->delete;
             my %r = $_->get_columns;
-            $r->{Agent} = [ \%r ];
+            $r->{Master} = [ \%r ];
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{Master}) {
+            if (ref($q->{Master}) eq 'HASH') {
+                $q->{Master} = [ $q->{Master} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{Master}) eq 'ARRAY') {
+                foreach (@{$q->{Master}}) {
                     if (ref($_) eq 'HASH') {
-                        if (exists $_->{agent_id}) {
-                            $id = delete $_->{agent_id};
-                            if ((my $o = Lim::DB->schema->resultset('Agent')->find($id))) {
+                        if (exists $_->{master_id}) {
+                            $id = delete $_->{master_id};
+                            if ((my $o = Lim::DB->schema->resultset('Master')->find($id))) {
                                 $o->delete;
                                 my %r = $o->get_columns;
-                                push(@{$r->{Agent}}, \%r);
+                                push(@{$r->{Master}}, \%r);
                             }
                         }
                     }
@@ -243,7 +243,7 @@ sub DeleteAgent
 
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 

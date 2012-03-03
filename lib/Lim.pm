@@ -72,6 +72,8 @@ sub Module
 
 sub ReadVersion
 {
+    Lim::RPC::F(@_, undef);
+    
     $_[0]->R({
         'version' => $VERSION
     });
@@ -83,6 +85,8 @@ sub ReadVersion
 
 sub ReadType
 {
+    Lim::RPC::F(@_, undef);
+    
     $_[0]->R({
         'type' => $_[0]->{type}
     });

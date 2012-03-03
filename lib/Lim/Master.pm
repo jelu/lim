@@ -8,7 +8,11 @@ use Log::Log4perl ();
 use Lim ();
 use Lim::DB::Agent ();
 
-use base qw(Lim::RPC SOAP::Server::Parameters);
+use base qw(
+    Lim::RPC
+    Lim::Notification
+    SOAP::Server::Parameters
+    );
 
 =head1 NAME
 
@@ -38,6 +42,7 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        agent => {}
     };
     bless $self, $class;
     
@@ -45,7 +50,8 @@ sub new {
         croak __PACKAGE__, ': Missing server';
     }
     
-    $self->{db_agent} = Lim::DB::Agent->new;
+    $self->{db_agent} = Lim::DB::Agent->new
+        ->AddNotify($self, 'CreateAgent', 'UpdateAgent', 'DeleteAgent');
     
     $args{server}->serve(
         $self->{db_agent}
@@ -67,6 +73,15 @@ sub DESTROY {
 sub Module
 {
     'Master';
+}
+
+=head2 function2
+
+=cut
+
+sub Notification
+{
+    my ($self, $object, $what, @parameters) = @_;
 }
 
 =head1 AUTHOR

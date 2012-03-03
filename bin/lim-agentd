@@ -44,7 +44,7 @@ unless (-d $wsdl) {
 }
 
 eval {
-    Lim::DB->instance->connection($dsn);
+    Lim::DB->schema->connection($dsn);
 };
 if ($@) {
     print STDERR 'Unable to connect to database ', $dsn, ': ', $@, "\n";
@@ -95,8 +95,8 @@ my $server = Lim::Server->new(
     wsdl => $wsdl
 );
 $server->serve(
-    Lim->new,
-    Lim::Agent->new
+    Lim->new(type => 'agent'),
+    Lim::Agent->new(server => $server)
     );
 
 if (defined $server) {

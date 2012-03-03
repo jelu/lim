@@ -23,7 +23,7 @@
 			<xsd:element name="ReadTypeResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="tns:Type" />
+						<xsd:element ref="tns:type" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>

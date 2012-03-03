@@ -3,9 +3,13 @@ package Lim::RPC;
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed);
+
 use SOAP::Lite ();
 
 use Lim::DB ();
+
+use base qw(SOAP::Server::Parameters);
 
 =head1 NAME
 
@@ -58,7 +62,7 @@ sub isSoap
 
 sub F
 {
-    if (ref($_[scalar @_ - 2]) eq 'SOAP::SOM') {
+    if (blessed($_[scalar @_ - 2]) and $_[scalar @_ - 2]->isa('SOAP::SOM')) {
         my $valueof = pop;
         my $som = pop;
         $_[0]->{__rpc_isSoap} = 1;
@@ -166,7 +170,7 @@ sub __result
 
 sub R
 {
-    if (ref($_[1]) and ref($_[1]) ne 'HASH' and ref($_[1]) ne 'ARRAY') {
+    if (blessed($_[1])) {
         if ($_[1]->isa('DBIx::Class::ResultSet')) {
             my @r;
             my $c = $_[1]->result_source->source_name;

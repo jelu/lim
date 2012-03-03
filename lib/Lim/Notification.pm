@@ -1,18 +1,7 @@
-package Lim::Agent;
+package Lim::Notification;
 
 use common::sense;
 use Carp;
-
-use Log::Log4perl ();
-
-use Lim ();
-use Lim::DB::Master ();
-
-use base qw(
-    Lim::RPC
-    Lim::Notification
-    SOAP::Server::Parameters
-    );
 
 =head1 NAME
 
@@ -24,8 +13,6 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::VERSION;
-
 =head1 SYNOPSIS
 
 ...
@@ -36,51 +23,9 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
-    };
-    bless $self, $class;
-    
-    unless (defined $args{server}) {
-        croak __PACKAGE__, ': Missing server';
-    }
-    
-    $self->{db_master} = Lim::DB::Master->new
-        ->AddNotify($self, 'CreateMaster', 'UpdateMaster', 'DeleteMaster');
-    
-    $args{server}->serve(
-        $self->{db_master}
-    );
-    
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-=head2 function2
-
-=cut
-
-sub Module
-{
-    'Agent';
-}
-
-=head2 function2
-
-=cut
-
 sub Notification
 {
-    my ($self, $object, $what, @parameters) = @_;
+    croak __PACKAGE__, ': Notification not overloaded';
 }
 
 =head1 AUTHOR
@@ -100,7 +45,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-perldoc Lim
+    perldoc Lim
 
 
 You can also look for information at:
@@ -142,4 +87,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Agent
+1; # End of Lim::Notification
