@@ -1,4 +1,4 @@
-package Lim::Server::Client;
+package Lim::RPC::Server::Client;
 
 use common::sense;
 use Carp;
@@ -64,16 +64,16 @@ sub new {
     weaken($self);
 
     unless (defined $args{fh}) {
-        croak __PACKAGE__, ': Missing fh (file handle)';
+        confess __PACKAGE__, ': Missing fh (file handle)';
     }
     unless (defined $args{tls_ctx}) {
-        croak __PACKAGE__, ': Missing tls_ctx (TLS context)';
+        confess __PACKAGE__, ': Missing tls_ctx (TLS context)';
     }
     unless (defined $args{wsdl}) {
-        croak __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
+        confess __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
     }
     unless (defined $args{server}) {
-        croak __PACKAGE__, ': Missing server object';
+        confess __PACKAGE__, ': Missing server object';
     }
 
     if (exists $args{on_error} and ref($args{on_error}) eq 'CODE') {
@@ -537,4 +537,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Server
+1; # End of Lim::RPC::Server::Client

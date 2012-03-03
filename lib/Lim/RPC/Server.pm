@@ -1,4 +1,4 @@
-package Lim::Server;
+package Lim::RPC::Server;
 
 use common::sense;
 use Carp;
@@ -13,7 +13,7 @@ use AnyEvent::TLS ();
 use SOAP::Transport::HTTP ();
 
 use Lim ();
-use Lim::Server::Client ();
+use Lim::RPC::Server::Client ();
 
 =head1 NAME
 
@@ -54,16 +54,16 @@ sub new {
     weaken($self);
     
     unless (defined $args{key} and -f $args{key}) {
-        croak __PACKAGE__, ': No key file specified or not found';
+        confess __PACKAGE__, ': No key file specified or not found';
     }
     unless (defined $args{host}) {
-        croak __PACKAGE__, ': No host specified';
+        confess __PACKAGE__, ': No host specified';
     }
     unless (defined $args{port}) {
-        croak __PACKAGE__, ': No port specified';
+        confess __PACKAGE__, ': No port specified';
     }
     unless (defined $args{wsdl}) {
-        croak __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
+        confess __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
     }
     
     $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
@@ -83,7 +83,7 @@ sub new {
         my ($fh, $host, $port) = @_;
         
         my $handle;
-        $handle = Lim::Server::Client->new(
+        $handle = Lim::RPC::Server::Client->new(
             server => $self,
             fh => $fh,
             tls_ctx => $self->{tls_ctx},
@@ -217,4 +217,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Server
+1; # End of Lim::RPC::Server

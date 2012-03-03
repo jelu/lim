@@ -10,7 +10,7 @@ use AnyEvent ();
 
 use Lim ();
 use Lim::DB ();
-use Lim::Server ();
+use Lim::RPC::Server ();
 use Lim::Master ();
 
 my $help = 0;
@@ -87,7 +87,7 @@ push(@watchers,
 
 $html =~ s/\/*$//o;
 
-my $server = Lim::Server->new(
+my $server = Lim::RPC::Server->new(
     host => $host,
     port => $port,
     key => $key,

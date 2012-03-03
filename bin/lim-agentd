@@ -95,7 +95,7 @@ my $server = Lim::Server->new(
     wsdl => $wsdl
 );
 $server->serve(
-    Lim->new(type => 'agent'),
+    Lim->new, #(type => 'agent'),
     Lim::Agent->new(server => $server)
     );
 

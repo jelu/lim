@@ -1,18 +1,16 @@
-package Lim::Master;
+package Lim::RPC::Client;
 
 use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Scalar::Util qw(weaken);
+
+use AnyEvent ();
+use AnyEvent::Socket ();
+use AnyEvent::TLS ();
 
 use Lim ();
-use Lim::DB::Agent ();
-
-use base qw(
-    Lim::RPC
-    Lim::Notification
-    SOAP::Server::Parameters
-    );
 
 =head1 NAME
 
@@ -41,51 +39,69 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
-        agent => {}
+        logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
+    my $real_self = $self;
+    weaken($self);
     
-    unless (defined $args{server}) {
-        confess __PACKAGE__, ': Missing server';
+    unless (defined $args{host}) {
+        confess __PACKAGE__, ': No host specified';
+    }
+    unless (defined $args{port}) {
+        confess __PACKAGE__, ': No port specified';
+    }
+
+    if (exists $args{on_error} and ref($args{on_error}) eq 'CODE') {
+        $self->{on_error} = $args{on_error};
+    }
+    if (exists $args{on_eof} and ref($args{on_eof}) eq 'CODE') {
+        $self->{on_eof} = $args{on_eof};
+        $args{on_eof} = sub {
+            $self->close;
+            $self->{on_eof}->($self);
+        };
     }
     
-    $self->{db_agent} = Lim::DB::Agent->new
-        ->AddNotify($self, 'CreateAgent', 'UpdateAgent', 'DeleteAgent');
-    
-    $args{server}->serve(
-        $self->{db_agent}
-    );
-    
+    $self->{host} = $args{host};
+    $self->{port} = $args{port};
+
+    $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
+        my ($fh, $host, $port) = @_;
+        
+        my $handle;
+        $handle = AnyEvent::Handle->new(
+            fh => $fh,
+            tls => 'connect',
+            on_error => sub {
+                my ($handle, $fatal, $message) = @_;
+                
+                $self->{logger}->warn($handle, ' Error: ', $message);
+                
+                delete $self->{handle};
+            },
+            on_eof => sub {
+                my ($handle) = @_;
+                
+                $self->{logger}->warn($handle, ' EOF');
+                
+                delete $self->{handle};
+            });
+        
+        $self->{handle} = $handle;
+    };
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
+    $real_self;
 }
 
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-=head2 function2
-
-=cut
-
-sub Module
-{
-    'Master';
-}
-
-=head2 function2
-
-=cut
-
-sub Notification
-{
-    my ($self, $object, $what, @parameters) = @_;
     
-    if ($what eq 'CreateAgent') {
-        
-    }
+    delete $self->{client};
+    delete $self->{socket};
+    delete $self->{handle};
 }
 
 =head1 AUTHOR
@@ -147,4 +163,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Master
+1; # End of Lim::RPC::Client

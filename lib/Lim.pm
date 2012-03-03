@@ -43,7 +43,7 @@ sub new {
     bless $self, $class;
     
     unless (defined $args{type}) {
-        croak __PACKAGE__, ': Missing type';
+        confess __PACKAGE__, ': Missing type';
     }
     
     $self->{type} = $args{type};

@@ -33,7 +33,7 @@ See L<Lim> for version.
 
 sub Module
 {
-    croak 'Module not overloaded';
+    confess 'Module not overloaded';
 }
 
 =head2 function1

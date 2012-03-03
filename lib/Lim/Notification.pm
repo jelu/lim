@@ -25,7 +25,7 @@ See L<Lim> for version.
 
 sub Notification
 {
-    croak __PACKAGE__, ': Notification not overloaded';
+    confess __PACKAGE__, ': Notification not overloaded';
 }
 
 =head1 AUTHOR

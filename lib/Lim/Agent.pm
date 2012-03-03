@@ -46,7 +46,7 @@ sub new {
     bless $self, $class;
     
     unless (defined $args{server}) {
-        croak __PACKAGE__, ': Missing server';
+        confess __PACKAGE__, ': Missing server';
     }
     
     $self->{db_master} = Lim::DB::Master->new

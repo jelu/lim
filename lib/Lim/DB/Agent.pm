@@ -152,6 +152,8 @@ sub CreateAgent
             }
         }
     }
+    
+    $self->Notify('CreateAgent', $r);
 
     $self->R($r,
         {
@@ -197,6 +199,8 @@ sub UpdateAgent
         }
     }
 
+    $self->Notify('UpdateAgent', $r);
+
     $self->R($r,
         {
             'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
@@ -240,6 +244,8 @@ sub DeleteAgent
             }
         }
     }
+
+    $self->Notify('DeleteAgent', $r);
 
     $self->R($r,
         {
