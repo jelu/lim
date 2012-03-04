@@ -36,6 +36,8 @@ our $JSON = JSON::XS->new->ascii;
 sub OK (){ 1 }
 sub ERROR (){ -1 }
 
+sub MAX_RESPONSE_LEN (){ 256 * 1024 }
+
 =head1 SYNOPSIS
 
 ...
@@ -52,6 +54,7 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        rbuf => '',
         status => 0,
         error => ''
     };
@@ -79,13 +82,23 @@ sub new {
         # TODO:
     }
     $self->{request} = HTTP::Request->new('GET', $self->{uri});
-    use Data::Dumper;
-    print Dumper($self->{request}),"\n";
-    print $self->{request}->as_string;
-    return $self;
+    $self->{request}->protocol('HTTP/1.1');
+    $self->{request}->header('Content-Length' => 0);
 
     $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
+        
+        unless (defined $fh) {
+            $self->{logger}->warn('Error: ', $!);
+            $self->{status} = ERROR;
+            $self->{error} = $!;
+        
+            if (exists $self->{cb}) {
+                $self->{cb}->($self);
+                delete $self->{cb};
+            }
+            return;
+        }
         
         my $handle;
         $handle = AnyEvent::Handle->new(
@@ -95,14 +108,14 @@ sub new {
                 my ($handle, $fatal, $message) = @_;
                 
                 $self->{logger}->warn($handle, ' Error: ', $message);
-                $self->{status} = -1;
+                $self->{status} = ERROR;
                 $self->{error} = $message;
                 
                 if (exists $self->{cb}) {
                     $self->{cb}->($self);
+                    delete $self->{cb};
                 }
-                
-                delete $self->{handle};
+                $handle->destroy;
             },
             on_eof => sub {
                 my ($handle) = @_;
@@ -111,12 +124,63 @@ sub new {
                 
                 if (exists $self->{cb}) {
                     $self->{cb}->($self);
+                    delete $self->{cb};
+                }
+                $handle->destroy;
+            },
+            on_read => sub {
+                my ($handle) = @_;
+                
+                if ((length($self->{rbuf}) + length($handle->{rbuf})) > MAX_RESPONSE_LEN) {
+                    if (exists $self->{on_error}) {
+                        $self->{on_error}->($self, 1, 'Response too long');
+                    }
+                    $handle->push_shutdown;
+                    $handle->destroy;
+                    return;
                 }
                 
-                delete $self->{handle};
+                unless (exists $self->{content}) {
+                    $self->{headers} .= $handle->{rbuf};
+                    
+                    if ($self->{headers} =~ /\r\n\r\n/o) {
+                        my ($headers, $content) = split(/\r\n\r\n/o, $self->{headers}, 2);
+                        $self->{headers} = $headers;
+                        $self->{content} = $content;
+                        $self->{response} = HTTP::Response->parse($self->{headers});
+                    }
+                }
+                else {
+                    $self->{content} .= $handle->{rbuf};
+                }
+                $handle->{rbuf} = '';
+                
+                if (defined $self->{response} and length($self->{content}) == $self->{response}->header('Content-Length')) {
+                    my $response = $self->{response};
+                    $response->content($self->{content});
+                    delete $self->{response};
+                    delete $self->{content};
+                    $self->{headers} = '';
+                    
+                    # TODO: handle JSON error
+                    my $data;
+                    eval {
+                        $data = $JSON->decode($response->decoded_content);
+                    };
+                    $self->{status} = OK;
+                    
+                    if (exists $self->{cb}) {
+                        $self->{cb}->($self, $data);
+                        delete $self->{cb};
+                    }
+                    $handle->push_shutdown;
+                    $handle->destroy;
+                }
             });
         
         $self->{handle} = $handle;
+        $handle->push_write($self->{request}->as_string("\r\n"));
+        delete $self->{request};
     };
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);

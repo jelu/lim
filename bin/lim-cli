@@ -58,18 +58,6 @@ push(@watchers,
     }),
 );
 
-push(@watchers, Lim::RPC::Client->new(
-    host => $host,
-    port => $port,
-    uri => '/db/agents',
-    cb => sub {
-        use Data::Dumper;
-        print Dumper(\@_);
-        $cv->send;
-    }
-));
-$cv->recv;
-
 @watchers = ();
 
 __END__

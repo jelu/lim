@@ -39,7 +39,7 @@ our %REST_CRUD = (
     DELETE => 'DELETE'
 );
 
-sub MAX_REQUEST_LEN     (){ 64 * 1024 }
+sub MAX_REQUEST_LEN (){ 256 * 1024 }
 
 =head1 SYNOPSIS
 
@@ -328,6 +328,7 @@ sub new {
                             
                             my $result = $module->$call($query, @parameters);
                             if (ref($result) eq 'HASH' or ref($result) eq 'ARRAY') {
+                                # TODO: handle JSON error
                                 eval {
                                     $response->content($JSON->encode($result));
                                 };
