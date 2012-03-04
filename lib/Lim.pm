@@ -70,12 +70,28 @@ sub Module
 
 =cut
 
+sub ReadIndex
+{
+    Lim::RPC::F(@_, undef);
+    
+    $_[0]->R({
+        Lim => {
+            version => $VERSION,
+            type => $_[0]->{type}
+        }
+    });
+}
+
+=head2 function1
+
+=cut
+
 sub ReadVersion
 {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R({
-        'version' => $VERSION
+        version => $VERSION
     });
 }
 
@@ -88,7 +104,7 @@ sub ReadType
     Lim::RPC::F(@_, undef);
     
     $_[0]->R({
-        'type' => $_[0]->{type}
+        type => $_[0]->{type}
     });
 }
 

@@ -146,6 +146,7 @@ sub CreateAgent
                             $_->insert;
                             my %r = $_->get_columns;
                             push(@{$r->{Agent}}, \%r);
+                            $self->Notify('CreateAgent', $_);
                         }
                     }
                 }
@@ -153,8 +154,6 @@ sub CreateAgent
         }
     }
     
-    $self->Notify('CreateAgent', $r);
-
     $self->R($r,
         {
             'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
@@ -175,6 +174,7 @@ sub UpdateAgent
             $_->update($q);
             my %r = $_->get_columns;
             $r->{Agent} = [ \%r ];
+            $self->Notify('UpdateAgent', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
@@ -191,6 +191,7 @@ sub UpdateAgent
                                 $o->update($_);
                                 my %r = $o->get_columns;
                                 push(@{$r->{Agent}}, \%r);
+                                $self->Notify('UpdateAgent', $o);
                             }
                         }
                     }
@@ -198,8 +199,6 @@ sub UpdateAgent
             }
         }
     }
-
-    $self->Notify('UpdateAgent', $r);
 
     $self->R($r,
         {
@@ -221,6 +220,7 @@ sub DeleteAgent
             $_->delete;
             my %r = $_->get_columns;
             $r->{Agent} = [ \%r ];
+            $self->Notify('DeleteAgent', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
@@ -237,6 +237,7 @@ sub DeleteAgent
                                 $o->delete;
                                 my %r = $o->get_columns;
                                 push(@{$r->{Agent}}, \%r);
+                                $self->Notify('DeleteAgent', $o);
                             }
                         }
                     }
@@ -244,8 +245,6 @@ sub DeleteAgent
             }
         }
     }
-
-    $self->Notify('DeleteAgent', $r);
 
     $self->R($r,
         {

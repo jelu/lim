@@ -77,7 +77,7 @@ sub Notify
                 if (Lim::DEBUG and exists $self->{logger}) {
                     $self->{logger}->debug('Notifying ', $_, ' about ', $what, '(', $self, ', ...)');
                 }
-                $_->($self, $what, @parameters);
+                $_->Notification($self, $what, @parameters);
             }
         }
     }

@@ -7,6 +7,7 @@ use Log::Log4perl ();
 
 use Lim ();
 use Lim::DB::Agent ();
+use Lim::RPC::Client ();
 
 use base qw(
     Lim::RPC
@@ -25,6 +26,12 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+
+sub CONNECTING (){ 1 }
+sub ONLINE (){ 2 }
+sub OFFLINE (){ 3 }
+sub WRONG_TYPE (){ 4 }
+sub INVALID (){ 5 }
 
 =head1 SYNOPSIS
 
@@ -79,12 +86,75 @@ sub Module
 
 =cut
 
+sub ReadAgents
+{
+    Lim::RPC::F(@_, undef);
+    
+    $_[0]->R({
+        'Agent' => $_[0]->{agent}
+    });
+}
+
+=head2 function2
+
+=cut
+
 sub Notification
 {
-    my ($self, $object, $what, @parameters) = @_;
+    my ($self, $notifier, $what, @parameters) = @_;
     
     if ($what eq 'CreateAgent') {
+        my ($agent) = @parameters;
         
+        if (defined $agent) {
+            my $id = $agent->agent_id;
+            
+            $self->{agent}->{$id} = {
+                id => $id,
+                name => $agent->agent_name,
+                host => $agent->agent_host,
+                port => $agent->agent_port,
+                status => CONNECTING,
+                status_message => ''
+            };
+            
+            Lim::RPC::Client->new(
+                host => $agent->agent_host,
+                port => $agent->agent_port,
+                uri => '/lim',
+                cb => sub {
+                    my ($cli, $data) = @_;
+                    
+                    if ($cli->status == Lim::RPC::Client::OK) {
+                        if (defined $data and ref($data) eq 'HASH'
+                            and exists $data->{Lim}->{type}
+                            and exists $data->{Lim}->{version})
+                        {
+                            if ($data->{Lim}->{type} eq 'agent') {
+                                $self->{agent}->{$id}->{status} = ONLINE;
+                                $self->{agent}->{$id}->{status_message} = 'Online';
+                                $self->{agent}->{$id}->{version} = $data->{Lim}->{version};
+                            }
+                            else {
+                                $self->{agent}->{$id}->{status} = WRONG_TYPE;
+                                $self->{agent}->{$id}->{status_message} = 'Expected agent but got '.$data->{Lim}->{type};
+                            }
+                        }
+                        else {
+                            $self->{agent}->{$id}->{status} = INVALID;
+                            $self->{agent}->{$id}->{status_message} = 'Invalid data returned';
+                        }
+                    }
+                    elsif ($cli->status == Lim::RPC::Client::ERROR) {
+                        $self->{agent}->{$id}->{status} = OFFLINE;
+                        $self->{agent}->{$id}->{status_message} = 'Error: '.$cli->error;
+                    }
+                    else {
+                        $self->{agent}->{$id}->{status} = OFFLINE;
+                        $self->{agent}->{$id}->{status_message} = 'Unknown';
+                    }
+                });
+        }
     }
 }
 

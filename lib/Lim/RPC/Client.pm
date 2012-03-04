@@ -196,6 +196,24 @@ sub DESTROY {
     delete $self->{handle};
 }
 
+=head2 function1
+
+=cut
+
+sub status
+{
+    $_[0]->{status};
+}
+
+=head2 function1
+
+=cut
+
+sub error
+{
+    $_[0]->{error};
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
