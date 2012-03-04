@@ -76,8 +76,13 @@ sub new {
         $self->{cb} = $args{cb};
     }
     if (defined $args{data}) {
-        
+        # TODO:
     }
+    $self->{request} = HTTP::Request->new('GET', $self->{uri});
+    use Data::Dumper;
+    print Dumper($self->{request}),"\n";
+    print $self->{request}->as_string;
+    return $self;
 
     $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
