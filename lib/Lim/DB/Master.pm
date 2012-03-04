@@ -146,6 +146,7 @@ sub CreateMaster
                             $_->insert;
                             my %r = $_->get_columns;
                             push(@{$r->{Master}}, \%r);
+                            $self->Notify('CreateMaster', $_);
                         }
                     }
                 }
@@ -173,6 +174,7 @@ sub UpdateMaster
             $_->update($q);
             my %r = $_->get_columns;
             $r->{Master} = [ \%r ];
+            $self->Notify('UpdateMaster', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
@@ -189,6 +191,7 @@ sub UpdateMaster
                                 $o->update($_);
                                 my %r = $o->get_columns;
                                 push(@{$r->{Master}}, \%r);
+                                $self->Notify('UpdateMaster', $o);
                             }
                         }
                     }
@@ -217,6 +220,7 @@ sub DeleteMaster
             $_->delete;
             my %r = $_->get_columns;
             $r->{Master} = [ \%r ];
+            $self->Notify('DeleteMaster', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
@@ -233,6 +237,7 @@ sub DeleteMaster
                                 $o->delete;
                                 my %r = $o->get_columns;
                                 push(@{$r->{Master}}, \%r);
+                                $self->Notify('DeleteMaster', $o);
                             }
                         }
                     }

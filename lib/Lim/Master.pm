@@ -115,15 +115,16 @@ sub Notification
                 host => $agent->agent_host,
                 port => $agent->agent_port,
                 status => CONNECTING,
-                status_message => ''
+                status_message => 'Connecting'
             };
             
-            Lim::RPC::Client->new(
+            my $cli;
+            $cli = Lim::RPC::Client->new(
                 host => $agent->agent_host,
                 port => $agent->agent_port,
                 uri => '/lim',
                 cb => sub {
-                    my ($cli, $data) = @_;
+                    my ($data) = @_;
                     
                     if ($cli->status == Lim::RPC::Client::OK) {
                         if (defined $data and ref($data) eq 'HASH'
@@ -153,6 +154,8 @@ sub Notification
                         $self->{agent}->{$id}->{status} = OFFLINE;
                         $self->{agent}->{$id}->{status_message} = 'Unknown';
                     }
+                    
+                    undef($cli);
                 });
         }
     }
