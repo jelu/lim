@@ -8,7 +8,15 @@ use Scalar::Util qw(weaken);
 
 use AnyEvent ();
 use AnyEvent::Socket ();
+use AnyEvent::Handle ();
 use AnyEvent::TLS ();
+
+use HTTP::Request ();
+use HTTP::Response ();
+use URI ();
+use URI::QueryParam ();
+
+use JSON::XS ();
 
 use Lim ();
 
@@ -23,6 +31,10 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our $JSON = JSON::XS->new->ascii;
+
+sub OK (){ 1 }
+sub ERROR (){ -1 }
 
 =head1 SYNOPSIS
 
@@ -39,7 +51,9 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        status => 0,
+        error => ''
     };
     bless $self, $class;
     my $real_self = $self;
@@ -51,20 +65,19 @@ sub new {
     unless (defined $args{port}) {
         confess __PACKAGE__, ': No port specified';
     }
-
-    if (exists $args{on_error} and ref($args{on_error}) eq 'CODE') {
-        $self->{on_error} = $args{on_error};
-    }
-    if (exists $args{on_eof} and ref($args{on_eof}) eq 'CODE') {
-        $self->{on_eof} = $args{on_eof};
-        $args{on_eof} = sub {
-            $self->close;
-            $self->{on_eof}->($self);
-        };
+    unless (defined $args{uri}) {
+        confess __PACKAGE__, ': No uri specified';
     }
     
     $self->{host} = $args{host};
     $self->{port} = $args{port};
+    $self->{uri} = $args{uri};
+    if (defined $args{cb} and ref($args{cb}) eq 'CODE') {
+        $self->{cb} = $args{cb};
+    }
+    if (defined $args{data}) {
+        
+    }
 
     $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
@@ -77,6 +90,12 @@ sub new {
                 my ($handle, $fatal, $message) = @_;
                 
                 $self->{logger}->warn($handle, ' Error: ', $message);
+                $self->{status} = -1;
+                $self->{error} = $message;
+                
+                if (exists $self->{cb}) {
+                    $self->{cb}->($self);
+                }
                 
                 delete $self->{handle};
             },
@@ -84,6 +103,10 @@ sub new {
                 my ($handle) = @_;
                 
                 $self->{logger}->warn($handle, ' EOF');
+                
+                if (exists $self->{cb}) {
+                    $self->{cb}->($self);
+                }
                 
                 delete $self->{handle};
             });
