@@ -57,15 +57,6 @@ sub Module
     'Executer';
 }
 
-=head2 function1
-
-=cut
-
-sub GetIndex
-{
-    $_[0]->R;
-}
-
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
