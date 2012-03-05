@@ -132,15 +132,15 @@ Specify the port to listen on (default 5353)
 
 Specify the SSL/TLS key to use for HTTPS
 
-=item B<--html <key>>
+=item B<--html <path>>
 
 Specify the HTML directory (default /usr/share/lim/html)
 
-=item B<--wsdl <key>>
+=item B<--wsdl <path>>
 
 Specify the WSDL directory (default /usr/share/lim/wsdl)
 
-=item B<--dsn <key>>
+=item B<--dsn <DSN>>
 
 Specify the DBI DSN for connecting to the database
 

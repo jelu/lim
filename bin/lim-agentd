@@ -14,13 +14,15 @@ use Lim::RPC::Server ();
 use Lim::Agent ();
 
 my $help = 0;
-my $host = "0.0.0.0";
+my $host = '0.0.0.0';
 my $port = 5354;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
 my $wsdl = '/usr/share/lim/wsdl';
 my $dsn;
+my $exec_host = '127.0.0.1';
+my $exec_port = 5355;
 
 Getopt::Long::GetOptions(
 	'help|?' => \$help,
@@ -30,7 +32,9 @@ Getopt::Long::GetOptions(
     'log4perl:s' => \$log4perl,
     'html:s' => \$html,
     'wsdl:s' => \$wsdl,
-    'dsn=s' => \$dsn
+    'dsn=s' => \$dsn,
+    'exec-host:s' => \$exec_host,
+    'exec-port:s' => \$exec_port
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -96,8 +100,11 @@ my $server = Lim::RPC::Server->new(
 );
 $server->serve(
     Lim->new(type => 'agent'),
-    Lim::Agent->new(server => $server)
-    );
+    Lim::Agent->new(
+        server => $server,
+        exec_host => $exec_host,
+        exec_port => $exec_port
+    ));
 
 if (defined $server) {
     push(@watchers, $server);
@@ -132,17 +139,25 @@ Specify the port to listen on (default 5354)
 
 Specify the SSL/TLS key to use for HTTPS
 
-=item B<--html <key>>
+=item B<--html <path>>
 
 Specify the HTML directory (default /usr/share/lim/html)
 
-=item B<--wsdl <key>>
+=item B<--wsdl <path>>
 
 Specify the WSDL directory (default /usr/share/lim/wsdl)
 
-=item B<--dsn <key>>
+=item B<--dsn <DSN>>
 
 Specify the DBI DSN for connecting to the database
+
+=item B<--exec-host <host>>
+
+Specify the host of the Executor
+
+=item B<--exec-port <port>>
+
+Specify the port of the Executor
 
 =item B<--help>
 

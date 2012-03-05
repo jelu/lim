@@ -94,7 +94,7 @@ sub new {
             $self->{error} = $!;
         
             if (exists $self->{cb}) {
-                $self->{cb}->();
+                $self->{cb}->($self);
                 delete $self->{cb};
             }
             return;
@@ -112,7 +112,7 @@ sub new {
                 $self->{error} = $message;
                 
                 if (exists $self->{cb}) {
-                    $self->{cb}->();
+                    $self->{cb}->($self);
                     delete $self->{cb};
                 }
                 $handle->destroy;
@@ -123,7 +123,7 @@ sub new {
                 $self->{logger}->warn($handle, ' EOF');
                 
                 if (exists $self->{cb}) {
-                    $self->{cb}->();
+                    $self->{cb}->($self);
                     delete $self->{cb};
                 }
                 $handle->destroy;
@@ -170,7 +170,7 @@ sub new {
                     $self->{status} = OK;
                     
                     if (exists $self->{cb}) {
-                        $self->{cb}->($data);
+                        $self->{cb}->($self, $data);
                         delete $self->{cb};
                     }
                     $handle->push_shutdown;

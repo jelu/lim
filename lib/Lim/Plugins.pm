@@ -1,4 +1,4 @@
-package Lim::Executer;
+package Lim::Plugins;
 
 use common::sense;
 use Carp;
@@ -6,7 +6,6 @@ use Carp;
 use Log::Log4perl ();
 
 use Lim ();
-use base qw(Lim::RPC);
 
 =head1 NAME
 
@@ -19,6 +18,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our $INSTANCE;
 
 =head1 SYNOPSIS
 
@@ -30,12 +30,12 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub new {
+sub _new {
     my $this = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        plugins => {}
     };
     bless $self, $class;
     
@@ -46,15 +46,16 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+    
+    $self->Destroy;
 }
 
-=head2 function2
+=head2 function1
 
 =cut
 
-sub Module
-{
-    'Executer';
+sub instance {
+    $INSTANCE ||= Lim::Plugins->_new;
 }
 
 =head1 AUTHOR
@@ -74,7 +75,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-perldoc Lim
+    perldoc Lim
 
 
 You can also look for information at:
@@ -116,4 +117,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Executer
+1; # End of Lim::Plugins

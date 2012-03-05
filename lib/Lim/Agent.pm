@@ -4,14 +4,15 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Scalar::Util qw(weaken);
 
 use Lim ();
 use Lim::DB::Master ();
+use Lim::RPC::Client ();
 
 use base qw(
     Lim::RPC
     Lim::Notification
-    SOAP::Server::Parameters
     );
 
 =head1 NAME
@@ -25,6 +26,15 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+
+sub UNKNOWN (){ 0 }
+sub CONNECTING (){ 1 }
+sub ONLINE (){ 2 }
+sub OFFLINE (){ 3 }
+sub WRONG_TYPE (){ 4 }
+sub INVALID (){ 5 }
+
+sub EXECUTOR_STATUS_INTERVAL (){ 10 }
 
 =head1 SYNOPSIS
 
@@ -42,22 +52,45 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        executor => {}
     };
     bless $self, $class;
+    my $real_self = $self;
+    weaken($self);
     
     unless (defined $args{server}) {
+        confess __PACKAGE__, ': Missing server';
+    }
+    unless (defined $args{exec_host}) {
+        confess __PACKAGE__, ': Missing server';
+    }
+    unless (defined $args{exec_port}) {
         confess __PACKAGE__, ': Missing server';
     }
     
     $self->{db_master} = Lim::DB::Master->new
         ->AddNotify($self, 'CreateMaster', 'UpdateMaster', 'DeleteMaster');
     
+    $self->{executor} = {
+        host => $args{exec_host},
+        port => $args{exec_port},
+        status => UNKNOWN,
+        status_message => 'Not checked'
+    };
+
+    $self->{watcher_executor_status} = AnyEvent->timer(
+        after => EXECUTOR_STATUS_INTERVAL,
+        interval => EXECUTOR_STATUS_INTERVAL,
+        cb => sub {
+            $self->ExecutorGetStatus;
+        });
+    
     $args{server}->serve(
         $self->{db_master}
     );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
+    $real_self;
 }
 
 sub DESTROY {
@@ -80,7 +113,66 @@ sub Module
 
 sub Notification
 {
-    my ($self, $object, $what, @parameters) = @_;
+    my ($self, $notifier, $what, @parameters) = @_;
+}
+
+=head2 function2
+
+=cut
+
+sub ExecutorGetStatus
+{
+    my ($self) = @_;
+    my $real_self = $self;
+    weaken($self);
+    
+    if (exists $self->{executor} and !exists $self->{executor}->{watcher_status}) {
+        my $executor = $self->{executor};
+        weaken($executor);
+        
+        $executor->{watcher_status} = Lim::RPC::Client->new(
+            host => $executor->{host},
+            port => $executor->{port},
+            uri => '/lim',
+            cb => sub {
+                my ($cli, $data) = @_;
+                
+                if ($cli->status == Lim::RPC::Client::OK) {
+                    if (defined $data and ref($data) eq 'HASH'
+                        and exists $data->{Lim}->{type}
+                        and exists $data->{Lim}->{version})
+                    {
+                        if ($data->{Lim}->{type} eq 'executor') {
+                            $self->{executor}->{status} = ONLINE;
+                            $self->{executor}->{status_message} = 'Online';
+                            $self->{executor}->{version} = $data->{Lim}->{version};
+                        }
+                        else {
+                            $self->{executor}->{status} = WRONG_TYPE;
+                            $self->{executor}->{status_message} = 'Expected executor but got '.$data->{Lim}->{type};
+                        }
+                    }
+                    else {
+                        $self->{executor}->{status} = INVALID;
+                        $self->{executor}->{status_message} = 'Invalid data returned';
+                    }
+                }
+                elsif ($cli->status == Lim::RPC::Client::ERROR) {
+                    $self->{executor}->{status} = OFFLINE;
+                    $self->{executor}->{status_message} = 'Error: '.$cli->error;
+                }
+                else {
+                    $self->{executor}->{status} = OFFLINE;
+                    $self->{executor}->{status_message} = 'Unknown';
+                }
+                
+                delete $executor->{watcher_status};
+            });
+        $self->{executor}->{status} = CONNECTING;
+        $self->{executor}->{status_message} = 'Connecting';
+    }
+    
+    $real_self;
 }
 
 =head1 AUTHOR

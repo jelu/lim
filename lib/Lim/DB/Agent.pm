@@ -75,6 +75,25 @@ sub WSDL
 
 =cut
 
+sub Agents
+{
+    Lim::DB->schema->resultset('Agent')->all;
+}
+
+=head2 function1
+
+=cut
+
+sub Agent
+{
+    shift;
+    Lim::DB->schema->resultset('Agent')->find(@_);
+}
+
+=head2 function1
+
+=cut
+
 sub ReadAgents
 {
     Lim::RPC::F(@_, undef);
