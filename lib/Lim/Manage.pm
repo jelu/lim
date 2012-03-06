@@ -1,27 +1,16 @@
-package Lim;
+package Lim::Manage;
 
 use common::sense;
-use Carp;
-
-use base qw(Lim::RPC);
 
 =head1 NAME
 
-Lim - The great new Lim!
+...
 
 =head1 VERSION
 
-Version 0.01
+See L<Lim> for version.
 
 =cut
-
-our $VERSION = '0.01';
-
-sub OBJ_DEBUG (){ 1 }
-sub DEBUG (){ 1 }
-sub INFO (){ 1 }
-
-sub SRV_LISTEN (){ 10 }
 
 =head1 SYNOPSIS
 
@@ -33,75 +22,32 @@ sub SRV_LISTEN (){ 10 }
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
-    };
-    bless $self, $class;
-    
-    unless (defined $args{type}) {
-        confess __PACKAGE__, ': Missing type';
-    }
-    
-    $self->{type} = $args{type};
-
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+sub type {
+    $_[0]->{type};
 }
 
 =head2 function1
 
 =cut
 
-sub Module {
-    'Lim';
+sub name {
+    $_[0]->{name};
 }
 
 =head2 function1
 
 =cut
 
-sub ReadIndex {
-    Lim::RPC::F(@_, undef);
-    
-    $_[0]->R({
-        Lim => {
-            version => $VERSION,
-            type => $_[0]->{type}
-        }
-    });
+sub plugin {
+    $_[0]->{plugin};
 }
 
 =head2 function1
 
 =cut
 
-sub ReadVersion {
-    Lim::RPC::F(@_, undef);
-    
-    $_[0]->R({
-        version => $VERSION
-    });
-}
-
-=head2 function1
-
-=cut
-
-sub ReadType {
-    Lim::RPC::F(@_, undef);
-    
-    $_[0]->R({
-        type => $_[0]->{type}
-    });
+sub action {
+    $_[0]->{action};
 }
 
 =head1 AUTHOR
@@ -163,4 +109,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim
+1; # End of Lim::Manage

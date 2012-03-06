@@ -26,8 +26,7 @@ See L<Lim> for version.
 
 =cut
 
-sub AddNotify
-{
+sub AddNotify {
     my ($self, $notify, @what) = @_;
 
     if (blessed($notify) and $notify->isa('Lim::Notification')) {
@@ -47,8 +46,7 @@ sub AddNotify
 
 =cut
 
-sub RemoveNotify
-{
+sub RemoveNotify {
     my ($self, $notify, @what) = @_;
     
     foreach (@what) {
@@ -67,8 +65,7 @@ sub RemoveNotify
 
 =cut
 
-sub Notify
-{
+sub Notify {
     my ($self, $what, @parameters) = @_;
 
     if (exists $self->{__notify_what}->{$what}) {

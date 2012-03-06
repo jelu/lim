@@ -11,6 +11,8 @@ use AnyEvent ();
 use Lim ();
 use Lim::RPC::Server ();
 use Lim::Executor ();
+use Lim::Plugins ();
+use Lim::Manager ();
 
 my $help = 0;
 my $host = "127.0.0.1";
@@ -85,6 +87,9 @@ if (defined $server) {
 }
 
 @watchers = ();
+
+Lim::Manager->deinstance;
+Lim::Plugins->deinstance;
 
 __END__
 

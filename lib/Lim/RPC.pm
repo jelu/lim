@@ -31,8 +31,7 @@ See L<Lim> for version.
 
 =cut
 
-sub Module
-{
+sub Module {
     confess 'Module not overloaded';
 }
 
@@ -40,8 +39,7 @@ sub Module
 
 =cut
 
-sub WSDL
-{
+sub WSDL {
     $_[0]->Module;
 }
 
@@ -49,8 +47,7 @@ sub WSDL
 
 =cut
 
-sub isSoap
-{
+sub isSoap {
     $_[0]->{__rpc_isSoap} = $_[1] if (defined $_[1]);
     
     $_[0]->{__rpc_isSoap};
@@ -60,8 +57,7 @@ sub isSoap
 
 =cut
 
-sub F
-{
+sub F {
     if (blessed($_[scalar @_ - 2]) and $_[scalar @_ - 2]->isa('SOAP::SOM')) {
         my $valueof = pop;
         my $som = pop;
@@ -81,8 +77,7 @@ sub F
 
 =cut
 
-sub __result
-{
+sub __result {
     my @a;
     
     if (defined $_[2] and exists $_[2]->{$_[0]}) {
@@ -168,8 +163,7 @@ sub __result
     }
 }
 
-sub R
-{
+sub R {
     if (blessed($_[1])) {
         if ($_[1]->isa('DBIx::Class::ResultSet')) {
             my @r;

@@ -52,16 +52,21 @@ sub DESTROY {
 
 =cut
 
-sub Init
-{
+sub Init {
 }
 
 =head2 function1
 
 =cut
 
-sub Destroy
-{
+sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub Manage {
 }
 
 =head1 AUTHOR

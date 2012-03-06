@@ -57,8 +57,7 @@ sub DESTROY {
 
 =cut
 
-sub Module
-{
+sub Module {
     'DB';
 }
 
@@ -66,8 +65,7 @@ sub Module
 
 =cut
 
-sub WSDL
-{
+sub WSDL {
     'db_agent';
 }
 
@@ -75,8 +73,7 @@ sub WSDL
 
 =cut
 
-sub Agents
-{
+sub Agents {
     Lim::DB->schema->resultset('Agent')->all;
 }
 
@@ -84,8 +81,7 @@ sub Agents
 
 =cut
 
-sub Agent
-{
+sub Agent {
     shift;
     Lim::DB->schema->resultset('Agent')->find(@_);
 }
@@ -94,8 +90,7 @@ sub Agent
 
 =cut
 
-sub ReadAgents
-{
+sub ReadAgents {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R(
@@ -109,8 +104,7 @@ sub ReadAgents
 
 =cut
 
-sub ReadAgent
-{
+sub ReadAgent {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//ReadAgent/');
     my $r = {};
 
@@ -148,8 +142,7 @@ sub ReadAgent
 
 =cut
 
-sub CreateAgent
-{
+sub CreateAgent {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//CreateAgent/');
     my $r = {};
     
@@ -183,8 +176,7 @@ sub CreateAgent
 
 =cut
 
-sub UpdateAgent
-{
+sub UpdateAgent {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//UpdateAgent/');
     my $r = {};
 
@@ -229,8 +221,7 @@ sub UpdateAgent
 
 =cut
 
-sub DeleteAgent
-{
+sub DeleteAgent {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//DeleteAgent/');
     my $r = {};
 

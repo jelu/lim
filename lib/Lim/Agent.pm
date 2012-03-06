@@ -62,10 +62,10 @@ sub new {
         confess __PACKAGE__, ': Missing server';
     }
     unless (defined $args{exec_host}) {
-        confess __PACKAGE__, ': Missing server';
+        confess __PACKAGE__, ': Missing exec_host';
     }
     unless (defined $args{exec_port}) {
-        confess __PACKAGE__, ': Missing server';
+        confess __PACKAGE__, ': Missing exec_port';
     }
     
     $self->{db_master} = Lim::DB::Master->new
@@ -102,8 +102,7 @@ sub DESTROY {
 
 =cut
 
-sub Module
-{
+sub Module {
     'Agent';
 }
 
@@ -111,8 +110,7 @@ sub Module
 
 =cut
 
-sub Notification
-{
+sub Notification {
     my ($self, $notifier, $what, @parameters) = @_;
 }
 
@@ -120,8 +118,7 @@ sub Notification
 
 =cut
 
-sub ExecutorGetStatus
-{
+sub ExecutorGetStatus {
     my ($self) = @_;
     my $real_self = $self;
     weaken($self);

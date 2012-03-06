@@ -106,8 +106,7 @@ sub DESTROY {
 
 =cut
 
-sub Module
-{
+sub Module {
     'Master';
 }
 
@@ -115,12 +114,11 @@ sub Module
 
 =cut
 
-sub ReadAgents
-{
+sub ReadAgents {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R({
-        'Agent' => $_[0]->{agent}
+        Agent => $_[0]->{agent}
     });
 }
 
@@ -128,8 +126,7 @@ sub ReadAgents
 
 =cut
 
-sub Notification
-{
+sub Notification {
     my ($self, $notifier, $what, @parameters) = @_;
     
     if ($what eq 'CreateAgent') {
@@ -198,8 +195,7 @@ sub Notification
 
 =cut
 
-sub AgentGetStatus
-{
+sub AgentGetStatus {
     my ($self, $id) = @_;
     my $real_self = $self;
     weaken($self);

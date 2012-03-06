@@ -200,8 +200,7 @@ sub DESTROY {
 
 =cut
 
-sub status
-{
+sub status {
     $_[0]->{status};
 }
 
@@ -209,8 +208,7 @@ sub status
 
 =cut
 
-sub error
-{
+sub error {
     $_[0]->{error};
 }
 

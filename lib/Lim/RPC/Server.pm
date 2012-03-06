@@ -136,8 +136,7 @@ sub DESTROY {
 
 =cut
 
-sub serve
-{
+sub serve {
     my ($self) = shift;
     
     foreach my $module (@_) {

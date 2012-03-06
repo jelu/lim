@@ -70,6 +70,8 @@ REQUIRED PERL MODULES
     JSON::XS
     SOAP::Lite
     SOAP::Transport::HTTP
+    DBIx::Class
+    Module::Find
 
 INSTALLATION
 

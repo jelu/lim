@@ -4,8 +4,10 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Module::Find qw(usesub);
 
 use Lim ();
+use base qw(Lim::RPC);
 
 =head1 NAME
 
@@ -35,10 +37,22 @@ sub _new {
     my $class = ref($this) || $this;
     my $self = {
         logger => Log::Log4perl->get_logger,
-        plugins => {}
+        plugin => {},
+        plugin_obj => {}
     };
     bless $self, $class;
-    
+
+    foreach my $module (usesub Lim::Plugin) {
+        my $name = $module;
+        $name =~ s/.*:://o;
+        
+        $self->{plugin_obj}->{$module} = $module->new;
+        $self->{plugin}->{$module} = {
+            name => $name,
+            module => $module
+        };
+    }
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -56,6 +70,34 @@ sub DESTROY {
 
 sub instance {
     $INSTANCE ||= Lim::Plugins->_new;
+}
+
+=head2 function1
+
+=cut
+
+sub deinstance {
+    undef($INSTANCE);
+}
+
+=head2 function1
+
+=cut
+
+sub Module {
+    'Plugins';
+}
+
+=head2 function1
+
+=cut
+
+sub ReadIndex {
+    Lim::RPC::F(@_, undef);
+    
+    $_[0]->R({
+       Plugin => [ values %{$_[0]->{plugin}} ]
+    });
 }
 
 =head1 AUTHOR

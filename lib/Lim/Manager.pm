@@ -1,27 +1,26 @@
-package Lim;
+package Lim::Manager;
 
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed);
+use Log::Log4perl ();
+
+use Lim ();
 use base qw(Lim::RPC);
 
 =head1 NAME
 
-Lim - The great new Lim!
+...
 
 =head1 VERSION
 
-Version 0.01
+See L<Lim> for version.
 
 =cut
 
-our $VERSION = '0.01';
-
-sub OBJ_DEBUG (){ 1 }
-sub DEBUG (){ 1 }
-sub INFO (){ 1 }
-
-sub SRV_LISTEN (){ 10 }
+our $VERSION = $Lim::VERSION;
+our $INSTANCE;
 
 =head1 SYNOPSIS
 
@@ -33,21 +32,15 @@ sub SRV_LISTEN (){ 10 }
 
 =cut
 
-sub new {
+sub _new {
     my $this = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        manage => []
     };
     bless $self, $class;
     
-    unless (defined $args{type}) {
-        confess __PACKAGE__, ': Missing type';
-    }
-    
-    $self->{type} = $args{type};
-
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -55,6 +48,24 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+    
+    $self->Destroy;
+}
+
+=head2 function1
+
+=cut
+
+sub instance {
+    $INSTANCE ||= Lim::Manager->_new;
+}
+
+=head2 function1
+
+=cut
+
+sub deinstance {
+    undef($INSTANCE);
 }
 
 =head2 function1
@@ -62,46 +73,19 @@ sub DESTROY {
 =cut
 
 sub Module {
-    'Lim';
+    'Manager';
 }
 
 =head2 function1
 
 =cut
 
-sub ReadIndex {
-    Lim::RPC::F(@_, undef);
+sub Manage {
+    my ($self, $manage) = @_;
     
-    $_[0]->R({
-        Lim => {
-            version => $VERSION,
-            type => $_[0]->{type}
-        }
-    });
-}
-
-=head2 function1
-
-=cut
-
-sub ReadVersion {
-    Lim::RPC::F(@_, undef);
-    
-    $_[0]->R({
-        version => $VERSION
-    });
-}
-
-=head2 function1
-
-=cut
-
-sub ReadType {
-    Lim::RPC::F(@_, undef);
-    
-    $_[0]->R({
-        type => $_[0]->{type}
-    });
+    if (blessed $manage and $manage->isa('Lim::Manage')) {
+        push(@{$self->{manage}}, $manage);
+    }
 }
 
 =head1 AUTHOR
@@ -163,4 +147,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim
+1; # End of Lim::Manager

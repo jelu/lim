@@ -6,6 +6,8 @@ use Carp;
 use Log::Log4perl ();
 
 use Lim ();
+use Lim::Plugins ();
+use Lim::Manager ();
 use base qw(Lim::RPC);
 
 =head1 NAME
@@ -38,6 +40,15 @@ sub new {
         logger => Log::Log4perl->get_logger,
     };
     bless $self, $class;
+
+    unless (defined $args{server}) {
+        confess __PACKAGE__, ': Missing server';
+    }
+    
+    $args{server}->serve(
+        Lim::Plugins->instance,
+        Lim::Manager->instance
+    );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
@@ -52,9 +63,15 @@ sub DESTROY {
 
 =cut
 
-sub Module
-{
+sub Module {
     'Executor';
+}
+
+=head2 function2
+
+=cut
+
+sub Managed {
 }
 
 =head1 AUTHOR

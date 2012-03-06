@@ -57,8 +57,7 @@ sub DESTROY {
 
 =cut
 
-sub Module
-{
+sub Module {
     'DB';
 }
 
@@ -66,8 +65,7 @@ sub Module
 
 =cut
 
-sub WSDL
-{
+sub WSDL {
     'db_master';
 }
 
@@ -75,8 +73,7 @@ sub WSDL
 
 =cut
 
-sub ReadMasters
-{
+sub ReadMasters {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R(
@@ -90,8 +87,7 @@ sub ReadMasters
 
 =cut
 
-sub ReadMaster
-{
+sub ReadMaster {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//ReadMaster/');
     my $r = {};
 
@@ -129,8 +125,7 @@ sub ReadMaster
 
 =cut
 
-sub CreateMaster
-{
+sub CreateMaster {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//CreateMaster/');
     my $r = {};
     
@@ -164,8 +159,7 @@ sub CreateMaster
 
 =cut
 
-sub UpdateMaster
-{
+sub UpdateMaster {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//UpdateMaster/');
     my $r = {};
 
@@ -210,8 +204,7 @@ sub UpdateMaster
 
 =cut
 
-sub DeleteMaster
-{
+sub DeleteMaster {
     my ($self, $q, $id) = Lim::RPC::F(@_, '//DeleteMaster/');
     my $r = {};
 

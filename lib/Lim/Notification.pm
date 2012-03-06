@@ -23,8 +23,7 @@ See L<Lim> for version.
 
 =cut
 
-sub Notification
-{
+sub Notification {
     confess __PACKAGE__, ': Notification not overloaded';
 }
 

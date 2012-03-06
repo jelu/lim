@@ -1,13 +1,14 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::Plugin::SoftHSM;
 
 use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Fcntl qw(:seek);
 
 use Lim ();
+use Lim::Manager ();
 use Lim::Manage::Config ();
-use Lim::Manage::File ();
 use Lim::Manage::Program ();
 
 use base qw(Lim::Plugin);
@@ -25,8 +26,10 @@ See L<Lim> for version.
 our $VERSION = $Lim::VERSION;
 
 our %ConfigFiles = (
-    'conf.xml' => [ '/etc/opendnssec/conf.xml' ],
-    ''
+    'softhsm.conf' => [
+        '/etc/softhsm/softhsm.conf',
+        '/etc/softhsm.conf'
+    ]
 );
 
 =head1 SYNOPSIS
@@ -42,13 +45,49 @@ our %ConfigFiles = (
 sub Init {
     my $self = shift;
     my %args = ( @_ );
+    
+    foreach my $config (keys %ConfigFiles) {
+        foreach my $file (@{$ConfigFiles{$config}}) {
+            if (-f $file) {
+                Lim::Manager->instance->Manage(
+                    Lim::Manage::Config->new(
+                        name => $config,
+                        file => $file,
+                        plugin => $self,
+                        action => Lim::Manage::Config::VIEW &
+                            Lim::Manage::Config::EDIT
+                    ));
+            }
+        }
+    }
 }
 
 =head2 function1
 
 =cut
 
-sub Destroy {
+sub Manage {
+    my ($self, $manage, $action) = @_;
+    
+    if ($manage->isa('Lim::Manage::Config')) {
+        if ($action == Lim::Manage::Config::VIEW) {
+            unless (open(CONFIG, $manage->file)) {
+                return;
+            }
+            
+            my ($tell, $config);
+            seek(CONFIG, 0, SEEK_END);
+            $tell = tell(CONFIG);
+            seek(CONFIG, 0, SEEK_SET);
+            unless (read(CONFIG, $config, $tell) == $tell) {
+                close(CONFIG);
+                return;
+            }
+            close(CONFIG);
+            
+            return $config;
+        }
+    }
 }
 
 =head1 AUTHOR
@@ -110,4 +149,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::Plugin::SoftHSM
