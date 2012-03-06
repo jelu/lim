@@ -17,6 +17,8 @@ See L<Lim> for version.
 
 =cut
 
+our $VERSION = $Lim::VERSION;
+
 =head1 SYNOPSIS
 
 ...

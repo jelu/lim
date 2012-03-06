@@ -96,7 +96,9 @@ sub ReadIndex {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R({
-       Plugin => [ values %{$_[0]->{plugin}} ]
+       plugin => [ values %{$_[0]->{plugin}} ]
+    }, {
+        'base.plugin' => [ 'name', 'module' ]
     });
 }
 

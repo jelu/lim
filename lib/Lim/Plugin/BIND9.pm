@@ -5,8 +5,6 @@ use Carp;
 
 use Log::Log4perl ();
 
-use Lim ();
-
 use base qw(Lim::Plugin);
 
 =head1 NAME
@@ -18,8 +16,6 @@ use base qw(Lim::Plugin);
 See L<Lim> for version.
 
 =cut
-
-our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 

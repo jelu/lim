@@ -37,7 +37,8 @@ sub _new {
     my $class = ref($this) || $this;
     my $self = {
         logger => Log::Log4perl->get_logger,
-        manage => []
+        manage => {},
+        manages => []
     };
     bless $self, $class;
     
@@ -48,8 +49,9 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    $self->Destroy;
+
+    delete $self->{manage};
+    delete $self->{manages};
 }
 
 =head2 function1
@@ -84,8 +86,37 @@ sub Manage {
     my ($self, $manage) = @_;
     
     if (blessed $manage and $manage->isa('Lim::Manage')) {
-        push(@{$self->{manage}}, $manage);
+        if (exists $self->{manage}->{$manage->type}->{$manage->name}->{$manage->plugin}) {
+            confess __PACKAGE__, ': Object [type: ', $manage->type, ' name: ', $manage->name, '] already managed by ', $manage->plugin;
+        }
+        
+        $self->{manage}->{$manage->type}->{$manage->name}->{$manage->plugin} = $manage;
+        push(@{$self->{manages}}, $manage);
     }
+}
+
+=head2 function1
+
+=cut
+
+sub ReadIndex {
+    Lim::RPC::F(@_, undef);
+
+    my @manages;
+    foreach (@{$_[0]->{manages}}) {
+        push(@manages, {
+            type => $_->type,
+            name => $_->name,
+            plugin => $_->plugin,
+            actions => [ $_->actions ]
+        });
+    }
+
+    $_[0]->R({
+        manage => \@manages
+    }, {
+       'base.manage' => [ 'type', 'name', 'plugin' ] 
+    });
 }
 
 =head1 AUTHOR

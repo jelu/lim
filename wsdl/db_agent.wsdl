@@ -14,7 +14,7 @@
 			<xsd:element name="agent_name" type="xsd:string" />
 			<xsd:element name="agent_host" type="xsd:string" />
 			<xsd:element name="agent_port" type="xsd:positiveInteger" />
-			<xsd:element name="Agent">
+			<xsd:element name="agent">
 				<xsd:complexType>
 					<xsd:sequence>
 						<xsd:element ref="lim:agent_id" minOccurs="0" />
@@ -30,63 +30,63 @@
 			<xsd:element name="ReadAgentsResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="ReadAgent">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="ReadAgentResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="CreateAgent">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="CreateAgentResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="UpdateAgent">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="UpdateAgentResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="DeleteAgent">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="DeleteAgentResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Agent" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:agent" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>

@@ -77,7 +77,7 @@ my $server = Lim::RPC::Server->new(
     wsdl => $wsdl
 );
 $server->serve(
-    Lim->new(type => 'executer'),
+    Lim->new(type => 'executor'),
     Lim::Executor->new(server => $server)
     );
 

@@ -3,10 +3,6 @@ package Lim::Manage::Config;
 use common::sense;
 use Carp;
 
-use Log::Log4perl ();
-
-use Lim ();
-
 use base qw(Lim::Manage);
 
 =head1 NAME
@@ -18,8 +14,6 @@ use base qw(Lim::Manage);
 See L<Lim> for version.
 
 =cut
-
-our $VERSION = $Lim::VERSION;
 
 sub VIEW (){ 1<<1 }
 sub EDIT (){ 1<<2 }
@@ -34,48 +28,26 @@ sub EDIT (){ 1<<2 }
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
+sub Init {
+    my $self = shift;
     my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
-    bless $self, $class;
-    
-    unless (defined $args{name}) {
-        confess __PACKAGE__, ': Missing name';
-    }
-    unless (defined $args{plugin}) {
-        confess __PACKAGE__, ': Missing plugin';
-    }
-    unless (defined $args{action}) {
-        confess __PACKAGE__, ': Missing action';
-    }
-    unless (($args{action} & (VIEW | EDIT)) == $args{action}) {
-        confess __PACKAGE__, ': Invalid action(s)';
-    }
     
     unless (defined $args{file}) {
         confess __PACKAGE__, ': Missing file';
     }
     
-    $self->{type} = 'Config';
-    $self->{name} = $args{name};
-    $self->{plugin} = $args{plugin};
-    $self->{action} = $args{action};
+    $self->{type} = 'config';
+    $self->__add_action(VIEW, 'view');
+    $self->__add_action(EDIT, 'edit');
 
     $self->{file} = $args{file};
-    
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
 }
 
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    $self->Destroy;
+=head2 function1
+
+=cut
+
+sub Destroy {
 }
 
 =head2 function1

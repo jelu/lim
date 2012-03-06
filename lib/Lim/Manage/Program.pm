@@ -2,10 +2,6 @@ package Lim::Manage::Program;
 
 use common::sense;
 
-use Log::Log4perl ();
-
-use Lim ();
-
 use base qw(Lim::Manage);
 
 =head1 NAME
@@ -30,24 +26,16 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
+sub Init {
+    my $self = shift;
     my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
-    bless $self, $class;
-    
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
 }
 
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    $self->Destroy;
+=head2 function1
+
+=cut
+
+sub Destroy {
 }
 
 =head1 AUTHOR

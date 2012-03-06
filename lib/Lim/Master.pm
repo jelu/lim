@@ -118,7 +118,7 @@ sub ReadAgents {
     Lim::RPC::F(@_, undef);
     
     $_[0]->R({
-        Agent => $_[0]->{agent}
+        agent => $_[0]->{agent}
     });
 }
 

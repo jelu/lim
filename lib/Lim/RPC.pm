@@ -87,14 +87,14 @@ sub __result {
                     foreach my $v (@{$_[1]->{$k}}) {
                         if (ref($v) eq 'HASH') {
                             push(@a,
-                                SOAP::Data->new->name($k)
+                                SOAP::Data->new->name(lc($k))
                                 ->value(Lim::RPC::__result($_[0].'.'.$k, $v, $_[2]))
                                 ->prefix('lim1')
                                 );
                         }
                         else {
                             push(@a,
-                                SOAP::Data->new->name($k)
+                                SOAP::Data->new->name(lc($k))
                                 ->value($v)
                                 ->prefix('lim1')
                                 );
@@ -103,14 +103,14 @@ sub __result {
                 }
                 elsif (ref($_[1]->{$k}) eq 'HASH') {
                     push(@a,
-                        SOAP::Data->new->name($k)
+                        SOAP::Data->new->name(lc($k))
                         ->value(Lim::RPC::__result($_[0].'.'.$k, $_[1]->{$k}, $_[2]))
                         ->prefix('lim1')
                         );
                 }
                 else {
                     push(@a,
-                        SOAP::Data->new->name($k)
+                        SOAP::Data->new->name(lc($k))
                         ->value($_[1]->{$k})
                         ->prefix('lim1')
                         );
@@ -124,14 +124,14 @@ sub __result {
                 foreach my $v (@{$_[1]->{$k}}) {
                     if (ref($v) eq 'HASH') {
                         push(@a,
-                            SOAP::Data->new->name($k)
+                            SOAP::Data->new->name(lc($k))
                             ->value(Lim::RPC::__result($_[0].'.'.$k, $v, $_[2]))
                             ->prefix('lim1')
                             );
                     }
                     else {
                         push(@a,
-                            SOAP::Data->new->name($k)
+                            SOAP::Data->new->name(lc($k))
                             ->value($v)
                             ->prefix('lim1')
                             );
@@ -140,14 +140,14 @@ sub __result {
             }
             elsif (ref($_[1]->{$k}) eq 'HASH') {
                 push(@a,
-                    SOAP::Data->new->name($k)
+                    SOAP::Data->new->name(lc($k))
                     ->value(Lim::RPC::__result($_[0].'.'.$k, $_[1]->{$k}, $_[2]))
                     ->prefix('lim1')
                     );
             }
             else {
                 push(@a,
-                    SOAP::Data->new->name($k)
+                    SOAP::Data->new->name(lc($k))
                     ->value($_[1]->{$k})
                     ->prefix('lim1')
                     );
@@ -167,7 +167,7 @@ sub R {
     if (blessed($_[1])) {
         if ($_[1]->isa('DBIx::Class::ResultSet')) {
             my @r;
-            my $c = $_[1]->result_source->source_name;
+            my $c = lc($_[1]->result_source->source_name);
             foreach ($_[1]->all) {
                 my %r = $_->get_columns;
                 push(@r, \%r);

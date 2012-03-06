@@ -79,7 +79,7 @@ sub ReadMasters {
     $_[0]->R(
         Lim::DB->schema->resultset('Master'),
         {
-            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -94,20 +94,20 @@ sub ReadMaster {
     if (defined $id) {
         if (($_ = Lim::DB->schema->resultset('Master')->find($id))) {
             my %r = $_->get_columns;
-            $r->{Master} = [ \%r ];
+            $r->{master} = [ \%r ];
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Master}) {
-            if (ref($q->{Master}) eq 'HASH') {
-                $q->{Master} = [ $q->{Master} ];
+        if (exists $q->{master}) {
+            if (ref($q->{master}) eq 'HASH') {
+                $q->{master} = [ $q->{master} ];
             }
-            if (ref($q->{Master}) eq 'ARRAY') {
-                foreach (@{$q->{Master}}) {
+            if (ref($q->{master}) eq 'ARRAY') {
+                foreach (@{$q->{master}}) {
                     if (ref($_) eq 'HASH') {
                         foreach (Lim::DB->schema->resultset('Master')->search($_)) {
                             my %r = $_->get_columns;
-                            push(@{$r->{Master}}, \%r);
+                            push(@{$r->{master}}, \%r);
                         }
                     }
                 }
@@ -117,7 +117,7 @@ sub ReadMaster {
     
     $self->R($r,
         {
-            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -130,17 +130,17 @@ sub CreateMaster {
     my $r = {};
     
     if (ref($q) eq 'HASH') {
-        if (exists $q->{Master}) {
-            if (ref($q->{Master}) eq 'HASH') {
-                $q->{Master} = [ $q->{Master} ];
+        if (exists $q->{master}) {
+            if (ref($q->{master}) eq 'HASH') {
+                $q->{master} = [ $q->{master} ];
             }
-            if (ref($q->{Master}) eq 'ARRAY') {
-                foreach (@{$q->{Master}}) {
+            if (ref($q->{master}) eq 'ARRAY') {
+                foreach (@{$q->{master}}) {
                     if (ref($_) eq 'HASH') {
                         if (($_ = Lim::DB->schema->resultset('Master')->new($_))) {
                             $_->insert;
                             my %r = $_->get_columns;
-                            push(@{$r->{Master}}, \%r);
+                            push(@{$r->{master}}, \%r);
                             $self->Notify('CreateMaster', $_);
                         }
                     }
@@ -151,7 +151,7 @@ sub CreateMaster {
 
     $self->R($r,
         {
-            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -167,24 +167,24 @@ sub UpdateMaster {
         if (($_ = Lim::DB->schema->resultset('Master')->find($id))) {
             $_->update($q);
             my %r = $_->get_columns;
-            $r->{Master} = [ \%r ];
+            $r->{master} = [ \%r ];
             $self->Notify('UpdateMaster', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Master}) {
-            if (ref($q->{Master}) eq 'HASH') {
-                $q->{Master} = [ $q->{Master} ];
+        if (exists $q->{master}) {
+            if (ref($q->{master}) eq 'HASH') {
+                $q->{master} = [ $q->{master} ];
             }
-            if (ref($q->{Master}) eq 'ARRAY') {
-                foreach (@{$q->{Master}}) {
+            if (ref($q->{master}) eq 'ARRAY') {
+                foreach (@{$q->{master}}) {
                     if (ref($_) eq 'HASH') {
                         if (exists $_->{master_id}) {
                             $id = delete $_->{master_id};
                             if ((my $o = Lim::DB->schema->resultset('Master')->find($id))) {
                                 $o->update($_);
                                 my %r = $o->get_columns;
-                                push(@{$r->{Master}}, \%r);
+                                push(@{$r->{master}}, \%r);
                                 $self->Notify('UpdateMaster', $o);
                             }
                         }
@@ -196,7 +196,7 @@ sub UpdateMaster {
 
     $self->R($r,
         {
-            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 
@@ -212,24 +212,24 @@ sub DeleteMaster {
         if (($_ = Lim::DB->schema->resultset('Master')->find($id))) {
             $_->delete;
             my %r = $_->get_columns;
-            $r->{Master} = [ \%r ];
+            $r->{master} = [ \%r ];
             $self->Notify('DeleteMaster', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Master}) {
-            if (ref($q->{Master}) eq 'HASH') {
-                $q->{Master} = [ $q->{Master} ];
+        if (exists $q->{master}) {
+            if (ref($q->{master}) eq 'HASH') {
+                $q->{master} = [ $q->{master} ];
             }
-            if (ref($q->{Master}) eq 'ARRAY') {
-                foreach (@{$q->{Master}}) {
+            if (ref($q->{master}) eq 'ARRAY') {
+                foreach (@{$q->{master}}) {
                     if (ref($_) eq 'HASH') {
                         if (exists $_->{master_id}) {
                             $id = delete $_->{master_id};
                             if ((my $o = Lim::DB->schema->resultset('Master')->find($id))) {
                                 $o->delete;
                                 my %r = $o->get_columns;
-                                push(@{$r->{Master}}, \%r);
+                                push(@{$r->{master}}, \%r);
                                 $self->Notify('DeleteMaster', $o);
                             }
                         }
@@ -241,7 +241,7 @@ sub DeleteMaster {
 
     $self->R($r,
         {
-            'base.Master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
         });
 }
 

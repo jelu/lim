@@ -67,13 +67,6 @@ sub Module {
     'Executor';
 }
 
-=head2 function2
-
-=cut
-
-sub Managed {
-}
-
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

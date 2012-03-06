@@ -30,63 +30,63 @@
 			<xsd:element name="ReadMastersResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="ReadMaster">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="ReadMasterResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="CreateMaster">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="CreateMasterResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="UpdateMaster">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="UpdateMasterResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>
  			<xsd:element name="DeleteMaster">
  				<xsd:complexType>
  					<xsd:choice>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" />
  					</xsd:choice>
  				</xsd:complexType>
  			</xsd:element>
 			<xsd:element name="DeleteMasterResponse">
 				<xsd:complexType>
 					<xsd:sequence>
-						<xsd:element ref="lim:Master" maxOccurs="unbounded" minOccurs="0" />
+						<xsd:element ref="lim:master" maxOccurs="unbounded" minOccurs="0" />
 					</xsd:sequence>
 				</xsd:complexType>
 			</xsd:element>

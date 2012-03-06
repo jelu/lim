@@ -52,7 +52,8 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        executor => {}
+        executor => {},
+        watchers => []
     };
     bless $self, $class;
     my $real_self = $self;
@@ -104,6 +105,47 @@ sub DESTROY {
 
 sub Module {
     'Agent';
+}
+
+=head2 function2
+
+=cut
+
+sub ReadManage
+{
+    my ($self) = Lim::RPC::F(@_, undef);
+    weaken($self);
+
+    if (exists $self->{executor}) {
+        if ($self->{executor}->{status} == ONLINE) {
+            my $cv = AnyEvent->condvar;
+            my ($cli, $data);
+            $cli = Lim::RPC::Client->new(
+                host => $self->{executor}->{host},
+                port => $self->{executor}->{port},
+                uri => '/manager',
+                cb => sub {
+                    (undef, $data) = @_;
+                    $cv->send;
+                });
+            $cv->recv;
+            
+            if ($cli->status == Lim::RPC::Client::OK) {
+                use Data::Dumper;
+                print Dumper($data),"\n";
+            }
+            else {
+                # TODO: cli not ok
+            }
+        }
+        else {
+            # TODO: executor not online
+        }
+    }
+    else {
+        # TODO: no executor
+    }
+    
 }
 
 =head2 function2

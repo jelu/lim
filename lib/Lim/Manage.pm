@@ -1,6 +1,11 @@
 package Lim::Manage;
 
 use common::sense;
+use Carp;
+
+use Log::Log4perl ();
+
+use Lim ();
 
 =head1 NAME
 
@@ -12,11 +17,79 @@ See L<Lim> for version.
 
 =cut
 
+our $VERSION = $Lim::VERSION;
+
 =head1 SYNOPSIS
 
 ...
 
 =head1 SUBROUTINES/METHODS
+
+=head2 function1
+
+=cut
+
+sub new {
+    my $this = shift;
+    my $class = ref($this) || $this;
+    my %args = ( @_ );
+    my $self = {
+        logger => Log::Log4perl->get_logger
+    };
+    bless $self, $class;
+    
+    unless (defined $args{name}) {
+        confess __PACKAGE__, ': Missing name';
+    }
+    unless (defined $args{plugin}) {
+        confess __PACKAGE__, ': Missing plugin';
+    }
+    unless (defined $args{action}) {
+        confess __PACKAGE__, ': Missing action';
+    }
+    
+    $self->{name} = $args{name};
+    $self->{plugin} = $args{plugin};
+    $self->{action} = $args{action};
+
+    $self->Init(%args);
+    
+    unless (exists $self->{type}) {
+        confess __PACKAGE__, ': Init() did not set type';
+    }
+
+    my $actions = 0;
+    foreach (values %{$self->{__action_bitmap}}) {
+        $actions &= $_;
+    }
+    unless (($args{action} & $actions) == $args{action}) {
+        confess __PACKAGE__, ': Invalid action(s)';
+    }
+    
+    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
+    $self;
+}
+
+sub DESTROY {
+    my ($self) = @_;
+    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+    
+    $self->Destroy;
+}
+
+=head2 function1
+
+=cut
+
+sub Init {
+}
+
+=head2 function1
+
+=cut
+
+sub Destroy {
+}
 
 =head2 function1
 
@@ -48,6 +121,39 @@ sub plugin {
 
 sub action {
     $_[0]->{action};
+}
+
+=head2 function1
+
+=cut
+
+sub actions {
+    if (exists $_[0]->{__action_bitmap}) {
+        return keys %{$_[0]->{__action_bitmap}};
+    }
+}
+
+=head2 function1
+
+=cut
+
+sub __add_action {
+    my ($self, $action, $string) = @_;
+
+    if (defined $action and defined $string) {
+        $string = lc($string);
+        
+        if (exists $self->{__action_string}->{$action} and
+            exists $self->{__action_bitmap}->{$string})
+        {
+            confess __PACKAGE__, ': __add_action failed, ', $string, ' action already added';
+        }
+        
+        $self->{__action_string}->{$action} = $string;
+        $self->{__action_bitmap}->{$string} = $action;
+    }
+    
+    $self;
 }
 
 =head1 AUTHOR

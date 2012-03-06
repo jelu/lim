@@ -6,7 +6,6 @@ use Carp;
 use Log::Log4perl ();
 use Fcntl qw(:seek);
 
-use Lim ();
 use Lim::Manager ();
 use Lim::Manage::Config ();
 use Lim::Manage::Program ();
@@ -22,8 +21,6 @@ use base qw(Lim::Plugin);
 See L<Lim> for version.
 
 =cut
-
-our $VERSION = $Lim::VERSION;
 
 our %ConfigFiles = (
     'softhsm.conf' => [
@@ -51,9 +48,9 @@ sub Init {
             if (-f $file) {
                 Lim::Manager->instance->Manage(
                     Lim::Manage::Config->new(
-                        name => $config,
+                        name => $file,
                         file => $file,
-                        plugin => $self,
+                        plugin => 'Lim::Plugin::SoftHSM',
                         action => Lim::Manage::Config::VIEW &
                             Lim::Manage::Config::EDIT
                     ));

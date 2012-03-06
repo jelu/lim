@@ -96,7 +96,7 @@ sub ReadAgents {
     $_[0]->R(
         Lim::DB->schema->resultset('Agent'),
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
         });
 }
 
@@ -111,20 +111,20 @@ sub ReadAgent {
     if (defined $id) {
         if (($_ = Lim::DB->schema->resultset('Agent')->find($id))) {
             my %r = $_->get_columns;
-            $r->{Agent} = [ \%r ];
+            $r->{agent} = [ \%r ];
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{agent}) {
+            if (ref($q->{agent}) eq 'HASH') {
+                $q->{agent} = [ $q->{agent} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{agent}) eq 'ARRAY') {
+                foreach (@{$q->{agent}}) {
                     if (ref($_) eq 'HASH') {
                         foreach (Lim::DB->schema->resultset('Agent')->search($_)) {
                             my %r = $_->get_columns;
-                            push(@{$r->{Agent}}, \%r);
+                            push(@{$r->{agent}}, \%r);
                         }
                     }
                 }
@@ -134,7 +134,7 @@ sub ReadAgent {
     
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
         });
 }
 
@@ -147,17 +147,17 @@ sub CreateAgent {
     my $r = {};
     
     if (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{agent}) {
+            if (ref($q->{agent}) eq 'HASH') {
+                $q->{agent} = [ $q->{agent} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{agent}) eq 'ARRAY') {
+                foreach (@{$q->{agent}}) {
                     if (ref($_) eq 'HASH') {
                         if (($_ = Lim::DB->schema->resultset('Agent')->new($_))) {
                             $_->insert;
                             my %r = $_->get_columns;
-                            push(@{$r->{Agent}}, \%r);
+                            push(@{$r->{agent}}, \%r);
                             $self->Notify('CreateAgent', $_);
                         }
                     }
@@ -168,7 +168,7 @@ sub CreateAgent {
     
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
         });
 }
 
@@ -184,24 +184,24 @@ sub UpdateAgent {
         if (($_ = Lim::DB->schema->resultset('Agent')->find($id))) {
             $_->update($q);
             my %r = $_->get_columns;
-            $r->{Agent} = [ \%r ];
+            $r->{agent} = [ \%r ];
             $self->Notify('UpdateAgent', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{agent}) {
+            if (ref($q->{agent}) eq 'HASH') {
+                $q->{agent} = [ $q->{agent} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{agent}) eq 'ARRAY') {
+                foreach (@{$q->{agent}}) {
                     if (ref($_) eq 'HASH') {
                         if (exists $_->{agent_id}) {
                             $id = delete $_->{agent_id};
                             if ((my $o = Lim::DB->schema->resultset('Agent')->find($id))) {
                                 $o->update($_);
                                 my %r = $o->get_columns;
-                                push(@{$r->{Agent}}, \%r);
+                                push(@{$r->{agent}}, \%r);
                                 $self->Notify('UpdateAgent', $o);
                             }
                         }
@@ -213,7 +213,7 @@ sub UpdateAgent {
 
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
         });
 }
 
@@ -229,24 +229,24 @@ sub DeleteAgent {
         if (($_ = Lim::DB->schema->resultset('Agent')->find($id))) {
             $_->delete;
             my %r = $_->get_columns;
-            $r->{Agent} = [ \%r ];
+            $r->{agent} = [ \%r ];
             $self->Notify('DeleteAgent', $_);
         }
     }
     elsif (ref($q) eq 'HASH') {
-        if (exists $q->{Agent}) {
-            if (ref($q->{Agent}) eq 'HASH') {
-                $q->{Agent} = [ $q->{Agent} ];
+        if (exists $q->{agent}) {
+            if (ref($q->{agent}) eq 'HASH') {
+                $q->{agent} = [ $q->{agent} ];
             }
-            if (ref($q->{Agent}) eq 'ARRAY') {
-                foreach (@{$q->{Agent}}) {
+            if (ref($q->{agent}) eq 'ARRAY') {
+                foreach (@{$q->{agent}}) {
                     if (ref($_) eq 'HASH') {
                         if (exists $_->{agent_id}) {
                             $id = delete $_->{agent_id};
                             if ((my $o = Lim::DB->schema->resultset('Agent')->find($id))) {
                                 $o->delete;
                                 my %r = $o->get_columns;
-                                push(@{$r->{Agent}}, \%r);
+                                push(@{$r->{agent}}, \%r);
                                 $self->Notify('DeleteAgent', $o);
                             }
                         }
@@ -258,7 +258,7 @@ sub DeleteAgent {
 
     $self->R($r,
         {
-            'base.Agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
         });
 }
 

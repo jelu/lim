@@ -5,7 +5,6 @@ use Carp;
 
 use Log::Log4perl ();
 
-use Lim ();
 use Lim::Manage::Config ();
 use Lim::Manage::File ();
 use Lim::Manage::Program ();
@@ -21,8 +20,6 @@ use base qw(Lim::Plugin);
 See L<Lim> for version.
 
 =cut
-
-our $VERSION = $Lim::VERSION;
 
 our %ConfigFiles = (
     'conf.xml' => [ '/etc/opendnssec/conf.xml' ],
