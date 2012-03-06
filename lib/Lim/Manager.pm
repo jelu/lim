@@ -115,7 +115,7 @@ sub ReadIndex {
     Lim::RPC::R($cb, {
         manage => \@manages
     }, {
-       'base.manage' => [ 'type', 'name', 'plugin' ] 
+       'base.manage' => [ 'type', 'name', 'plugin', 'actions' ] 
     });
 }
 

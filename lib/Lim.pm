@@ -73,7 +73,7 @@ sub ReadIndex {
     my ($self, $cb) = Lim::RPC::C(@_, undef);
     
     Lim::RPC::R($cb, {
-        Lim => {
+        lim => {
             version => $VERSION,
             type => $self->{type}
         }

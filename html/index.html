@@ -13,17 +13,12 @@
 	<script type="text/javascript">
 	$(function () {
 		Lim.ready({
-			menubar: $('#menubar').menubar(),
-			console: $('#console').dialog({
-				position: [ 'left', 'bottom' ]
-			}),
+			workspace: $('#workspace'),
+			menubar: $('#menubar'),
+			console: $('#console'),
 			dialog: {
-				connect: $('#connectDialog').dialog({
-					autoOpen: false,
-					height: 300,
-					width: 350,
-					modal: true
-				}),
+				connect: $('#connectDialog'),
+				master: $('#masterDialog')
 			}
 		});
 	});
@@ -48,7 +43,7 @@
 			</li>
 		</ul>
 	</div>
-	<div>
+	<div id="workspace">
 		<div id="console" title="Console">
 		</div>
 		<div id="connectDialog" title="Connect to a Lim Master" style="display: none;">
@@ -59,6 +54,8 @@
 					<input type="text" name="uri" id="uri" class="text ui-widget-content ui-corner-all" />
 				</fieldset>
 			</form>
+		</div>
+		<div id="masterDialog" style="display: none;">
 		</div>
 	</div>
 </body>

@@ -6,106 +6,149 @@ var Lim = {
 		},
 		load: function () {
 			var val;
-			this.that.log.debug('Loading config from cookies');
+			this.that.console.debug('Loading config from cookies');
 			if ((val = $.cookie('lim_master_uri'))) {
 				this.data.master.uri = val;
 			}
 		},
 		save: function () {
-			this.that.log.debug('Saving config to cookies');
+			this.that.console.debug('Saving config to cookies');
 			$.cookie('lim_master_uri', this.data.master.uri, 365);
 		}
 	},
 	
 	gui: {
-		that: null,
-		object: {
-			menubar: null,
-			console: null,
-			dialog: {
-				connect: null
-			}
-		},
-		toggleConsole: function () {
-			if (this.object.console) {
-				if (this.object.console.dialog('isOpen')) {
-					this.object.console.dialog('close');
-				}
-				else {
-					this.object.console.dialog('open');
-				}
-			}
-		},
-		connect: function () {
-			if (this.object.dialog.connect) {
-				this.object.dialog.connect.find('input#uri')
-					.val(this.that.config.data.master.uri);
-				this.object.dialog.connect.dialog('open');
-			}
+		workspace: null,
+		menubar: null,
+		console: null,
+		dialog: {
+			connect: null,
+			master: null
 		}
 	},
 	
-	log: {
+	menubar: {
 		that: null,
-		debug: function (message) {
-			if (this.that.gui.object.console) {
-				var date = new Date();
-				$('<div/>').text(date.toTimeString() + ': ' + message).appendTo(this.that.gui.object.console);
+		init: function () {
+			var that = this;
+
+			this.that.gui.menubar.menubar({
+				select: function (event, ui) {
+					event.preventDefault();
+					var f = $('a', ui.item).first().attr('action');
+					if (f && typeof that[f] === 'function') {
+						that[f](event);
+					}
+				}
+			});
+
+			this.that.gui.dialog.connect.dialog({
+				autoOpen: false,
+				height: 300,
+				width: 350,
+				modal: true,
+				buttons: {
+					Connect: function () {
+						$(this).dialog('close');
+						that.that.master.connect($(this).find('input#uri').val());
+					},
+					Cancel: function () {
+						$(this).dialog('close');
+					}
+				}
+			});
+		},
+		toggleConsole: function () {
+			this.that.console.toggle();
+		},
+		connect: function () {
+			this.that.gui.dialog.connect.find('input#uri')
+				.val(this.that.config.data.master.uri);
+			this.that.gui.dialog.connect.dialog('open');
+		}
+	},
+	
+	master: {
+		that: null,
+		init: function () {
+		},
+		connect: function (uri) {
+			if (typeof uri !== 'string' /* TODO: || uri.match(/^https\:/i) */) {
+				alert('URI invalid');
+				return;
 			}
+			
+			var o = this.that.gui.dialog.master.clone();
+			o.dialog({
+				title: 'Master '+uri,
+				height: 500,
+				width: 600,
+				modal: false,
+				close: function (event, ui) {
+					o.remove();
+				}
+			});
+		}
+	},
+
+	console: {
+		that: null,
+		init: function () {
+			this.that.gui.console.dialog({
+				position: [ 'left', 'bottom' ]
+			});
+		},
+		toggle: function () {
+			if (this.that.gui.console.dialog('isOpen')) {
+				this.that.gui.console.dialog('close');
+			}
+			else {
+				this.that.gui.console.dialog('open');
+			}
+		},
+		debug: function (message) {
+			var date = new Date();
+			$('<div/>').text(date.toTimeString() + ': ' + message).appendTo(this.that.gui.console);
 		}
 	},
 	
 	ready: function (settings) {
-		var that =
-		this.config.that =
-		this.gui.that =
-		this.log.that =
-			this;
-
 		if (typeof settings === 'object') {
 			for (var key in settings) {
-				this.gui.object[key] = settings[key];
+				this.gui[key] = settings[key];
 			}
 		}
 		
 		// default config
-		
 		this.config.data.master.uri = '' + window.location.href;
 		this.config.data.master.uri = this.config.data.master.uri.replace(/\/+$/, '');
 		
-		// load saved config
-		
-		this.config.load();
+		// Initialize elements
+		for (var key in this) {
+			if (typeof this[key] === 'object') {
+				this[key].that = this;
+				if (typeof this[key]['init'] === 'function') {
+					this[key].init();
+				}
+			}
+		}
 
-		// Initialize gui elements
-		
-		if (this.gui.object.menubar) {
-			this.gui.object.menubar.menubar('option', 'select', function (event, ui) {
-				event.preventDefault();
-				var f = $('a', ui.item).first().attr('action');
-				if (f && typeof that.gui[f] === 'function') {
-					that.gui[f](event);
-				}
-			});
-		}
-		
-		if (this.gui.object.dialog.connect) {
-			this.gui.object.dialog.connect.dialog('option', 'buttons', {
-				Connect: function () {
-					$(this).dialog('close');
-					that.connect($(this).find('input#uri').val());
-				},
-				Cancel: function () {
-					$(this).dialog('close');
-				}
-			});
-		}
+		// load saved config
+		this.config.load();
 	},
 	
-	connect: function (uri) {
-		if (typeof uri !== 'string' /* TODO: || uri.match(/^https\:/i) */) {
-			alert('URI invalid');
-			return;
-		}
+	call: function (uri, data, callback) {
+		$.ajax({
+			url: uri,
+			data: data,
+			dataType: 'json',
+			timeout: 10000,
+			success: function(data, textStatus, XHR) {
+				callback(data, textStatus, XHR);
+			},
+			error: function(XHR, textStatus, errorThrown) {
+				callback(null, textStatus, XHR);
+			}
+		});
 	}
 };

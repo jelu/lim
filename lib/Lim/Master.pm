@@ -201,13 +201,15 @@ sub Notification {
 
 sub AgentGetStatus {
     my ($self, $id) = @_;
-    my $real_self = $self;
-    weaken($self);
     
     if (defined $id and exists $self->{agent}->{$id} and !exists $self->{agent}->{$id}->{watcher_status}) {
         my $agent = $self->{agent}->{$id};
-        weaken($agent);
         
+        weaken($self);
+        weaken($agent);
+
+        $agent->{status} = CONNECTING;
+        $agent->{status_message} = 'Connecting';
         $agent->{watcher_status} = Lim::RPC::Client->new(
             host => $agent->{host},
             port => $agent->{port},
@@ -217,40 +219,70 @@ sub AgentGetStatus {
                 
                 if ($cli->status == Lim::RPC::Client::OK) {
                     if (defined $data and ref($data) eq 'HASH'
-                        and exists $data->{Lim}->{type}
-                        and exists $data->{Lim}->{version})
+                        and exists $data->{lim}->{type}
+                        and exists $data->{lim}->{version})
                     {
-                        if ($data->{Lim}->{type} eq 'agent') {
-                            $self->{agent}->{$id}->{status} = ONLINE;
-                            $self->{agent}->{$id}->{status_message} = 'Online';
-                            $self->{agent}->{$id}->{version} = $data->{Lim}->{version};
+                        if ($data->{lim}->{type} eq 'agent') {
+                            $agent->{status} = ONLINE;
+                            $agent->{status_message} = 'Online';
+                            $agent->{version} = $data->{lim}->{version};
+                            $self->AgentGetInformation($id);
                         }
                         else {
-                            $self->{agent}->{$id}->{status} = WRONG_TYPE;
-                            $self->{agent}->{$id}->{status_message} = 'Expected agent but got '.$data->{Lim}->{type};
+                            $agent->{status} = WRONG_TYPE;
+                            $agent->{status_message} = 'Expected agent but got '.$data->{lim}->{type};
                         }
                     }
                     else {
-                        $self->{agent}->{$id}->{status} = INVALID;
-                        $self->{agent}->{$id}->{status_message} = 'Invalid data returned';
+                        $agent->{status} = INVALID;
+                        $agent->{status_message} = 'Invalid data returned';
                     }
                 }
                 elsif ($cli->status == Lim::RPC::Client::ERROR) {
-                    $self->{agent}->{$id}->{status} = OFFLINE;
-                    $self->{agent}->{$id}->{status_message} = 'Error: '.$cli->error;
+                    $agent->{status} = OFFLINE;
+                    $agent->{status_message} = 'Error: '.$cli->error;
                 }
                 else {
-                    $self->{agent}->{$id}->{status} = OFFLINE;
-                    $self->{agent}->{$id}->{status_message} = 'Unknown';
+                    $agent->{status} = OFFLINE;
+                    $agent->{status_message} = 'Unknown';
                 }
                 
                 delete $agent->{watcher_status};
             });
-        $self->{agent}->{$id}->{status} = CONNECTING;
-        $self->{agent}->{$id}->{status_message} = 'Connecting';
     }
+}
+
+=head2 function2
+
+=cut
+
+sub AgentGetInformation {
+    my ($self, $id) = @_;
     
-    $real_self;
+    if (defined $id and exists $self->{agent}->{$id} and !exists $self->{agent}->{$id}->{watcher_information}) {
+        my $agent = $self->{agent}->{$id};
+
+        if ($agent->{status} == ONLINE) {
+            weaken($agent);
+            $agent->{watcher_information} = Lim::RPC::Client->new(
+                host => $agent->{host},
+                port => $agent->{port},
+                uri => '/agent/manage',
+                cb => sub {
+                    my ($cli, $data) = @_;
+                    
+                    if ($cli->status == Lim::RPC::Client::OK
+                        and defined $data and ref($data) eq 'HASH'
+                        and exists $data->{manage}
+                        and ref($data->{manage}) eq 'ARRAY')
+                    {
+                        $agent->{manage} = $data->{manage};
+                    }
+                    
+                    delete $agent->{watcher_information};
+                });
+        }
+    }
 }
 
 =head1 AUTHOR

@@ -131,14 +131,15 @@ sub ReadManage
                     my (undef, $data) = @_;
                     
                     if ($cli->status == Lim::RPC::Client::OK) {
-                        use Data::Dumper;
-                        print Dumper($data),"\n";
+                        Lim::RPC::R($cb, $data, {
+                           'base.manage' => [ 'type', 'name', 'plugin', 'actions' ] 
+                        });
                     }
                     else {
                         # TODO: cli not ok
+                        Lim::RPC::R($cb);
                     }
                     undef($cli);
-                    Lim::RPC::R($cb);
                 });
             return;
         }
@@ -182,17 +183,17 @@ sub ExecutorGetStatus {
                 
                 if ($cli->status == Lim::RPC::Client::OK) {
                     if (defined $data and ref($data) eq 'HASH'
-                        and exists $data->{Lim}->{type}
-                        and exists $data->{Lim}->{version})
+                        and exists $data->{lim}->{type}
+                        and exists $data->{lim}->{version})
                     {
-                        if ($data->{Lim}->{type} eq 'executor') {
+                        if ($data->{lim}->{type} eq 'executor') {
                             $self->{executor}->{status} = ONLINE;
                             $self->{executor}->{status_message} = 'Online';
-                            $self->{executor}->{version} = $data->{Lim}->{version};
+                            $self->{executor}->{version} = $data->{lim}->{version};
                         }
                         else {
                             $self->{executor}->{status} = WRONG_TYPE;
-                            $self->{executor}->{status_message} = 'Expected executor but got '.$data->{Lim}->{type};
+                            $self->{executor}->{status_message} = 'Expected executor but got '.$data->{lim}->{type};
                         }
                     }
                     else {
