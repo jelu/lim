@@ -1,13 +1,11 @@
-package Lim::Manager;
+package Lim::RPC::Callback::JSON;
 
 use common::sense;
 use Carp;
 
-use Scalar::Util qw(blessed);
 use Log::Log4perl ();
 
 use Lim ();
-use base qw(Lim::RPC);
 
 =head1 NAME
 
@@ -19,9 +17,6 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::VERSION;
-our $INSTANCE;
-
 =head1 SYNOPSIS
 
 ...
@@ -32,16 +27,21 @@ our $INSTANCE;
 
 =cut
 
-sub _new {
+sub new {
     my $this = shift;
     my $class = ref($this) || $this;
+    my ($cb) = @_;
     my $self = {
-        logger => Log::Log4perl->get_logger,
-        manage => {},
-        manages => []
+        logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
+
+    unless (defined $cb and ref($cb) eq 'CODE') {
+        confess __PACKAGE__, ': Callback not given or invalid';
+    }
     
+    $self->{cb} = $cb;
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -49,74 +49,14 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-
-    delete $self->{manage};
-    delete $self->{manages};
 }
 
 =head2 function1
 
 =cut
 
-sub instance {
-    $INSTANCE ||= Lim::Manager->_new;
-}
-
-=head2 function1
-
-=cut
-
-sub deinstance {
-    undef($INSTANCE);
-}
-
-=head2 function1
-
-=cut
-
-sub Module {
-    'Manager';
-}
-
-=head2 function1
-
-=cut
-
-sub Manage {
-    my ($self, $manage) = @_;
-    
-    if (blessed $manage and $manage->isa('Lim::Manage')) {
-        if (exists $self->{manage}->{$manage->type}->{$manage->name}->{$manage->plugin}) {
-            confess __PACKAGE__, ': Object [type: ', $manage->type, ' name: ', $manage->name, '] already managed by ', $manage->plugin;
-        }
-        
-        $self->{manage}->{$manage->type}->{$manage->name}->{$manage->plugin} = $manage;
-        push(@{$self->{manages}}, $manage);
-    }
-}
-
-=head2 function1
-
-=cut
-
-sub ReadIndex {
-    my ($self, $cb) = Lim::RPC::C(@_, undef);
-
-    my @manages;
-    foreach (@{$self->{manages}}) {
-        push(@manages, {
-            type => $_->type,
-            name => $_->name,
-            plugin => $_->plugin,
-            actions => [ $_->actions ]
-        });
-    }
-
-    Lim::RPC::R($cb, {
-        manage => \@manages
-    }, {
-       'base.manage' => [ 'type', 'name', 'plugin' ] 
-    });
+sub cb {
+    $_[0]->{cb}
 }
 
 =head1 AUTHOR
@@ -178,4 +118,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Manager
+1; # End of Lim::RPC::Callback::JSON

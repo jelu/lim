@@ -91,13 +91,11 @@ sub Agent {
 =cut
 
 sub ReadAgents {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R(
-        Lim::DB->schema->resultset('Agent'),
-        {
-            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
-        });
+    Lim::RPC::R($cb, Lim::DB->schema->resultset('Agent'), {
+        'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+    });
 }
 
 =head2 function1
@@ -105,7 +103,7 @@ sub ReadAgents {
 =cut
 
 sub ReadAgent {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//ReadAgent/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//ReadAgent/');
     my $r = {};
 
     if (defined $id) {
@@ -132,10 +130,9 @@ sub ReadAgent {
         }
     }
     
-    $self->R($r,
-        {
-            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+    });
 }
 
 =head2 function1
@@ -143,7 +140,7 @@ sub ReadAgent {
 =cut
 
 sub CreateAgent {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//CreateAgent/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//CreateAgent/');
     my $r = {};
     
     if (ref($q) eq 'HASH') {
@@ -166,10 +163,9 @@ sub CreateAgent {
         }
     }
     
-    $self->R($r,
-        {
-            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+    });
 }
 
 =head2 function1
@@ -177,7 +173,7 @@ sub CreateAgent {
 =cut
 
 sub UpdateAgent {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//UpdateAgent/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//UpdateAgent/');
     my $r = {};
 
     if (defined $id) {
@@ -211,10 +207,9 @@ sub UpdateAgent {
         }
     }
 
-    $self->R($r,
-        {
-            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+    });
 }
 
 =head2 function1
@@ -222,7 +217,7 @@ sub UpdateAgent {
 =cut
 
 sub DeleteAgent {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//DeleteAgent/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//DeleteAgent/');
     my $r = {};
 
     if (defined $id) {
@@ -256,10 +251,9 @@ sub DeleteAgent {
         }
     }
 
-    $self->R($r,
-        {
-            'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.agent' => [ 'agent_id', 'agent_name', 'agent_host', 'agent_port' ]
+    });
 }
 
 =head1 AUTHOR

@@ -93,10 +93,10 @@ sub Module {
 =cut
 
 sub ReadIndex {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R({
-       plugin => [ values %{$_[0]->{plugin}} ]
+    Lim::RPC::R($cb, {
+       plugin => [ values %{$self->{plugin}} ]
     }, {
         'base.plugin' => [ 'name', 'module' ]
     });

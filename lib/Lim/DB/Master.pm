@@ -74,13 +74,11 @@ sub WSDL {
 =cut
 
 sub ReadMasters {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R(
-        Lim::DB->schema->resultset('Master'),
-        {
-            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
-        });
+    Lim::RPC::R($cb, Lim::DB->schema->resultset('Master'), {
+        'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+    });
 }
 
 =head2 function1
@@ -88,7 +86,7 @@ sub ReadMasters {
 =cut
 
 sub ReadMaster {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//ReadMaster/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//ReadMaster/');
     my $r = {};
 
     if (defined $id) {
@@ -115,10 +113,9 @@ sub ReadMaster {
         }
     }
     
-    $self->R($r,
-        {
-            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+    });
 }
 
 =head2 function1
@@ -126,7 +123,7 @@ sub ReadMaster {
 =cut
 
 sub CreateMaster {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//CreateMaster/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//CreateMaster/');
     my $r = {};
     
     if (ref($q) eq 'HASH') {
@@ -149,10 +146,9 @@ sub CreateMaster {
         }
     }
 
-    $self->R($r,
-        {
-            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+    });
 }
 
 =head2 function1
@@ -160,7 +156,7 @@ sub CreateMaster {
 =cut
 
 sub UpdateMaster {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//UpdateMaster/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//UpdateMaster/');
     my $r = {};
 
     if (defined $id) {
@@ -194,10 +190,9 @@ sub UpdateMaster {
         }
     }
 
-    $self->R($r,
-        {
-            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+    });
 }
 
 =head2 function1
@@ -205,7 +200,7 @@ sub UpdateMaster {
 =cut
 
 sub DeleteMaster {
-    my ($self, $q, $id) = Lim::RPC::F(@_, '//DeleteMaster/');
+    my ($self, $cb, $q, $id) = Lim::RPC::C(@_, '//DeleteMaster/');
     my $r = {};
 
     if (defined $id) {
@@ -239,10 +234,9 @@ sub DeleteMaster {
         }
     }
 
-    $self->R($r,
-        {
-            'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
-        });
+    Lim::RPC::R($cb, $r, {
+        'base.master' => [ 'master_id', 'master_name', 'master_host', 'master_port' ]
+    });
 }
 
 =head1 AUTHOR

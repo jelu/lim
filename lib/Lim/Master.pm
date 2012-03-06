@@ -80,8 +80,12 @@ sub new {
         after => AGENT_STATUS_INTERVAL,
         interval => AGENT_STATUS_INTERVAL,
         cb => sub {
-            foreach (keys %{$self->{agent}}) {
-                $self->AgentGetStatus($_);
+            unless (exists $self->{run_agent_status}) {
+                $self->{run_agent_status} = 1;
+                foreach (keys %{$self->{agent}}) {
+                    $self->AgentGetStatus($_);
+                }
+                delete $self->{run_agent_status};
             }
         });
     
@@ -115,10 +119,10 @@ sub Module {
 =cut
 
 sub ReadAgents {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R({
-        agent => $_[0]->{agent}
+    Lim::RPC::R($cb, {
+        agent => $self->{agent}
     });
 }
 

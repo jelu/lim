@@ -83,7 +83,11 @@ sub new {
         after => EXECUTOR_STATUS_INTERVAL,
         interval => EXECUTOR_STATUS_INTERVAL,
         cb => sub {
-            $self->ExecutorGetStatus;
+            unless (exists $self->{run_executor_status}) {
+                $self->{run_executor_status} = 1;
+                $self->ExecutorGetStatus;
+                delete $self->{run_executor_status};
+            }
         });
     
     $args{server}->serve(
@@ -113,30 +117,30 @@ sub Module {
 
 sub ReadManage
 {
-    my ($self) = Lim::RPC::F(@_, undef);
-    weaken($self);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
 
     if (exists $self->{executor}) {
         if ($self->{executor}->{status} == ONLINE) {
-            my $cv = AnyEvent->condvar;
             my ($cli, $data);
+            weaken($self);
             $cli = Lim::RPC::Client->new(
                 host => $self->{executor}->{host},
                 port => $self->{executor}->{port},
                 uri => '/manager',
                 cb => sub {
-                    (undef, $data) = @_;
-                    $cv->send;
+                    my (undef, $data) = @_;
+                    
+                    if ($cli->status == Lim::RPC::Client::OK) {
+                        use Data::Dumper;
+                        print Dumper($data),"\n";
+                    }
+                    else {
+                        # TODO: cli not ok
+                    }
+                    undef($cli);
+                    Lim::RPC::R($cb);
                 });
-            $cv->recv;
-            
-            if ($cli->status == Lim::RPC::Client::OK) {
-                use Data::Dumper;
-                print Dumper($data),"\n";
-            }
-            else {
-                # TODO: cli not ok
-            }
+            return;
         }
         else {
             # TODO: executor not online
@@ -145,7 +149,7 @@ sub ReadManage
     else {
         # TODO: no executor
     }
-    
+    Lim::RPC::R($cb);
 }
 
 =head2 function2

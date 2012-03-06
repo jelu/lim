@@ -70,12 +70,12 @@ sub Module {
 =cut
 
 sub ReadIndex {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R({
+    Lim::RPC::R($cb, {
         Lim => {
             version => $VERSION,
-            type => $_[0]->{type}
+            type => $self->{type}
         }
     });
 }
@@ -85,9 +85,9 @@ sub ReadIndex {
 =cut
 
 sub ReadVersion {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R({
+    Lim::RPC::R($cb, {
         version => $VERSION
     });
 }
@@ -97,10 +97,10 @@ sub ReadVersion {
 =cut
 
 sub ReadType {
-    Lim::RPC::F(@_, undef);
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
     
-    $_[0]->R({
-        type => $_[0]->{type}
+    Lim::RPC::R($cb, {
+        type => $self->{type}
     });
 }
 

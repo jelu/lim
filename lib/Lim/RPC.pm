@@ -47,30 +47,28 @@ sub WSDL {
 
 =cut
 
-sub isSoap {
-    $_[0]->{__rpc_isSoap} = $_[1] if (defined $_[1]);
-    
-    $_[0]->{__rpc_isSoap};
-}
+sub C {
+    my $object = shift;
 
-=head2 function1
-
-=cut
-
-sub F {
-    if (blessed($_[scalar @_ - 2]) and $_[scalar @_ - 2]->isa('SOAP::SOM')) {
+    my $som = $_[scalar @_ - 2];
+    if (blessed($som) and $som->isa('SOAP::SOM')) {
+        unless (exists $som->{__lim_rpc_cb} and blessed($som->{__lim_rpc_cb}) and $som->{__lim_rpc_cb}->isa('Lim::RPC::Callback::SOAP')) {
+            confess __PACKAGE__, ': SOAP::SOM does not contain lim rpc callback or invalid';
+        }
+        my $cb = $som->{__lim_rpc_cb};
+        delete $som->{__lim_rpc_cb};
         my $valueof = pop;
         my $som = pop;
-        $_[0]->{__rpc_isSoap} = 1;
         if (defined $valueof) {
-            $_[1] = $som->valueof($valueof);
+            $som->valueof($valueof);
         }
+        return ($object, $cb, @_);
     }
     else {
         pop;
     }
-    
-    @_;
+
+    return ($object, @_);
 }
 
 =head2 function1
@@ -164,33 +162,37 @@ sub __result {
 }
 
 sub R {
-    if (blessed($_[1])) {
-        if ($_[1]->isa('DBIx::Class::ResultSet')) {
+    my ($cb, $data, $map) = @_;
+    
+    if (blessed($data)) {
+        if ($data->isa('DBIx::Class::ResultSet')) {
             my @r;
-            my $c = lc($_[1]->result_source->source_name);
-            foreach ($_[1]->all) {
+            my $c = lc($data->result_source->source_name);
+            foreach ($data->all) {
                 my %r = $_->get_columns;
                 push(@r, \%r);
             }
-            $_[1] = { $c => \@r };
+            $data = { $c => \@r };
         }
     }
     
-    if (exists $_[0]->{__rpc_isSoap} and $_[0]->{__rpc_isSoap}) {
-        if (ref($_[1]) eq 'HASH') {
-            $_[0]->{__rpc_isSoap} = 0;
-            return SOAP::Data->value(Lim::RPC::__result('base', $_[1], $_[2]));
+    unless (blessed($cb)) {
+        confess __PACKAGE__, ': cb not blessed';
+    }
+    
+    if ($cb->isa('Lim::RPC::Callback::SOAP')) {
+        if (ref($data) eq 'HASH') {
+            return $cb->cb->(SOAP::Data->value(Lim::RPC::__result('base', $data, $map)));
         }
         else {
-            $_[0]->{__rpc_isSoap} = 0;
-            return SOAP::Data->value($_[1]);
+            return $cb->cb->(SOAP::Data->value($data));
         }
     }
 
-    if (ref($_[1]) eq 'ARRAY' or ref($_[1]) eq 'HASH') {
-        return $_[1];
+    if (ref($data) eq 'ARRAY' or ref($data) eq 'HASH') {
+        return $cb->cb->($data);
     }
-    [ $_[1] ];
+    $cb->cb->([ $data ]);
 }
 
 =head1 AUTHOR
