@@ -27,12 +27,12 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub UNKNOWN (){ 0 }
-sub CONNECTING (){ 1 }
-sub ONLINE (){ 2 }
-sub OFFLINE (){ 3 }
-sub WRONG_TYPE (){ 4 }
-sub INVALID (){ 5 }
+sub UNKNOWN (){ 'UNKNOWN' }
+sub CONNECTING (){ 'CONNECTING' }
+sub ONLINE (){ 'ONLINE' }
+sub OFFLINE (){ 'OFFLINE' }
+sub WRONG_TYPE (){ 'WRONG_TYPE' }
+sub INVALID (){ 'INVALID' }
 
 sub AGENT_STATUS_INTERVAL (){ 10 }
 
@@ -122,7 +122,10 @@ sub ReadAgents {
     my ($self, $cb) = Lim::RPC::C(@_, undef);
     
     Lim::RPC::R($cb, {
-        agent => $self->{agent}
+        agent => [ values %{$self->{agent}} ]
+    }, {
+        'base.agent' => [ 'id', 'name', 'host', 'port', 'status', 'status_message', 'manage' ],
+        'base.agent.manage' => [ 'type', 'name', 'plugin', 'actions' ]
     });
 }
 
