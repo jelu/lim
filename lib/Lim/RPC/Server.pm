@@ -10,8 +10,6 @@ use AnyEvent ();
 use AnyEvent::Socket ();
 use AnyEvent::TLS ();
 
-use SOAP::Transport::HTTP ();
-
 use Lim ();
 use Lim::RPC::Server::Client ();
 
@@ -74,10 +72,6 @@ sub new {
         $self->{html} = $args{html};
     }
     $self->{wsdl} = $args{wsdl};
-
-    $self->{soap} = SOAP::Transport::HTTP::Server->new;
-    $self->{soap}->serializer->ns('urn:Lim', 'lim1');
-    $self->{soap}->serializer->autotype(0);
 
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
@@ -151,8 +145,6 @@ sub serve {
             $self->{wsdl_module}->{$wsdl} = $module;
         }
     }
-    
-    $self->{soap}->dispatch_to(@{$self->{modules}});
     
     $self;
 }
