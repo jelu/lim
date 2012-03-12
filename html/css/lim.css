@@ -26,13 +26,33 @@ form fieldset {
 	margin-top: 25px;
 }
 
-#menubar {
+.lim-menubar > ul {
 	margin: 0 0 4em;
 }
 
-#console {
+.lim-console {
 	padding: 2px;
 	font-size: 1em;
+}
+
+.lim-master .lim-master-header {
+	display: table;
+	margin-bottom: 0.5em;	
+}
+.lim-master .lim-master-header > div {
+	display: table-row;
+}
+.lim-master .lim-master-header > div > div:first-child {
+	display: table-cell;
+	width: 35%;
+}
+.lim-master .lim-master-header > div > div:last-child {
+	display: table-cell;
+	width: 75%;
+}
+.lim-master-context-menu {
+	position: absolute;
+	z-index: 9999;
 }
 
 .ui-menu {
