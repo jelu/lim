@@ -20,6 +20,7 @@ my $port = 5355;
 my $key;
 my $log4perl;
 my $wsdl = '/usr/share/lim/wsdl';
+my $prefix;
 
 Getopt::Long::GetOptions(
 	'help|?' => \$help,
@@ -27,7 +28,8 @@ Getopt::Long::GetOptions(
 	'port:i' => \$port,
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
-    'wsdl:s' => \$wsdl
+    'wsdl:s' => \$wsdl,
+    'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -47,6 +49,15 @@ else {
     log4perl.appender.Lim.layout   = Log::Log4perl::Layout::PatternLayout
     log4perl.appender.Lim.layout.ConversionPattern = %d %F [%L] %p: %m%n
     ) );
+}
+
+if (defined $prefix) {
+    Lim::Config->{prefix} = [];
+    
+    foreach (split(/,/o, $prefix)) {
+        s/\/+$//o;
+        push(@{Lim::Config->{prefix}}, $_);
+    }
 }
 
 my $cv = AnyEvent->condvar;

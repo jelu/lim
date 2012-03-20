@@ -16,6 +16,7 @@ Version 0.01
 =cut
 
 our $VERSION = '0.01';
+our $CONFIG;
 
 sub OBJ_DEBUG (){ 1 }
 sub DEBUG (){ 1 }
@@ -55,6 +56,16 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+}
+
+=head2 function1
+
+=cut
+
+sub Config {
+    $CONFIG ||= {
+        prefix => [qw(/ /usr /usr/local)]
+    };
 }
 
 =head2 function1

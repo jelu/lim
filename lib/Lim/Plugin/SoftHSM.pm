@@ -25,7 +25,8 @@ See L<Lim> for version.
 our %ConfigFiles = (
     'softhsm.conf' => [
         '/etc/softhsm/softhsm.conf',
-        '/etc/softhsm.conf'
+        '/etc/softhsm.conf',
+        'softhsm.conf'
     ]
 );
 
@@ -45,14 +46,25 @@ sub Init {
     
     foreach my $config (keys %ConfigFiles) {
         foreach my $file (@{$ConfigFiles{$config}}) {
-            if (-f $file) {
+            my $real_file;
+            
+            if (defined ($real_file = $self->FileWritable($file))) {
                 Lim::Manager->instance->Manage(
                     Lim::Manage::Config->new(
-                        name => $file,
-                        file => $file,
+                        name => $config,
+                        file => $real_file,
                         plugin => 'Lim::Plugin::SoftHSM',
                         action => Lim::Manage::Config::VIEW &
                             Lim::Manage::Config::EDIT
+                    ));
+            }
+            elsif (defined ($real_file = $self->FileReadable($file))) {
+                Lim::Manager->instance->Manage(
+                    Lim::Manage::Config->new(
+                        name => $config,
+                        file => $real_file,
+                        plugin => 'Lim::Plugin::SoftHSM',
+                        action => Lim::Manage::Config::VIEW
                     ));
             }
         }

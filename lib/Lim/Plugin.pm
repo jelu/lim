@@ -71,6 +71,67 @@ sub Destroy {
 sub Manage {
 }
 
+=head2 function1
+
+=cut
+
+sub FileExists {
+    my ($self, $file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            Lim::DEBUG and $self->{logger}->debug('check file exists ', $real_file);
+            if (-f $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
+
+=head2 function1
+
+=cut
+
+sub FileReadable {
+    my ($self, $file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            Lim::DEBUG and $self->{logger}->debug('check file readable ', $real_file);
+            if (-f $real_file and -r $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
+
+
+=head2 function1
+
+=cut
+
+sub FileWritable {
+    my ($self, $file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            Lim::DEBUG and $self->{logger}->debug('check file writable ', $real_file);
+            if (-f $real_file and -w $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
