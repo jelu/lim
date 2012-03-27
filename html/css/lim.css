@@ -51,8 +51,10 @@ form fieldset {
 	width: 75%;
 }
 .lim-master-context-menu {
+	display: none;
 	position: absolute;
 	z-index: 9999;
+	padding: 10px;
 }
 
 .ui-menu {

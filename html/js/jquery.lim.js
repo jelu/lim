@@ -152,7 +152,7 @@
 			
 			this.element.addClass('lim-console').attr('title', 'Console').dialog({
 				height: 150,
-				width: '50%',
+				width: 500,
 				position: [ 'left', 'bottom' ]
 			});
 		},
@@ -206,6 +206,12 @@
 			this._lim = this.options.lim;
 			var self = this.element, that = this;
 
+			this._contextMenu = $('<div class="lim-master-context-menu"></div>')
+				.mouseleave(function () {
+					$(this).hide();
+				})
+				.appendTo('body');
+			
 			self.html(
 				'<div class="lim-master-header">'+
 				'<div><div>URI:</div><div><span id="uri"></span></div></div>'+
@@ -223,7 +229,7 @@
 					title: 'Master',
 					dialogClass: 'lim-master',
 					height: 'auto',
-					width: '80%',
+					width: 700,
 					modal: false,
 					close: function (event, ui) {
 						self.remove();
@@ -241,7 +247,20 @@
 		            { sTitle: 'Status', sClass: 'center' }
 		        ]
 		    }).find('tbody tr').live('contextmenu', function (e) {
-		    	$(that._lim).lim('logDebug', 'contextmenu');
+		    	that._contextMenu
+		    		.html('<ul><li><a href="#" action="refreshAgents">Refresh</a></li></ul>')
+		    		.find('ul')
+		    		.menu({
+		    			select: function (event, ui) {
+							event.preventDefault();
+							that._contextMenu.hide();
+							self.limMaster($('a', ui.item).first().attr('action'));
+						}
+		    		});
+	    		that._contextMenu.css({
+		    			top: (e.pageY-8)+'px',
+		    			left: (e.pageX-8)+'px'
+		    		}).show();
 				return false;
 			});
 			self.find('#manage').dataTable({
@@ -256,18 +275,25 @@
 		            { sTitle: 'Actions' }
 		        ]
 		    }).find('tbody tr').live('contextmenu', function (e) {
-		    	$(that._lim).lim('logDebug', 'contextmenu');
+		    	that._contextMenu
+		    		.html('<ul>'+
+		    			'<li><a href="#" action="dummy">View</a></li>'+
+		    			'<li><a href="#" action="dummy">Edit</a></li>'+
+		    			'</ul>')
+		    		.find('ul')
+		    		.menu({
+		    			select: function (event, ui) {
+							event.preventDefault();
+							that._contextMenu.hide();
+							self.limMaster($('a', ui.item).first().attr('action'));
+						}
+		    		});
+	    		that._contextMenu.css({
+		    			top: (e.pageY-8)+'px',
+		    			left: (e.pageX-8)+'px'
+		    		}).show();
 				return false;
 			});
-			
-			this._contextMenu = $('<div class="lim-master-context-menu"><ul>'+
-				'<li><a href="#" action="toggleConsole">Toggle Console</a></li>'+
-				'<li><a href="#" action="preference">Preference</a></li>'+
-				'<li><a href="#" action="about">About</a></li>'+
-				'</ul></div>').mouseleave(function () {
-					$(this).hide();
-				})
-				.children('ul').menu();
 			
 			if (this.options.uri) {
 				this.connect();
@@ -305,6 +331,9 @@
 			}
 			if (this._dialog) {
 				this._dialog.remove();
+			}
+			if (this._contextMenu) {
+				this._contextMenu.remove();
 			}
 		},
 		connect: function (uri) {
@@ -374,6 +403,9 @@
 				}, 10000);
 			}
 		},
+		refreshAgents: function () {
+			this.loadAgents(true);
+		},
 		loadAgents: function (reload) {
 			var el = this.element;
 			
@@ -387,9 +419,10 @@
 					el.find('#manage').dataTable().fnClearTable();
 				}
 				
+				var that = this;
 				$(this._lim).lim('call', this.options.uri+'/master/agents', function (data, status) {
 					if (typeof data === 'object' && data.agent) {
-						this._agents = data.agent;
+						that._agents = data.agent;
 						
 						var dtAgent = el.find('#agents').dataTable(),
 							dtManage = el.find('#manage').dataTable();
@@ -405,9 +438,11 @@
 							}
 						}
 					}
-					this._agentCall = false;
+					that._agentCall = false;
 				});
 			}
+		},
+		dummy: function () {
 		}
 	});
 })(jQuery);
