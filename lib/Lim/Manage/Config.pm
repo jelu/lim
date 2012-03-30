@@ -15,8 +15,8 @@ See L<Lim> for version.
 
 =cut
 
-sub VIEW (){ 1<<1 }
-sub EDIT (){ 1<<2 }
+sub VIEW (){ 'view' }
+sub EDIT (){ 'edit' }
 
 =head1 SYNOPSIS
 
@@ -37,8 +37,8 @@ sub Init {
     }
     
     $self->{type} = 'config';
-    $self->__add_action(VIEW, 'view');
-    $self->__add_action(EDIT, 'edit');
+    $self->add_action(VIEW, 'View', 'view');
+    $self->add_action(EDIT, 'Edit', 'edit');
 
     $self->{file} = $args{file};
 }

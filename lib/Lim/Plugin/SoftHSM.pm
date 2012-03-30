@@ -54,8 +54,10 @@ sub Init {
                         name => $config,
                         file => $real_file,
                         plugin => 'Lim::Plugin::SoftHSM',
-                        action => Lim::Manage::Config::VIEW &
+                        action => [
+                            Lim::Manage::Config::VIEW,
                             Lim::Manage::Config::EDIT
+                        ]
                     ));
             }
             elsif (defined ($real_file = $self->FileReadable($file))) {

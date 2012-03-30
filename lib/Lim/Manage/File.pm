@@ -15,6 +15,8 @@ See L<Lim> for version.
 
 =cut
 
+sub VIEW (){ 'view' }
+
 =head1 SYNOPSIS
 
 ...
@@ -28,6 +30,15 @@ See L<Lim> for version.
 sub Init {
     my $self = shift;
     my %args = ( @_ );
+    
+    unless (defined $args{file}) {
+        confess __PACKAGE__, ': Missing file';
+    }
+    
+    $self->{type} = 'file';
+    $self->add_action(VIEW, 'View', 'view');
+
+    $self->{file} = $args{file};
 }
 
 =head2 function1
@@ -35,6 +46,14 @@ sub Init {
 =cut
 
 sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub file {
+    $_[0]->{file};
 }
 
 =head1 AUTHOR

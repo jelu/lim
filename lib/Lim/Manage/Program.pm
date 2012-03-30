@@ -1,6 +1,7 @@
 package Lim::Manage::Program;
 
 use common::sense;
+use Carp;
 
 use base qw(Lim::Manage);
 
@@ -14,7 +15,8 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::VERSION;
+sub START (){ 'start' }
+sub STOP (){ 'stop' }
 
 =head1 SYNOPSIS
 
@@ -29,6 +31,20 @@ our $VERSION = $Lim::VERSION;
 sub Init {
     my $self = shift;
     my %args = ( @_ );
+
+    unless (defined $args{start}) {
+        confess __PACKAGE__, ': Missing start command';
+    }
+    unless (defined $args{stop}) {
+        confess __PACKAGE__, ': Missing stop command';
+    }
+    
+    $self->{type} = 'program';
+    $self->add_action(START, 'Start');
+    $self->add_action(STOP, 'Stop');
+
+    $self->{start} = $args{start};
+    $self->{stop} = $args{stop};
 }
 
 =head2 function1
@@ -36,6 +52,22 @@ sub Init {
 =cut
 
 sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub start {
+    $_[0]->{start};
+}
+
+=head2 function1
+
+=cut
+
+sub stop {
+    $_[0]->{stop};
 }
 
 =head1 AUTHOR

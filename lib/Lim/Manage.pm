@@ -34,7 +34,8 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        action => {}
     };
     bless $self, $class;
     
@@ -50,7 +51,6 @@ sub new {
     
     $self->{name} = $args{name};
     $self->{plugin} = $args{plugin};
-    $self->{action} = $args{action};
 
     $self->Init(%args);
     
@@ -58,12 +58,29 @@ sub new {
         confess __PACKAGE__, ': Init() did not set type';
     }
 
-    my $actions = 0;
-    foreach (values %{$self->{__action_bitmap}}) {
-        $actions &= $_;
+    if (exists $args{action}) {
+        if (ref($args{action}) eq 'ARRAY') {
+            foreach my $action (@{$args{action}}) {
+                unless (exists $self->{action}->{$action}) {
+                    confess __PACKAGE__, ': Invalid action ', $action, ', does not exist';
+                }
+                
+                $self->{action}->{$action}->{enabled} = 1;
+            }
+        }
+        else {
+            unless (exists $self->{action}->{$args{action}}) {
+                confess __PACKAGE__, ': Invalid action ', $args{action}, ', does not exist';
+            }
+            
+            $self->{action}->{$args{action}}->{enabled} = 1;
+        }
     }
-    unless (($args{action} & $actions) == $args{action}) {
-        confess __PACKAGE__, ': Invalid action(s)';
+    
+    foreach my $action (keys %{$self->{action}}) {
+        unless (exists $self->{action}->{$action}->{enabled}) {
+            delete $self->{action}->{$action};
+        }
     }
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -127,32 +144,29 @@ sub action {
 
 =cut
 
-sub actions {
-    if (exists $_[0]->{__action_bitmap}) {
-        return keys %{$_[0]->{__action_bitmap}};
-    }
-}
-
-=head2 function1
-
-=cut
-
-sub __add_action {
-    my ($self, $action, $string) = @_;
-
-    if (defined $action and defined $string) {
-        $string = lc($string);
-        
-        if (exists $self->{__action_string}->{$action} and
-            exists $self->{__action_bitmap}->{$string})
-        {
-            confess __PACKAGE__, ': __add_action failed, ', $string, ' action already added';
-        }
-        
-        $self->{__action_string}->{$action} = $string;
-        $self->{__action_bitmap}->{$string} = $action;
-    }
+sub add_action {
+    my ($self, $action, $displayName, $helper) = @_;
     
+    unless (defined $action) {
+        confess __PACKAGE__, ': no action given';
+    }
+    unless (defined $displayName) {
+        confess __PACKAGE__, ': no displayName given';
+    }
+    unless (defined $helper) {
+        $helper = 'none';
+    }
+    if (exists $self->{action}->{$action})
+    {
+        confess __PACKAGE__, ': action ', $action, ' already exists';
+    }
+        
+    $self->{action}->{$action} = {
+        action => $action,
+        displayName => $displayName,
+        helper => $helper
+    };
+
     $self;
 }
 

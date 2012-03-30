@@ -108,7 +108,7 @@ sub ReadIndex {
             type => $_->type,
             name => $_->name,
             plugin => $_->plugin,
-            actions => [ $_->actions ]
+            actions => [ values %{$_->action} ]
         });
     }
 
