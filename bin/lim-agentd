@@ -129,35 +129,35 @@ lim-agentd [options]
 
 =item B<--host <ip>>
 
-Specify the host/IP to bind to (default 0.0.0.0)
+Specify the host/IP to bind to (default 0.0.0.0).
 
 =item B<--port <port>>
 
-Specify the port to listen on (default 5354)
+Specify the port to listen on (default 5354).
 
 =item B<--key <key>>
 
-Specify the SSL/TLS key to use for HTTPS
+Specify the SSL/TLS key to use for HTTPS.
 
 =item B<--html <path>>
 
-Specify the HTML directory (default /usr/share/lim/html)
+Specify the HTML directory (default /usr/share/lim/html).
 
 =item B<--wsdl <path>>
 
-Specify the WSDL directory (default /usr/share/lim/wsdl)
+Specify the WSDL directory (default /usr/share/lim/wsdl).
 
 =item B<--dsn <DSN>>
 
-Specify the DBI DSN for connecting to the database
+Specify the DBI DSN for connecting to the database.
 
 =item B<--exec-host <host>>
 
-Specify the host of the Executor
+Specify the host of the Executor.
 
 =item B<--exec-port <port>>
 
-Specify the port of the Executor
+Specify the port of the Executor.
 
 =item B<--help>
 

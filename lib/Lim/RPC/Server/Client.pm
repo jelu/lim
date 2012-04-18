@@ -136,7 +136,7 @@ sub new {
                 return;
             }
             
-            if ((length($self->{rbuf}) + length($handle->{rbuf})) > MAX_REQUEST_LEN) {
+            if ((length($self->{headers}) + (exists $self->{content} ? length($self->{content}) : 0) + length($handle->{rbuf})) > MAX_REQUEST_LEN) {
                 if (exists $self->{on_error}) {
                     $self->{on_error}->($self, 1, 'Request too long');
                 }
@@ -561,6 +561,8 @@ sub result {
     $handle->push_write("\r\n");
     $handle->push_write($response->content);
 
+    delete $self->{request};
+    delete $self->{response};
     delete $self->{process_watcher};
 }
 

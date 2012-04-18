@@ -119,6 +119,21 @@ sub ReadIndex {
     });
 }
 
+=head2 function1
+
+=cut
+
+sub ReadAction {
+    my ($self, $cb, $q, $type, $name, $plugin, $action) = Lim::RPC::C(@_, undef);
+
+    if (exists $self->{manage}->{$type}->{$name}->{$plugin}) {
+        $self->{manage}->{$type}->{$name}->{$plugin}->Action($action);
+        # TODO ActionData in/out
+    }
+
+    Lim::RPC::R($cb);
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

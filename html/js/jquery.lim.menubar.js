@@ -16,6 +16,7 @@
 			self.addClass('lim-menubar').html('<ul>'+
 				'<li><a href="#">Lim</a><ul>'+
 				'<li><a href="#" action="toggleConsole">Toggle Console</a></li>'+
+				'<li><a href="#" action="clearConsole">Clear Console</a></li>'+
 				'<li><a href="#" action="preference">Preference</a></li>'+
 				'<li><a href="#" action="about">About</a></li>'+
 				'</ul></li>'+
@@ -33,6 +34,9 @@
 		},
 		toggleConsole: function () {
 			$(this._lim).lim('console').limConsole('toggle');
+		},
+		clearConsole: function () {
+			$(this._lim).lim('console').limConsole('clear');
 		},
 		preference: function () {
 			alert('preference');

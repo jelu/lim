@@ -9,6 +9,7 @@ use Scalar::Util qw(weaken);
 use Lim ();
 use Lim::DB::Agent ();
 use Lim::RPC::Client ();
+use Lim::Helpers ();
 
 use base qw(
     Lim::RPC
@@ -88,9 +89,10 @@ sub new {
                 delete $self->{run_agent_status};
             }
         });
-    
+
     $args{server}->serve(
-        $self->{db_agent}
+        $self->{db_agent},
+        Lim::Helpers->new(html => $args{server}->html)
     );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);

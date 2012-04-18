@@ -170,6 +170,14 @@ sub add_action {
     $self;
 }
 
+=head2 function1
+
+=cut
+
+sub Action {
+    confess __PACKAGE__, ': Action not overloaded';
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

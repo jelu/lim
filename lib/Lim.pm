@@ -21,6 +21,8 @@ our $CONFIG;
 sub OBJ_DEBUG (){ 1 }
 sub DEBUG (){ 1 }
 sub INFO (){ 1 }
+sub WARN (){ 1 }
+sub ERR (){ 1 }
 
 sub SRV_LISTEN (){ 10 }
 

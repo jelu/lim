@@ -9,6 +9,8 @@
 		_create: function () {
 			this._menubar = $('<div></div>').limMenubar({ lim: this.element }).appendTo(this.element);
 			this._console = $('<div></div>').limConsole({ lim: this.element });
+			this._helpers = {};
+			this._helperCall = {};
 		},
 		_destroy: function () {
 			this._menubar = 
@@ -84,6 +86,67 @@
 					}
 				});
 			}
-		}		
+		},
+		loadHelper: function (uri, helper, callback) {
+			if (callback === undefined) {
+				callback = function () {};
+			}
+			if (typeof callback !== 'function') {
+				return false;
+			}
+			
+			if (this._helpers[helper] !== undefined) {
+				callback(true);
+				return true;
+			}
+			
+			if (this._helperCall[helper] === true) {
+				return false;
+			}
+			this._helperCall[helper] = true;
+			
+			this._console.limConsole('debug', 'loading helper '+helper);
+			
+			var that = this;
+			this.call(uri+'/helpers/helper/'+helper, function (data, status) {
+				if (data && typeof data === 'object' && data.helper) {
+					for (var i = 0, len = data.helper.length; i < len; i++) {
+						if (data.helper[i].name == helper) {
+							that._console.limConsole('debug', 'retrieved helper '+helper);
+							try {
+								eval(data.helper[i].code);
+								that._console.limConsole('debug', 'loaded helper '+helper);
+								that._helpers[helper] = data.helper[i];
+								callback(true);
+								that._helperCall[helper] = false;
+								return;
+							}
+							catch (err) {
+								that._console.limConsole('debug', 'failed to eval() helper '+helper+': '+err.message);
+							}
+							break;
+						}
+					}
+				}
+				that._console.limConsole('debug', 'failed to load helper '+helper);
+				callback(false);
+				that._helperCall[helper] = false;
+			});
+			return true;
+		},
+		callHelper: function (helper, options) {
+			if (helper === undefined || typeof options !== 'object') {
+				return false;
+			}
+			
+			if (this._helpers[helper] === undefined) {
+				return false;
+			}
+			
+			this._console.limConsole('debug', 'calling helper '+helper);
+			var object = $('<div></div>');
+			options.lim = this;
+			return object[this._helpers[helper].widget](options);
+		}
 	});
 })(jQuery);

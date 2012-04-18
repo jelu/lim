@@ -60,8 +60,6 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    $self->Destroy;
 }
 
 =head2 function1

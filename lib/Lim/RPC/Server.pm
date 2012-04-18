@@ -70,8 +70,16 @@ sub new {
     $self->{port} = $args{port};
     if (defined $args{html}) {
         $self->{html} = $args{html};
+        
+        unless (-d $self->{html} and -r $self->{html} and -x $self->{html}) {
+            confess __PACKAGE__, ': Path to html "', $self->{html}, '" is invalid';
+        }
     }
     $self->{wsdl} = $args{wsdl};
+
+    unless (-d $self->{wsdl} and -r $self->{wsdl} and -x $self->{wsdl}) {
+        confess __PACKAGE__, ': Path to wsdl "', $self->{wsdl}, '" is invalid';
+    }
 
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
@@ -147,6 +155,46 @@ sub serve {
     }
     
     $self;
+}
+
+=head2 function2
+
+=cut
+
+sub key {
+    $_[0]->{key};
+}
+
+=head2 function2
+
+=cut
+
+sub port {
+    $_[0]->{port};
+}
+
+=head2 function2
+
+=cut
+
+sub host {
+    $_[0]->{host};
+}
+
+=head2 function2
+
+=cut
+
+sub wsdl {
+    $_[0]->{wsdl};
+}
+
+=head2 function2
+
+=cut
+
+sub html {
+    $_[0]->{html};
 }
 
 =head1 AUTHOR

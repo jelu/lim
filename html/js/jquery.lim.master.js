@@ -58,7 +58,8 @@
 		            { sTitle: 'Host', sClass: 'center' },
 		            { sTitle: 'Port', sClass: 'center' },
 		            { sTitle: 'Status', sClass: 'center' }
-		        ]
+		        ],
+		        bAutoWidth: false
 		    }).find('tbody tr').live('contextmenu', function (e) {
 		    	that._contextMenu
 		    		.html('<ul><li><a href="#" action="refreshAgents">Refresh</a></li></ul>')
@@ -80,31 +81,50 @@
 				bJQueryUI: true,
 		        sPaginationType: 'full_numbers',
 		        aoColumns: [
-		            { sTitle: 'Agent Id', sClass: 'center' },
-		            { sTitle: 'Agent Name' },
+		            { bVisible: false, bSearchable: false, bUseRendered: false },
+		            { bVisible: false, bSearchable: false, bUseRendered: false },
+		            { sTitle: 'Agent', sClass: 'center' },
 		            { sTitle: 'Plugin' },
 		            { sTitle: 'Name' },
 		            { sTitle: 'Type', sClass: 'center' }
-		        ]
+		        ],
+		        bAutoWidth: false
 		    }).find('tbody tr').live('contextmenu', function (e) {
-		    	that._contextMenu
-		    		.html('<ul>'+
-		    			'<li><a href="#" action="dummy">View</a></li>'+
-		    			'<li><a href="#" action="dummy">Edit</a></li>'+
-		    			'</ul>')
-		    		.find('ul')
-		    		.menu({
-		    			select: function (event, ui) {
-							event.preventDefault();
-							that._contextMenu.hide();
-							self.limMaster($('a', ui.item).first().attr('action'));
-						}
-		    		});
-	    		that._contextMenu.css({
-		    			top: (e.pageY-8)+'px',
-		    			left: (e.pageX-8)+'px'
-		    		}).show();
-				return false;
+		    	var oTable = self.find('#manage').dataTable();
+		    	var aPos = oTable.fnGetPosition(this);
+		    	var data = oTable.fnSettings().aoData[aPos]._aData;
+		    	
+		    	var agent = that._agents[data[0]];
+		    	if (agent) {
+		    		var manage = agent.manage[data[1]];
+		    		if (manage) {
+    					var html = '';
+    					
+    					for (var i = 0, len = manage.actions.length; i < len; i++) {
+    						html += '<li><a href="#" helper="'+ manage.actions[i].helper +'">' + manage.actions[i].displayName + '</a></li>';
+    					}
+    					
+				    	that._contextMenu
+			    		.html('<ul>'+html+'</ul>')
+			    		.find('ul')
+			    		.menu({
+			    			select: function (event, ui) {
+								event.preventDefault();
+								that._contextMenu.hide();
+								$(that._lim).lim('callHelper', $('a', ui.item).first().attr('helper'), {
+									uri: that.options.uri,
+									agent: agent,
+									manage: manage
+								});
+							}
+			    		});
+				    	that._contextMenu.css({
+			    			top: (e.pageY-8)+'px',
+			    			left: (e.pageX-8)+'px'
+			    		}).show();
+		    		}
+		    	}
+		    	return false;
 			});
 			
 			if (this.options.uri) {
@@ -233,22 +253,30 @@
 				
 				var that = this;
 				$(this._lim).lim('call', this.options.uri+'/master/agents', function (data, status) {
-					if (typeof data === 'object' && data.agent) {
+					if (data && typeof data === 'object' && data.agent) {
 						that._agents = data.agent;
 						
 						var dtAgent = el.find('#agents').dataTable(),
 							dtManage = el.find('#manage').dataTable();
 						for (var iAgent = 0, lenAgent = data.agent.length; iAgent < lenAgent; iAgent++) {
 							var agent = data.agent[iAgent];
-							dtAgent.fnAddData([ agent.id, agent.name, agent.host, agent.port, agent.status ]);
+							dtAgent.fnAddData([ agent.id, agent.name, agent.host, agent.port, agent.status ], false);
 							
 							if (typeof agent.manage === 'object' && agent.manage.length) {
 								for (var iManage = 0, lenManage = agent.manage.length; iManage < lenManage; iManage++) {
 									var manage = agent.manage[iManage];
-									dtManage.fnAddData([ agent.id, agent.name, manage.plugin, manage.name, manage.type ]);
+									dtManage.fnAddData([ iAgent, iManage, agent.name, manage.plugin, manage.name, manage.type ], false);
+									
+									for (var iAction = 0, lenAction = manage.actions.length; iAction < lenAction; iAction++) {
+										var action = manage.actions[iAction];
+										$(that._lim).lim('loadHelper', that.options.uri, action.helper);
+									}
 								}
 							}
 						}
+						
+						dtAgent.fnDraw();
+						dtManage.fnDraw();
 					}
 					that._agentCall = false;
 				});
