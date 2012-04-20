@@ -60,12 +60,12 @@ sub new {
 
     if (exists $args{action}) {
         if (ref($args{action}) eq 'ARRAY') {
-            foreach my $action (@{$args{action}}) {
-                unless (exists $self->{action}->{$action}) {
-                    confess __PACKAGE__, ': Invalid action ', $action, ', does not exist';
+            foreach my $name (@{$args{action}}) {
+                unless (exists $self->{action}->{$name}) {
+                    confess __PACKAGE__, ': Invalid action ', $name, ', does not exist';
                 }
                 
-                $self->{action}->{$action}->{enabled} = 1;
+                $self->{action}->{$name}->{enabled} = 1;
             }
         }
         else {
@@ -77,9 +77,9 @@ sub new {
         }
     }
     
-    foreach my $action (keys %{$self->{action}}) {
-        unless (exists $self->{action}->{$action}->{enabled}) {
-            delete $self->{action}->{$action};
+    foreach my $name (keys %{$self->{action}}) {
+        unless (exists $self->{action}->{$name}->{enabled}) {
+            delete $self->{action}->{$name};
         }
     }
     
@@ -145,9 +145,9 @@ sub action {
 =cut
 
 sub add_action {
-    my ($self, $action, $displayName, $helper) = @_;
+    my ($self, $name, $displayName, $helper) = @_;
     
-    unless (defined $action) {
+    unless (defined $name) {
         confess __PACKAGE__, ': no action given';
     }
     unless (defined $displayName) {
@@ -156,13 +156,13 @@ sub add_action {
     unless (defined $helper) {
         $helper = 'none';
     }
-    if (exists $self->{action}->{$action})
+    if (exists $self->{action}->{$name})
     {
-        confess __PACKAGE__, ': action ', $action, ' already exists';
+        confess __PACKAGE__, ': action ', $name, ' already exists';
     }
         
-    $self->{action}->{$action} = {
-        action => $action,
+    $self->{action}->{$name} = {
+        name => $name,
         displayName => $displayName,
         helper => $helper
     };
