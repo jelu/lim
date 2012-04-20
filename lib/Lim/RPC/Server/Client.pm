@@ -384,7 +384,7 @@ sub process {
                 
                 if (defined $parameters) {
                     foreach my $parameter (split(/\//o, $parameters)) {
-                        # TODO urldecode $parameter
+                        $parameter =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
                         push(@parameters, $parameter);
                     }
                 }
