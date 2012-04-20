@@ -145,7 +145,7 @@
 			
 			this._console.limConsole('debug', 'calling helper '+helper);
 			var object = $('<div></div>');
-			options.lim = this;
+			options.lim = this.element;
 			return object[this._helpers[helper].widget](options);
 		}
 	});
