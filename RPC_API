@@ -40,3 +40,36 @@ Ports/Services
 	Master tcp/5353
 	Agent tcp/5354
 	Executer tcp/5355
+
+
+
+
+Plugin/Manage Client<->Master<->Agent<->Executore call schema
+c=CREATE r=READ u=UPDATE d=DELETE
+
+client   r> master /master/agents
+master   r> agent:* /lim
+master   <r agent:* { lim: { version: VERSION, type: TYPE } }
+client   <r master agent: [ { agent_id: ID, status: ONLINE / OFFLINE, ... }, ... ]
+
+client   r> master /master/agent/{ID}/manages
+master   r> agent:ID /agent/manages
+agent:ID r> executor /manager
+agent:ID <r executor manage: [ { type: TYPE, name: NAME, plugin: PLUGIN, action: [ { action: ACTION, helper: HELPER }, ... ] }, ... ]
+master   <r agent:ID manage: [ { type: TYPE, name: NAME, plugin: PLUGIN, action: [ { action: ACTION, helper: HELPER }, ... ] }, ... ]
+client   <r master manage: [ { type: TYPE, name: NAME, plugin: PLUGIN, action: [ { action: ACTION, helper: HELPER }, ... ] }, ... ]
+
+client   r> master /master/agent/{ID}/manage/{TYPE}/{NAME}/{PLUGIN}/{ACTION}
+master   r> agent:ID /agent/manage/{TYPE}/{NAME}/{PLUGIN}/{ACTION}
+agent:ID r> executor /manager/manage/{TYPE}/{NAME}/{PLUGIN}/{ACTION}
+agent:ID <r executor { <helper specific data> }
+master   <r agent:ID { <helper specific data> }
+client   <r master { <helper specific data> }
+
+client   u> master /master/agent/{ID}/manage/{TYPE}/{NAME}/{PLUGIN}/{ACTION} { <helper specific data> }
+master   u> agent:ID /agent/manage/{TYPE}/{NAME}/{PLUGIN}/{ACTION} { <helper specific data> }
+agent:ID u> executor /manager/manage/{TYPE}/{NAME}/{PLUGIN}/{ACTION} { <helper specific data> }
+agent:ID <u executor { <helper specific data> }
+master   <u agent:ID { <helper specific data> }
+client   <u master { <helper specific data> }
+
