@@ -122,13 +122,138 @@ sub Module {
 
 sub ReadAgents {
     my ($self, $cb) = Lim::RPC::C(@_, undef);
+    my %agent = %{$self->{agent}};
+    my $callCount = 0;
     
-    Lim::RPC::R($cb, {
-        agent => [ values %{$self->{agent}} ]
-    }, {
-        'base.agent' => [ 'id', 'name', 'host', 'port', 'status', 'status_message', 'manage' ],
-        'base.agent.manage' => [ 'type', 'name', 'plugin', 'actions' ]
-    });
+    foreach my $agent (values %agent) {
+        if ($agent->{status} == ONLINE) {
+            $callCount++;
+        }
+    }
+    
+    unless ($callCount) {
+        Lim::RPC::R($cb, {
+            agent => [ values %agent ]
+        }, {
+            'base.agent' => [ 'id', 'name', 'host', 'port', 'status', 'status_message', 'manage' ],
+            'base.agent.manage' => [ 'type', 'name', 'plugin', 'action' ],
+            'base.agent.manage.action' => [ 'name', 'displayName', 'helper' ]
+        });
+        return;
+    }
+    
+    foreach my $agent (values %agent) {
+        if ($agent->{status} == ONLINE) {
+            my $cli; $cli = Lim::RPC::Client->new(
+                host => $agent->{host},
+                port => $agent->{port},
+                uri => '/agent/manages',
+                cb => sub {
+                    my (undef, $data) = @_;
+                    
+                    if ($cli->status == Lim::RPC::Client::OK
+                        and defined $data and ref($data) eq 'HASH'
+                        and exists $data->{manage}
+                        and ref($data->{manage}) eq 'ARRAY')
+                    {
+                        $agent->{manage} = $data->{manage};
+                    }
+                    
+                    $callCount--;
+                    unless ($callCount) {
+                        Lim::RPC::R($cb, {
+                            agent => [ values %agent ]
+                        }, {
+                            'base.agent' => [ 'id', 'name', 'host', 'port', 'status', 'status_message', 'manage' ],
+                            'base.agent.manage' => [ 'type', 'name', 'plugin', 'action' ],
+                            'base.agent.manage.action' => [ 'name', 'displayName', 'helper' ]
+                        });
+                    }
+                    undef($cli);
+                });
+        }
+    }
+}
+
+=head2 function2
+
+=cut
+
+sub ReadAgent {
+    my ($self, $cb, undef, $id, $method, @parameters) = Lim::RPC::C(@_, undef);
+    
+    if (defined $id and exists $self->{agent}->{$id}) {
+        my $agent = $self->{agent}->{$id};
+
+        if ($method eq 'manages') {
+            if ($agent->{status} == ONLINE) {
+                my $cli; $cli = Lim::RPC::Client->new(
+                    host => $agent->{host},
+                    port => $agent->{port},
+                    uri => '/agent/manages',
+                    cb => sub {
+                        my (undef, $data) = @_;
+                        
+                        if ($cli->status == Lim::RPC::Client::OK
+                            and defined $data and ref($data) eq 'HASH'
+                            and exists $data->{manage}
+                            and ref($data->{manage}) eq 'ARRAY')
+                        {
+                            Lim::RPC::R($cb, {
+                                manage => $data->{manage}
+                            }, {
+                                'base.manage' => [ 'type', 'name', 'plugin', 'action' ],
+                                'base.manage.action' => [ 'name', 'displayName', 'helper' ]
+                            });
+                        }
+                        else {
+                            Lim::RPC::R($cb);
+                        }
+                        undef($cli);
+                    });
+                return;
+            }
+        }
+        elsif ($method eq 'manage') {
+            my ($type, $name, $plugin, $action) = @parameters;
+            
+            if (defined $type and defined $name and defined $plugin and defined $action and $agent->{status} == ONLINE) {
+                my $cli; $cli = Lim::RPC::Client->new(
+                    host => $agent->{host},
+                    port => $agent->{port},
+                    uri => '/agent/manage/'.join('/', $type, $name, $plugin, $action),
+                    cb => sub {
+                        my (undef, $data) = @_;
+                        
+                        if ($cli->status == Lim::RPC::Client::OK
+                            and defined $data and ref($data) eq 'HASH'
+                            and exists $data->{helper}
+                            and ref($data->{helper}) eq 'HASH')
+                        {
+                            Lim::RPC::R($cb, {
+                                helper => $data->{helper}
+                            }, {
+                                'base.helper' => [ 'name', 'data' ]
+                            });
+                        }
+                        else {
+                            Lim::RPC::R($cb);
+                        }
+                        undef($cli);
+                    });
+                return;
+            }
+        }
+        elsif (!defined($method)) {
+            Lim::RPC::R($cb, {
+                agent => [ $agent ]
+            }, {
+                'base.agent' => [ 'id', 'name', 'host', 'port', 'status', 'status_message' ]
+            });
+            return;
+        }
+    }
+    Lim::RPC::R($cb);
 }
 
 =head2 function2
@@ -224,6 +349,8 @@ sub AgentGetStatus {
                 
                 if ($cli->status == Lim::RPC::Client::OK) {
                     if (defined $data and ref($data) eq 'HASH'
+                        and exists $data->{lim}
+                        and ref($data->{lim}) eq 'HASH'
                         and exists $data->{lim}->{type}
                         and exists $data->{lim}->{version})
                     {
@@ -231,7 +358,6 @@ sub AgentGetStatus {
                             $agent->{status} = ONLINE;
                             $agent->{status_message} = 'Online';
                             $agent->{version} = $data->{lim}->{version};
-                            $self->AgentGetInformation($id);
                         }
                         else {
                             $agent->{status} = WRONG_TYPE;
@@ -254,39 +380,6 @@ sub AgentGetStatus {
                 
                 delete $agent->{watcher_status};
             });
-    }
-}
-
-=head2 function2
-
-=cut
-
-sub AgentGetInformation {
-    my ($self, $id) = @_;
-    
-    if (defined $id and exists $self->{agent}->{$id} and !exists $self->{agent}->{$id}->{watcher_information}) {
-        my $agent = $self->{agent}->{$id};
-
-        if ($agent->{status} == ONLINE) {
-            weaken($agent);
-            $agent->{watcher_information} = Lim::RPC::Client->new(
-                host => $agent->{host},
-                port => $agent->{port},
-                uri => '/agent/manage',
-                cb => sub {
-                    my ($cli, $data) = @_;
-                    
-                    if ($cli->status == Lim::RPC::Client::OK
-                        and defined $data and ref($data) eq 'HASH'
-                        and exists $data->{manage}
-                        and ref($data->{manage}) eq 'ARRAY')
-                    {
-                        $agent->{manage} = $data->{manage};
-                    }
-                    
-                    delete $agent->{watcher_information};
-                });
-        }
     }
 }
 

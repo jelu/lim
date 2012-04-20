@@ -58,6 +58,32 @@ sub file {
     $_[0]->{file};
 }
 
+=head2 function1
+
+=cut
+
+sub Action {
+    my ($self, $action, $data) = @_;
+    
+    if ($action eq VIEW) {
+        if (open(FILE, $self->{file})) {
+            my ($read, $buffer, $content);
+
+            while (($read = read(FILE, $buffer, 64*1024))) {
+                $content .= $buffer;
+            }
+            close(FILE);
+            
+            if (defined $read) {
+                return ('view', $content);
+            }
+        }
+    }
+    elsif ($action eq EDIT) {
+        
+    }
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

@@ -100,8 +100,8 @@
 		    		if (manage) {
     					var html = '';
     					
-    					for (var i = 0, len = manage.actions.length; i < len; i++) {
-    						html += '<li><a href="#" helper="'+ manage.actions[i].helper +'">' + manage.actions[i].displayName + '</a></li>';
+    					for (var i = 0, len = manage.action.length; i < len; i++) {
+    						html += '<li><a href="#" helper="'+ manage.action[i].helper +'" uri="' + that.options.uri+'/master/agent/'+encodeURIComponent(agent.id)+'/manage/'+encodeURIComponent(manage.type)+'/'+encodeURIComponent(manage.name)+'/'+encodeURIComponent(manage.plugin)+'/'+encodeURIComponent(manage.action[i].name) + '">' + manage.action[i].displayName + '</a></li>';
     					}
     					
 				    	that._contextMenu
@@ -112,9 +112,7 @@
 								event.preventDefault();
 								that._contextMenu.hide();
 								$(that._lim).lim('callHelper', $('a', ui.item).first().attr('helper'), {
-									uri: that.options.uri,
-									agent: agent,
-									manage: manage
+									uri: $('a', ui.item).first().attr('uri')
 								});
 							}
 			    		});
@@ -267,8 +265,8 @@
 									var manage = agent.manage[iManage];
 									dtManage.fnAddData([ iAgent, iManage, agent.name, manage.plugin, manage.name, manage.type ], false);
 									
-									for (var iAction = 0, lenAction = manage.actions.length; iAction < lenAction; iAction++) {
-										var action = manage.actions[iAction];
+									for (var iAction = 0, lenAction = manage.action.length; iAction < lenAction; iAction++) {
+										var action = manage.action[iAction];
 										$(that._lim).lim('loadHelper', that.options.uri, action.helper);
 									}
 								}

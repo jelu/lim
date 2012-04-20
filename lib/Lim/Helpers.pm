@@ -126,7 +126,6 @@ sub ReadIndex {
 
 sub ReadHelper {
     my ($self, $cb, undef, $helper) = Lim::RPC::C(@_, undef);
-    my @js;
 
     if (defined $helper) {
         $helper = lc($helper);
@@ -150,12 +149,17 @@ sub ReadHelper {
                                 my $name = $1;
                                 
                                 if ($helper eq lc($name)) {
-                                    push(@js, {
-                                        widget => 'limHelper'.$name,
-                                        name => lc($name),
-                                        file => $entry,
-                                        code => $content
+                                    Lim::RPC::R($cb, {
+                                        helper => [ {
+                                            widget => 'limHelper'.$name,
+                                            name => lc($name),
+                                            file => $entry,
+                                            code => $content
+                                        } ]
+                                    }, {
+                                        'base.helper' => [ 'name', 'widget', 'file', 'code' ]
                                     });
+                                    return;
                                 }
                             }
                         }
@@ -172,11 +176,7 @@ sub ReadHelper {
         }
     }
     
-    Lim::RPC::R($cb, {
-        helper => \@js
-    }, {
-        'base.helper' => [ 'name', 'widget', 'file', 'code' ]
-    });
+    Lim::RPC::R($cb, {});
 }
 
 =head1 AUTHOR

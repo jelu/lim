@@ -115,24 +115,76 @@ sub Module {
 
 =cut
 
-sub ReadManage
-{
+sub ReadManages {
     my ($self, $cb) = Lim::RPC::C(@_, undef);
 
     if (exists $self->{executor}) {
         if ($self->{executor}->{status} == ONLINE) {
-            my ($cli, $data);
-            weaken($self);
-            $cli = Lim::RPC::Client->new(
+            my $cli; $cli = Lim::RPC::Client->new(
                 host => $self->{executor}->{host},
                 port => $self->{executor}->{port},
                 uri => '/manager',
                 cb => sub {
                     my (undef, $data) = @_;
                     
-                    if ($cli->status == Lim::RPC::Client::OK) {
+                    if ($cli->status == Lim::RPC::Client::OK
+                        and defined $data and ref($data) eq 'HASH'
+                        and exists $data->{manage}
+                        and ref($data->{manage}) eq 'ARRAY')
+                    {
                         Lim::RPC::R($cb, $data, {
-                           'base.manage' => [ 'type', 'name', 'plugin', 'actions' ] 
+                           'base.manage' => [ 'type', 'name', 'plugin', 'action' ],
+                           'base.manage.action' => [ 'name', 'displayName', 'helper' ]
+                        });
+                    }
+                    else {
+                        # TODO: cli not ok
+                        Lim::RPC::R($cb);
+                    }
+                    undef($cli);
+                });
+            return;
+        }
+        else {
+            # TODO: executor not online
+        }
+    }
+    else {
+        # TODO: no executor
+    }
+    Lim::RPC::R($cb);
+}
+
+=head2 function2
+
+=cut
+
+sub ReadManage {
+    my ($self, $cb, undef, $type, $name, $plugin, $action) = Lim::RPC::C(@_, undef);
+    
+    unless (defined $type and defined $name and defined $plugin and defined $action) {
+        Lim::RPC::R($cb);
+        return;
+    }
+    
+    if (exists $self->{executor}) {
+        if ($self->{executor}->{status} == ONLINE) {
+            my $cli; $cli = Lim::RPC::Client->new(
+                host => $self->{executor}->{host},
+                port => $self->{executor}->{port},
+                uri => '/manager/manage/'.join('/', $type, $name, $plugin, $action),
+                cb => sub {
+                    my (undef, $data) = @_;
+                    
+                    if ($cli->status == Lim::RPC::Client::OK
+                        and defined $data and ref($data) eq 'HASH'
+                        and exists $data->{helper}
+                        and ref($data->{helper}) eq 'HASH')
+                    {
+                        Lim::RPC::R($cb, {
+                            helper => $data->{helper}
+                        }, {
+                            'base.helper' => [ 'name', 'data' ]
                         });
                     }
                     else {
@@ -183,6 +235,8 @@ sub ExecutorGetStatus {
                 
                 if ($cli->status == Lim::RPC::Client::OK) {
                     if (defined $data and ref($data) eq 'HASH'
+                        and exists $data->{lim}
+                        and ref($data->{lim}) eq 'HASH'
                         and exists $data->{lim}->{type}
                         and exists $data->{lim}->{version})
                     {

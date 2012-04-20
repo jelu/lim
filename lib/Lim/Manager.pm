@@ -5,6 +5,7 @@ use Carp;
 
 use Scalar::Util qw(blessed);
 use Log::Log4perl ();
+use JSON::XS ();
 
 use Lim ();
 use base qw(Lim::RPC);
@@ -20,6 +21,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our $JSON = JSON::XS->new->ascii;
 our $INSTANCE;
 
 =head1 SYNOPSIS
@@ -108,14 +110,15 @@ sub ReadIndex {
             type => $_->type,
             name => $_->name,
             plugin => $_->plugin,
-            actions => [ values %{$_->action} ]
+            action => [ values %{$_->action} ]
         });
     }
 
     Lim::RPC::R($cb, {
         manage => \@manages
     }, {
-       'base.manage' => [ 'type', 'name', 'plugin', 'actions' ]
+       'base.manage' => [ 'type', 'name', 'plugin', 'action' ],
+       'base.manage.action' => [ 'name', 'displayName', 'helper' ]
     });
 }
 
@@ -123,12 +126,41 @@ sub ReadIndex {
 
 =cut
 
-sub ReadAction {
-    my ($self, $cb, $q, $type, $name, $plugin, $action) = Lim::RPC::C(@_, undef);
+sub ReadManage {
+    my ($self, $cb, undef, $type, $name, $plugin, $action) = Lim::RPC::C(@_, undef);
 
-    if (exists $self->{manage}->{$type}->{$name}->{$plugin}) {
-        $self->{manage}->{$type}->{$name}->{$plugin}->Action($action);
-        # TODO ActionData in/out
+    unless (defined $type and defined $name and defined $plugin and defined $action) {
+        # TODO invalid parameters
+        Lim::RPC::R($cb);
+        return;
+    }
+    
+    unless (exists $self->{manage}
+        and exists $self->{manage}->{$type}
+        and exists $self->{manage}->{$type}->{$name}
+        and exists $self->{manage}->{$type}->{$name}->{$plugin})
+    {
+        # TODO no such manage object
+        Lim::RPC::R($cb);
+        return;
+    }
+    
+    my ($helper, $data) = $self->{manage}->{$type}->{$name}->{$plugin}->Action($action);
+    if (defined $helper and defined $data) {
+        if (ref($data) eq 'HASH' or ref($data) eq 'ARRAY') {
+            # TODO json encode error
+            $data = $JSON->encode($data);
+        }
+        
+        Lim::RPC::R($cb, {
+            helper => {
+                name => $helper,
+                data => $data
+            }
+        }, {
+            'base.helper' => [ 'name', 'data' ]
+        });
+        return;
     }
 
     Lim::RPC::R($cb);
