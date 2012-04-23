@@ -33,7 +33,7 @@
 					$('pre', self).text(data.helper.data);
 				}
 				else {
-					$('pre', self).text('Failed to load text: '+status);
+					$('pre', self).text('Failed to load text');
 				}
 			});
 		},
