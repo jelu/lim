@@ -1,11 +1,13 @@
+/*
 * {
 	font-size: 100%;
 	font-weight: normal;
 }
+*/
 
 body {
 	background-color: #f0f0f0;
-	font: 62.5% Verdana, Arial, sans-serif !important;
+	font: 10px Verdana, Arial, sans-serif !important;
 	margin: 0;
 	padding: 0;
 }
