@@ -54,6 +54,7 @@
 				$.ajax({
 					url: uri,
 					data: data,
+					type: data === null ? 'GET' : 'POST',
 					dataType: 'json',
 					timeout: this.options.timeout,
 					success: function(data, textStatus, XHR) {
@@ -76,6 +77,7 @@
 				$.ajax({
 					url: uri,
 					data: data,
+					type: data === null ? 'GET' : 'POST',
 					dataType: 'json',
 					timeout: this.options.timeout,
 					success: function () {
