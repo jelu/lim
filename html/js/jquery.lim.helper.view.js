@@ -15,7 +15,7 @@
 			var self = this.element;
 			
 			$('<pre>Loading...</pre>').appendTo(self);
-			self.addClass('lim-helper-view').dialog({
+			self.dialog({
 				title: 'View',
 				height: 300,
 				width: 400,
