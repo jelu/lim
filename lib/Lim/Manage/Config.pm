@@ -78,10 +78,54 @@ sub Action {
                 return ('view', $content);
             }
         }
+        # TODO error
     }
     elsif ($action eq EDIT) {
-        
+        unless (defined $data) {
+            if (open(FILE, $self->{file})) {
+                my ($read, $buffer, $content);
+    
+                while (($read = read(FILE, $buffer, 64*1024))) {
+                    $content .= $buffer;
+                }
+                close(FILE);
+                
+                if (defined $read) {
+                    return ('edit', $content);
+                }
+            }
+        }
+        else {
+            my $tmpfile = $self->{file}.'-lim-new';
+            
+            if (-e $tmpfile) {
+                # TODO file exitst
+                return;
+            }
+            
+            if (open(FILE, '>'.$tmpfile)) {
+                my $wrote = syswrite(FILE, $data);
+                
+                # TODO utf8? multibyte?
+                
+                if ($wrote != length($data)) {
+                    # TODO error
+                    unlink($tmpfile);
+                    return;
+                }
+                close(FILE);
+                
+                unless(rename($tmpfile, $self->{file})) {
+                    # TODO error
+                    unlink($tmpfile);
+                    return;
+                }
+                return;
+            }
+        }
+        # TODO error
     }
+    # TODO error
 }
 
 =head1 AUTHOR
