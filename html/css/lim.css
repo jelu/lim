@@ -28,6 +28,10 @@ form fieldset {
 	margin-top: 25px;
 }
 
+pre {
+	margin: 0;
+}
+
 .lim-menubar > ul {
 	margin: 0 0 4em;
 }
