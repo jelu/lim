@@ -3,6 +3,8 @@ package Lim::Manage::Config;
 use common::sense;
 use Carp;
 
+use Lim::Error ();
+
 use base qw(Lim::Manage);
 
 =head1 NAME
@@ -78,7 +80,10 @@ sub Action {
                 return ('view', $content);
             }
         }
-        # TODO error
+        return Lim::Error->new(
+            message => 'Unable to open file for reading',
+            module => $self
+        );
     }
     elsif ($action eq EDIT) {
         unless (defined $data) {
@@ -94,13 +99,19 @@ sub Action {
                     return ('edit', $content);
                 }
             }
+            return Lim::Error->new(
+                message => 'Unable to open file for reading',
+                module => $self
+            );
         }
         else {
             my $tmpfile = $self->{file}.'-lim-new';
             
             if (-e $tmpfile) {
-                # TODO file exitst
-                return;
+                return Lim::Error->new(
+                    message => 'Unable to create temporary file for writing: file exists',
+                    module => $self
+                );
             }
             
             if (open(FILE, '>'.$tmpfile)) {
@@ -109,23 +120,30 @@ sub Action {
                 # TODO utf8? multibyte?
                 
                 if ($wrote != length($data)) {
-                    # TODO error
                     unlink($tmpfile);
-                    return;
+                    return Lim::Error->new(
+                        message => 'Unable to write to temporary file',
+                        module => $self
+                    );
                 }
                 close(FILE);
                 
                 unless(rename($tmpfile, $self->{file})) {
-                    # TODO error
                     unlink($tmpfile);
-                    return;
+                    return Lim::Error->new(
+                        message => 'Unable to rename temporary file',
+                        module => $self
+                    );
                 }
                 return;
             }
+            return Lim::Error->new(
+                message => 'Unable to open file for reading',
+                module => $self
+            );
         }
-        # TODO error
     }
-    # TODO error
+    # Unknown $action but we ignore that
 }
 
 =head1 AUTHOR

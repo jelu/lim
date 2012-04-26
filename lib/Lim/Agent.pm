@@ -128,14 +128,23 @@ sub ReadManages {
                     my (undef, $data) = @_;
                     
                     if ($cli->status == Lim::RPC::Client::OK
-                        and defined $data and ref($data) eq 'HASH'
-                        and exists $data->{manage}
-                        and ref($data->{manage}) eq 'ARRAY')
+                        and defined $data and ref($data) eq 'HASH')
                     {
-                        Lim::RPC::R($cb, $data, {
-                           'base.manage' => [ 'type', 'name', 'plugin', 'action' ],
-                           'base.manage.action' => [ 'name', 'displayName', 'helper' ]
-                        });
+                        if (exists $data->{manage}
+                            and ref($data->{manage}) eq 'ARRAY')
+                        {
+                            Lim::RPC::R($cb, $data, {
+                               'base.manage' => [ 'type', 'name', 'plugin', 'action' ],
+                               'base.manage.action' => [ 'name', 'displayName', 'helper' ]
+                            });
+                        }
+                        elsif (exists $data->{error}) {
+                            Lim::RPC::E($cb, $data->{error});
+                        }
+                        else {
+                            # TODO invalid data
+                            Lim::RPC::R($cb);
+                        }
                     }
                     else {
                         # TODO: cli not ok
@@ -177,15 +186,24 @@ sub ReadManage {
                     my (undef, $data) = @_;
                     
                     if ($cli->status == Lim::RPC::Client::OK
-                        and defined $data and ref($data) eq 'HASH'
-                        and exists $data->{helper}
-                        and ref($data->{helper}) eq 'HASH')
+                        and defined $data and ref($data) eq 'HASH')
                     {
-                        Lim::RPC::R($cb, {
-                            helper => $data->{helper}
-                        }, {
-                            'base.helper' => [ 'name', 'data' ]
-                        });
+                        if (exists $data->{helper}
+                            and ref($data->{helper}) eq 'HASH')
+                        {
+                            Lim::RPC::R($cb, {
+                                helper => $data->{helper}
+                            }, {
+                                'base.helper' => [ 'name', 'data' ]
+                            });
+                        }
+                        elsif (exists $data->{error}) {
+                            Lim::RPC::E($cb, $data->{error});
+                        }
+                        else {
+                            # TODO invalid data
+                            Lim::RPC::R($cb);
+                        }
                     }
                     else {
                         # TODO: cli not ok

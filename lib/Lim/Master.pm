@@ -226,15 +226,24 @@ sub ReadAgent {
                         my (undef, $data) = @_;
                         
                         if ($cli->status == Lim::RPC::Client::OK
-                            and defined $data and ref($data) eq 'HASH'
-                            and exists $data->{helper}
-                            and ref($data->{helper}) eq 'HASH')
+                            and defined $data and ref($data) eq 'HASH')
                         {
-                            Lim::RPC::R($cb, {
-                                helper => $data->{helper}
-                            }, {
-                                'base.helper' => [ 'name', 'data' ]
-                            });
+                            if (exists $data->{helper}
+                                and ref($data->{helper}) eq 'HASH')
+                            {
+                                Lim::RPC::R($cb, {
+                                    helper => $data->{helper}
+                                }, {
+                                    'base.helper' => [ 'name', 'data' ]
+                                });
+                            }
+                            elsif (exists $data->{error}) {
+                                Lim::RPC::E($cb, $data->{error});
+                            }
+                            else {
+                                # TODO invalid data
+                                Lim::RPC::R($cb);
+                            }
                         }
                         else {
                             Lim::RPC::R($cb);

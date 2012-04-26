@@ -146,6 +146,15 @@ sub ReadManage {
     }
     
     my ($helper, $data) = $self->{manage}->{$type}->{$name}->{$plugin}->Action($action);
+    if (blessed($helper)) {
+        if ($helper->isa('Lim::Error')) {
+            Lim::RPC::E($cb, $helper);
+            return;
+        }
+        else {
+            # TODO error
+        }
+    }
     if (defined $helper and defined $data) {
         if (ref($data) eq 'HASH' or ref($data) eq 'ARRAY') {
             # TODO json encode error
