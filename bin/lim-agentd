@@ -21,8 +21,9 @@ my $log4perl;
 my $html = '/usr/share/lim/html';
 my $wsdl = '/usr/share/lim/wsdl';
 my $dsn;
-my $exec_host = '127.0.0.1';
-my $exec_port = 5355;
+#my $exec_host = '127.0.0.1';
+#my $exec_port = 5355;
+my $prefix;
 
 Getopt::Long::GetOptions(
 	'help|?' => \$help,
@@ -33,8 +34,9 @@ Getopt::Long::GetOptions(
     'html:s' => \$html,
     'wsdl:s' => \$wsdl,
     'dsn=s' => \$dsn,
-    'exec-host:s' => \$exec_host,
-    'exec-port:s' => \$exec_port
+#    'exec-host:s' => \$exec_host,
+#    'exec-port:s' => \$exec_port,
+    'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -66,6 +68,15 @@ else {
     log4perl.appender.Lim.layout   = Log::Log4perl::Layout::PatternLayout
     log4perl.appender.Lim.layout.ConversionPattern = %d %F [%L] %p: %m%n
     ) );
+}
+
+if (defined $prefix) {
+    Lim::Config->{prefix} = [];
+    
+    foreach (split(/,/o, $prefix)) {
+        s/\/+$//o;
+        push(@{Lim::Config->{prefix}}, $_);
+    }
 }
 
 my $cv = AnyEvent->condvar;
@@ -102,8 +113,8 @@ $server->serve(
     Lim->new(type => 'agent'),
     Lim::Agent->new(
         server => $server,
-        exec_host => $exec_host,
-        exec_port => $exec_port
+#        exec_host => $exec_host,
+#        exec_port => $exec_port
     ));
 
 if (defined $server) {

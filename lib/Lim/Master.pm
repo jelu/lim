@@ -147,7 +147,7 @@ sub ReadAgents {
             my $cli; $cli = Lim::RPC::Client->new(
                 host => $agent->{host},
                 port => $agent->{port},
-                uri => '/agent/manages',
+                uri => '/manager/manages',
                 cb => sub {
                     my (undef, $data) = @_;
                     
@@ -190,7 +190,7 @@ sub ReadAgent {
                 my $cli; $cli = Lim::RPC::Client->new(
                     host => $agent->{host},
                     port => $agent->{port},
-                    uri => '/agent/manages',
+                    uri => '/manager/manages',
                     cb => sub {
                         my (undef, $data) = @_;
                         
@@ -221,7 +221,7 @@ sub ReadAgent {
                 my $cli; $cli = Lim::RPC::Client->new(
                     host => $agent->{host},
                     port => $agent->{port},
-                    uri => '/agent/manage/'.join('/', $type, $name, $plugin, $action),
+                    uri => '/manager/manage/'.join('/', $type, $name, $plugin, $action),
                     cb => sub {
                         my (undef, $data) = @_;
                         
