@@ -9,7 +9,7 @@ use EV ();
 use AnyEvent ();
 
 use Lim ();
-use Lim::RPC::Client ();
+use Lim::CLI;
 
 my $help = 0;
 my $host = "0.0.0.0";
@@ -57,6 +57,16 @@ push(@watchers,
         $cv->send;
     }),
 );
+
+my $cli = Lim::CLI->new(
+    on_quit => sub {
+        $cv->send;
+    });
+
+if (defined $cli) {
+    push(@watchers, $cli);
+    $cv->recv;
+}
 
 @watchers = ();
 
