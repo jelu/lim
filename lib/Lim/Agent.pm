@@ -7,6 +7,8 @@ use Log::Log4perl ();
 use Scalar::Util qw(weaken);
 
 use Lim ();
+use Lim::Plugins ();
+use Lim::Manager ();
 use Lim::DB::Master ();
 use Lim::RPC::Client ();
 
@@ -52,8 +54,8 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        executor => {},
-        watchers => []
+#        executor => {},
+#        watchers => []
     };
     bless $self, $class;
     my $real_self = $self;
@@ -62,12 +64,12 @@ sub new {
     unless (defined $args{server}) {
         confess __PACKAGE__, ': Missing server';
     }
-    unless (defined $args{exec_host}) {
-        confess __PACKAGE__, ': Missing exec_host';
-    }
-    unless (defined $args{exec_port}) {
-        confess __PACKAGE__, ': Missing exec_port';
-    }
+#    unless (defined $args{exec_host}) {
+#        confess __PACKAGE__, ': Missing exec_host';
+#    }
+#    unless (defined $args{exec_port}) {
+#        confess __PACKAGE__, ': Missing exec_port';
+#    }
     
     $self->{db_master} = Lim::DB::Master->new
         ->AddNotify($self, 'CreateMaster', 'UpdateMaster', 'DeleteMaster');
