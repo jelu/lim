@@ -4,7 +4,8 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Module::Find qw(usesub);
+use Scalar::Util qw(blessed);
+use Module::Find qw(findsubmod);
 
 use Lim ();
 use base qw(Lim::RPC);
@@ -20,7 +21,6 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $INSTANCE;
 
 =head1 SYNOPSIS
 
@@ -32,9 +32,10 @@ our $INSTANCE;
 
 =cut
 
-sub _new {
+sub new {
     my $this = shift;
     my $class = ref($this) || $this;
+    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
         plugin => {},
@@ -42,15 +43,39 @@ sub _new {
     };
     bless $self, $class;
 
-    foreach my $module (usesub Lim::Plugin) {
-        my $name = $module;
-        $name =~ s/.*:://o;
+    unless (defined $args{server}) {
+        confess __PACKAGE__, ': Missing server';
+    }
+    unless (blessed $args{server} and $args{server}->isa('Lim::RPC::Server')) {
+        confess __PACKAGE__, ': Server parameter is not a Lim::RPC::Server';
+    }
+    
+    foreach my $module (findsubmod Lim::Plugin) {
+        my ($name, $obj) = ($module, undef);
+
+        if (exists $self->{plugin}->{$module}) {
+            $self->{logger}->warn('Plugin ', $module, ' already loaded');
+            next;
+        }
         
-        $self->{plugin_obj}->{$module} = $module->new;
+        eval {
+            eval "use $module ();";
+            die $@ if $@;
+            $obj = $module->new;
+        };
+        
+        if ($@) {
+            $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
+            next;
+        }
+        
+        $name =~ s/.*:://o;
         $self->{plugin}->{$module} = {
             name => $name,
-            module => $module
+            module => $module,
         };
+        $self->{plugin_obj}->{$module} = $obj;
+        $args{server}->serve($obj);
     }
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -60,22 +85,9 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-=head2 function1
-
-=cut
-
-sub instance {
-    $INSTANCE ||= Lim::Plugins->_new;
-}
-
-=head2 function1
-
-=cut
-
-sub deinstance {
-    undef($INSTANCE);
+    
+    delete $self->{plugin};
+    delete $self->{plugin_obj};
 }
 
 =head2 function1
@@ -84,20 +96,6 @@ sub deinstance {
 
 sub Module {
     'Plugins';
-}
-
-=head2 function1
-
-=cut
-
-sub ReadIndex {
-    my ($self, $cb) = Lim::RPC::C(@_, undef);
-    
-    Lim::RPC::R($cb, {
-       plugin => [ values %{$self->{plugin}} ]
-    }, {
-        'base.plugin' => [ 'name', 'module' ]
-    });
 }
 
 =head1 AUTHOR

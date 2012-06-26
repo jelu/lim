@@ -6,11 +6,10 @@ use Carp;
 use Log::Log4perl ();
 use Fcntl qw(:seek);
 
-use Lim::Manager ();
-use Lim::Manage::Config ();
-use Lim::Manage::Program ();
-
-use base qw(Lim::Plugin);
+use base qw(
+    Lim::Plugin
+    Lim::RPC
+    );
 
 =head1 NAME
 
@@ -44,61 +43,75 @@ sub Init {
     my $self = shift;
     my %args = ( @_ );
     
-    foreach my $config (keys %ConfigFiles) {
-        foreach my $file (@{$ConfigFiles{$config}}) {
-            my $real_file;
-            
-            if (defined ($real_file = $self->FileWritable($file))) {
-                Lim::Manager->instance->Manage(
-                    Lim::Manage::Config->new(
-                        name => $config,
-                        file => $real_file,
-                        plugin => 'Lim::Plugin::SoftHSM',
-                        action => [
-                            Lim::Manage::Config::VIEW,
-                            Lim::Manage::Config::EDIT
-                        ]
-                    ));
-            }
-            elsif (defined ($real_file = $self->FileReadable($file))) {
-                Lim::Manager->instance->Manage(
-                    Lim::Manage::Config->new(
-                        name => $config,
-                        file => $real_file,
-                        plugin => 'Lim::Plugin::SoftHSM',
-                        action => Lim::Manage::Config::VIEW
-                    ));
-            }
-        }
-    }
+    $self->{config} = {};
 }
 
 =head2 function1
 
 =cut
 
-sub Manage {
-    my ($self, $manage, $action) = @_;
+sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub Module {
+    'SoftHSM';
+}
+
+=head2 function1
+
+=cut
+
+sub _ScanConfig {
+    my ($self) = @_;
+    my %file;
     
-    if ($manage->isa('Lim::Manage::Config')) {
-        if ($action == Lim::Manage::Config::VIEW) {
-            unless (open(CONFIG, $manage->file)) {
-                return;
+    foreach my $config (keys %ConfigFiles) {
+        foreach my $file (@{$ConfigFiles{$config}}) {
+            if (defined ($file = $self->FileWritable($file))) {
+                if (exists $file{$file}) {
+                    $file{$file}->{write} = 1;
+                    next;
+                }
+                
+                $file{$file}->{
+                    file => $file,
+                    write => 1,
+                    read => 1
+                };
             }
-            
-            my ($tell, $config);
-            seek(CONFIG, 0, SEEK_END);
-            $tell = tell(CONFIG);
-            seek(CONFIG, 0, SEEK_SET);
-            unless (read(CONFIG, $config, $tell) == $tell) {
-                close(CONFIG);
-                return;
+            elsif (defined ($file = $self->FileReadable($file))) {
+                if (exists $file{$file}) {
+                    next;
+                }
+                
+                $file{$file}->{
+                    file => $file,
+                    write => 0,
+                    read => 1
+                };
             }
-            close(CONFIG);
-            
-            return $config;
         }
     }
+    
+    return \%file;
+}
+
+=head2 function1
+
+=cut
+    
+sub ReadConfigs {
+    my ($self, $cb) = Lim::RPC::C(@_, undef);
+    
+    Lim::RPC::R($cb, {
+       plugin => [ values %{$self->{plugin}} ]
+    }, {
+        'base.plugin' => [ 'name', 'module' ]
+    });    
 }
 
 =head1 AUTHOR

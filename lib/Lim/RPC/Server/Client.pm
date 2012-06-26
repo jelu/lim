@@ -73,9 +73,6 @@ sub new {
     unless (defined $args{tls_ctx}) {
         confess __PACKAGE__, ': Missing tls_ctx (TLS context)';
     }
-    unless (defined $args{wsdl}) {
-        confess __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
-    }
     unless (defined $args{server}) {
         confess __PACKAGE__, ': Missing server object';
     }
@@ -97,7 +94,6 @@ sub new {
     if (defined $args{html}) {
         $self->{html} = $args{html};
     }
-    $self->{wsdl} = $args{wsdl};
     $self->{server} = $args{server};
     weaken($self->{server});
     $self->{handle} = AnyEvent::Handle->new(
@@ -117,7 +113,7 @@ sub new {
         on_eof => sub {
             my ($handle) = @_;
             
-            $self->{logger}->warn($handle, ' EOF');
+            $self->{logger}->debug($handle, ' EOF');
             
             if (exists $self->{on_eof}) {
                 $self->{on_eof}->($self);
@@ -279,8 +275,8 @@ sub process {
         
         my $server = $self->{server}; # make a copy of server ref to make it strong
         if (defined $server) {
-            if (exists $server->{module_name}->{$module}) {
-                $self->{soap}->dispatch_to(@{$server->{module_name}->{$module}});
+            if (exists $server->{module}->{$module}) {
+                $self->{soap}->dispatch_to($server->{module}->{$module}->{module});
                 
                 eval {
                     $self->{soap}->request($request);
@@ -303,27 +299,15 @@ sub process {
         undef($server);
     }
     elsif ($uri =~ /^\/wsdl\/([a-zA-Z_]+)/o) {
-        my $wsdl = lc($1);
+        my $module = lc($1);
         my $server = $self->{server}; # make a copy of server ref to make it strong
         if (defined $server) {
-            my $file = $self->{wsdl}.'/'.$wsdl.'.wsdl';
-
-            if (exists $server->{wsdl_module}->{$wsdl} and -f $file and open(FILE, $file)) {
-                my ($read, $buffer, $content) = (0, '', '');
-
-                Lim::DEBUG and $self->{logger}->debug('Sending wsdl ', $file);
-                
-                while (($read = read(FILE, $buffer, 64*1024))) {
-                    $content .= $buffer;
-                }
-                close(FILE);
-                
-                unless (defined $read) {
+            if (exists $server->{module}->{$module}) {
+                unless (defined $server->{module}->{$module}->{wsdl}) {
                     $response->code(HTTP_INTERNAL_SERVER_ERROR);
                 }
                 else {
-                    $content =~ s/\@SOAP_LOCATION\@/$self->{uri}/go;
-                    $response->content($content);
+                    $response->content($server->{module}->{$module}->{wsdl});
                     $response->header(
                         'Content-Type' => 'text/xml; charset=utf-8',
                         'Cache-Control' => 'no-cache',
@@ -346,7 +330,7 @@ sub process {
         
         $module = lc($module);
         my $server = $self->{server}; # make a copy of server ref to make it strong
-        if (defined $server and exists $server->{module_name}->{$module}) {
+        if (defined $server and exists $server->{module}->{$module}) {
             my ($method, $call);
             
             if (exists $REST_CRUD{$request->method}) {
@@ -363,18 +347,8 @@ sub process {
             }
             $call = ucfirst($method).ucfirst($function);
             
-            if (exists $server->{module_name_call}->{$module}->{$call}) {
-                $module = $server->{module_name_call}->{$module}->{$call};
-            }
-            else {
-                foreach (@{$server->{module_name}->{$module}}) {
-                    if ($_->can($call)) {
-                        $module =
-                            $server->{module_name_call}->{$module}->{$call} =
-                            $_;
-                        last;
-                    }
-                }
+            if ($server->{module}->{$module}->{module}->can($call)) {
+                $module = $server->{module}->{$module}->{module};
             }
             
             if (blessed($module)) {

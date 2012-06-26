@@ -5,10 +5,6 @@ use Carp;
 
 use Log::Log4perl ();
 
-use Lim::Manage::Config ();
-use Lim::Manage::File ();
-use Lim::Manage::Program ();
-
 use base qw(Lim::Plugin);
 
 =head1 NAME
@@ -20,11 +16,6 @@ use base qw(Lim::Plugin);
 See L<Lim> for version.
 
 =cut
-
-our %ConfigFiles = (
-    'conf.xml' => [ '/etc/opendnssec/conf.xml' ],
-    ''
-);
 
 =head1 SYNOPSIS
 

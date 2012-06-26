@@ -39,14 +39,6 @@ sub Module {
 
 =cut
 
-sub WSDL {
-    $_[0]->Module;
-}
-
-=head2 function1
-
-=cut
-
 sub C {
     my $object = shift;
 

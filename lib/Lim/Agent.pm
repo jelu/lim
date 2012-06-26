@@ -4,13 +4,10 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
+use Scalar::Util qw(blessed);
 
 use Lim ();
 use Lim::Plugins ();
-use Lim::Manager ();
-use Lim::DB::Master ();
-use Lim::RPC::Client ();
 
 use base qw(
     Lim::RPC
@@ -29,15 +26,6 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub UNKNOWN (){ 0 }
-sub CONNECTING (){ 1 }
-sub ONLINE (){ 2 }
-sub OFFLINE (){ 3 }
-sub WRONG_TYPE (){ 4 }
-sub INVALID (){ 5 }
-
-sub EXECUTOR_STATUS_INTERVAL (){ 10 }
-
 =head1 SYNOPSIS
 
 ...
@@ -53,59 +41,32 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
-#        executor => {},
-#        watchers => []
+        logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
-    my $real_self = $self;
-    weaken($self);
     
     unless (defined $args{server}) {
         confess __PACKAGE__, ': Missing server';
     }
-#    unless (defined $args{exec_host}) {
-#        confess __PACKAGE__, ': Missing exec_host';
-#    }
-#    unless (defined $args{exec_port}) {
-#        confess __PACKAGE__, ': Missing exec_port';
-#    }
+    unless (blessed $args{server} and $args{server}->isa('Lim::RPC::Server')) {
+        confess __PACKAGE__, ': Server parameter is not a Lim::RPC::Server';
+    }
     
-    $self->{db_master} = Lim::DB::Master->new
-        ->AddNotify($self, 'CreateMaster', 'UpdateMaster', 'DeleteMaster');
-    
-# Executor
-#    $self->{executor} = {
-#        host => $args{exec_host},
-#        port => $args{exec_port},
-#        status => UNKNOWN,
-#        status_message => 'Not checked'
-#    };
-#
-#    $self->{watcher_executor_status} = AnyEvent->timer(
-#        after => EXECUTOR_STATUS_INTERVAL,
-#        interval => EXECUTOR_STATUS_INTERVAL,
-#        cb => sub {
-#            unless (exists $self->{run_executor_status}) {
-#                $self->{run_executor_status} = 1;
-#                $self->ExecutorGetStatus;
-#                delete $self->{run_executor_status};
-#            }
-#        });
-    
-    $args{server}->serve(
-        $self->{db_master},
-        Lim::Plugins->instance,
-        Lim::Manager->instance
-    );
+#    $self->{plugins} = Lim::Plugins->new(server => $args{server});
+#    
+#    $args{server}->serve(
+#        $self->{plugins}
+#    );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $real_self;
+    $self;
 }
 
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+    
+    delete $self->{plugins};
 }
 
 =head2 function2
@@ -120,181 +81,9 @@ sub Module {
 
 =cut
 
-#sub ReadManages {
-#    my ($self, $cb) = Lim::RPC::C(@_, undef);
-#
-#    if (exists $self->{executor}) {
-#        if ($self->{executor}->{status} == ONLINE) {
-#            my $cli; $cli = Lim::RPC::Client->new(
-#                host => $self->{executor}->{host},
-#                port => $self->{executor}->{port},
-#                uri => '/manager',
-#                cb => sub {
-#                    my (undef, $data) = @_;
-#                    
-#                    if ($cli->status == Lim::RPC::Client::OK
-#                        and defined $data and ref($data) eq 'HASH')
-#                    {
-#                        if (exists $data->{manage}
-#                            and ref($data->{manage}) eq 'ARRAY')
-#                        {
-#                            Lim::RPC::R($cb, $data, {
-#                               'base.manage' => [ 'type', 'name', 'plugin', 'action' ],
-#                               'base.manage.action' => [ 'name', 'displayName', 'helper' ]
-#                            });
-#                        }
-#                        elsif (exists $data->{error}) {
-#                            Lim::RPC::E($cb, $data->{error});
-#                        }
-#                        else {
-#                            # TODO invalid data
-#                            Lim::RPC::R($cb);
-#                        }
-#                    }
-#                    else {
-#                        # TODO: cli not ok
-#                        Lim::RPC::R($cb);
-#                    }
-#                    undef($cli);
-#                });
-#            return;
-#        }
-#        else {
-#            # TODO: executor not online
-#        }
-#    }
-#    else {
-#        # TODO: no executor
-#    }
-#    Lim::RPC::R($cb);
-#}
-
-=head2 function2
-
-=cut
-
-#sub ReadManage {
-#    my ($self, $cb, undef, $type, $name, $plugin, $action) = Lim::RPC::C(@_, undef);
-#    
-#    unless (defined $type and defined $name and defined $plugin and defined $action) {
-#        Lim::RPC::R($cb);
-#        return;
-#    }
-#    
-#    if (exists $self->{executor}) {
-#        if ($self->{executor}->{status} == ONLINE) {
-#            my $cli; $cli = Lim::RPC::Client->new(
-#                host => $self->{executor}->{host},
-#                port => $self->{executor}->{port},
-#                uri => '/manager/manage/'.join('/', $type, $name, $plugin, $action),
-#                cb => sub {
-#                    my (undef, $data) = @_;
-#                    
-#                    if ($cli->status == Lim::RPC::Client::OK
-#                        and defined $data and ref($data) eq 'HASH')
-#                    {
-#                        if (exists $data->{helper}
-#                            and ref($data->{helper}) eq 'HASH')
-#                        {
-#                            Lim::RPC::R($cb, {
-#                                helper => $data->{helper}
-#                            }, {
-#                                'base.helper' => [ 'name', 'data' ]
-#                            });
-#                        }
-#                        elsif (exists $data->{error}) {
-#                            Lim::RPC::E($cb, $data->{error});
-#                        }
-#                        else {
-#                            # TODO invalid data
-#                            Lim::RPC::R($cb);
-#                        }
-#                    }
-#                    else {
-#                        # TODO: cli not ok
-#                        Lim::RPC::R($cb);
-#                    }
-#                    undef($cli);
-#                });
-#            return;
-#        }
-#        else {
-#            # TODO: executor not online
-#        }
-#    }
-#    else {
-#        # TODO: no executor
-#    }
-#    Lim::RPC::R($cb);
-#}
-
-=head2 function2
-
-=cut
-
 sub Notification {
     my ($self, $notifier, $what, @parameters) = @_;
 }
-
-=head2 function2
-
-=cut
-
-#sub ExecutorGetStatus {
-#    my ($self) = @_;
-#    my $real_self = $self;
-#    weaken($self);
-#    
-#    if (exists $self->{executor} and !exists $self->{executor}->{watcher_status}) {
-#        my $executor = $self->{executor};
-#        weaken($executor);
-#        
-#        $executor->{watcher_status} = Lim::RPC::Client->new(
-#            host => $executor->{host},
-#            port => $executor->{port},
-#            uri => '/lim',
-#            cb => sub {
-#                my ($cli, $data) = @_;
-#                
-#                if ($cli->status == Lim::RPC::Client::OK) {
-#                    if (defined $data and ref($data) eq 'HASH'
-#                        and exists $data->{lim}
-#                        and ref($data->{lim}) eq 'HASH'
-#                        and exists $data->{lim}->{type}
-#                        and exists $data->{lim}->{version})
-#                    {
-#                        if ($data->{lim}->{type} eq 'executor') {
-#                            $self->{executor}->{status} = ONLINE;
-#                            $self->{executor}->{status_message} = 'Online';
-#                            $self->{executor}->{version} = $data->{lim}->{version};
-#                        }
-#                        else {
-#                            $self->{executor}->{status} = WRONG_TYPE;
-#                            $self->{executor}->{status_message} = 'Expected executor but got '.$data->{lim}->{type};
-#                        }
-#                    }
-#                    else {
-#                        $self->{executor}->{status} = INVALID;
-#                        $self->{executor}->{status_message} = 'Invalid data returned';
-#                    }
-#                }
-#                elsif ($cli->status == Lim::RPC::Client::ERROR) {
-#                    $self->{executor}->{status} = OFFLINE;
-#                    $self->{executor}->{status_message} = 'Error: '.$cli->error;
-#                }
-#                else {
-#                    $self->{executor}->{status} = OFFLINE;
-#                    $self->{executor}->{status_message} = 'Unknown';
-#                }
-#                
-#                delete $executor->{watcher_status};
-#            });
-#        $self->{executor}->{status} = CONNECTING;
-#        $self->{executor}->{status_message} = 'Connecting';
-#    }
-#    
-#    $real_self;
-#}
 
 =head1 AUTHOR
 

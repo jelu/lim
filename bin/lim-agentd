@@ -15,14 +15,12 @@ use Lim::Agent ();
 
 my $help = 0;
 my $host = '0.0.0.0';
-my $port = 5354;
+my $port = 5353;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
 my $wsdl = '/usr/share/lim/wsdl';
 my $dsn;
-#my $exec_host = '127.0.0.1';
-#my $exec_port = 5355;
 my $prefix;
 
 Getopt::Long::GetOptions(
@@ -34,8 +32,6 @@ Getopt::Long::GetOptions(
     'html:s' => \$html,
     'wsdl:s' => \$wsdl,
     'dsn=s' => \$dsn,
-#    'exec-host:s' => \$exec_host,
-#    'exec-port:s' => \$exec_port,
     'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
@@ -112,9 +108,7 @@ my $server = Lim::RPC::Server->new(
 $server->serve(
     Lim->new(type => 'agent'),
     Lim::Agent->new(
-        server => $server,
-#        exec_host => $exec_host,
-#        exec_port => $exec_port
+        server => $server
     ));
 
 if (defined $server) {
@@ -144,7 +138,7 @@ Specify the host/IP to bind to (default 0.0.0.0).
 
 =item B<--port <port>>
 
-Specify the port to listen on (default 5354).
+Specify the port to listen on (default 5353).
 
 =item B<--key <key>>
 
@@ -161,14 +155,6 @@ Specify the WSDL directory (default /usr/share/lim/wsdl).
 =item B<--dsn <DSN>>
 
 Specify the DBI DSN for connecting to the database.
-
-=item B<--exec-host <host>>
-
-Specify the host of the Executor.
-
-=item B<--exec-port <port>>
-
-Specify the port of the Executor.
 
 =item B<--help>
 

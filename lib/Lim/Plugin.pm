@@ -68,13 +68,6 @@ sub Destroy {
 
 =cut
 
-sub Manage {
-}
-
-=head2 function1
-
-=cut
-
 sub FileExists {
     my ($self, $file) = @_;
     

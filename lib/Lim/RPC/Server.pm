@@ -42,10 +42,7 @@ sub new {
     my $self = {
         logger => Log::Log4perl->get_logger,
         client => {},
-        modules => [],
-        module_name => {},
-        module_name_call => {},
-        wsdl_module => {}
+        module => {}
     };
     bless $self, $class;
     my $real_self = $self;
@@ -60,9 +57,6 @@ sub new {
     unless (defined $args{port}) {
         confess __PACKAGE__, ': No port specified';
     }
-    unless (defined $args{wsdl}) {
-        confess __PACKAGE__, ': Missing wsdl (Path to WSDL files)';
-    }
     
     $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
 
@@ -75,11 +69,6 @@ sub new {
             confess __PACKAGE__, ': Path to html "', $self->{html}, '" is invalid';
         }
     }
-    $self->{wsdl} = $args{wsdl};
-
-    unless (-d $self->{wsdl} and -r $self->{wsdl} and -x $self->{wsdl}) {
-        confess __PACKAGE__, ': Path to wsdl "', $self->{wsdl}, '" is invalid';
-    }
 
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
@@ -89,7 +78,6 @@ sub new {
             server => $self,
             fh => $fh,
             tls_ctx => $self->{tls_ctx},
-            wsdl => $self->{wsdl},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
                 
@@ -100,7 +88,7 @@ sub new {
             on_eof => sub {
                 my ($handle) = @_;
                 
-                $self->{logger}->warn($handle, ' EOF');
+                $self->{logger}->debug($handle, ' EOF');
                 
                 delete $self->{client}->{$handle};
             });
@@ -128,10 +116,7 @@ sub DESTROY {
     
     delete $self->{client};
     delete $self->{socket};
-    delete $self->{modules};
-    delete $self->{module_name};
-    delete $self->{module_name_call};
-    delete $self->{wsdl};
+    delete $self->{module};
 }
 
 =head2 function2
@@ -144,13 +129,18 @@ sub serve {
     foreach my $module (@_) {
         if ($module->isa('Lim::RPC')) {
             my $name = lc($module->Module);
-            my $wsdl = lc($module->WSDL);
             
-            Lim::DEBUG and $self->{logger}->debug('serving ', $name, ' [wsdl: ', $wsdl, ']');
+            if (exists $self->{module}->{$name}) {
+                $self->{logger}->warn('Can not serve ', $name, ', module already served');
+                next;
+            }
             
-            push(@{$self->{module_name}->{$name}}, $module);
-            push(@{$self->{modules}}, $module);
-            $self->{wsdl_module}->{$wsdl} = $module;
+            Lim::DEBUG and $self->{logger}->debug('serving ', $name);
+            
+            $self->{module}->{$name} = {
+                name => $name,
+                module => $module
+            };
         }
     }
     
@@ -179,14 +169,6 @@ sub port {
 
 sub host {
     $_[0]->{host};
-}
-
-=head2 function2
-
-=cut
-
-sub wsdl {
-    $_[0]->{wsdl};
 }
 
 =head2 function2
