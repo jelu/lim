@@ -52,6 +52,10 @@ sub new {
     
     foreach my $module (findsubmod Lim::Plugin) {
         my ($name, $obj) = ($module, undef);
+        
+        if ($name eq 'Lim::Plugin::Base') {
+            next;
+        }
 
         if (exists $self->{plugin}->{$module}) {
             $self->{logger}->warn('Plugin ', $module, ' already loaded');
@@ -73,6 +77,7 @@ sub new {
         $self->{plugin}->{$module} = {
             name => $name,
             module => $module,
+            version => $obj->VERSION
         };
         $self->{plugin_obj}->{$module} = $obj;
         $args{server}->serve($obj);
@@ -96,6 +101,36 @@ sub DESTROY {
 
 sub Module {
     'Plugins';
+}
+
+=head2 function1
+
+=cut
+
+sub Calls {
+    {
+        ReadIndex => {
+            out => {
+                plugin => {
+                    name => Lim::RPC::STRING,
+                    module => Lim::RPC::STRING,
+                    version => Lim::RPC::STRING
+                }
+            }
+        }
+    };
+}
+
+=head2 function1
+
+=cut
+
+sub ReadIndex {
+    my ($self) = @_;
+    
+    {
+        plugin => [ values %{$self->{plugin}} ]
+    };
 }
 
 =head1 AUTHOR

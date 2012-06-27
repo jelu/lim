@@ -21,6 +21,12 @@ See L<Lim> for version.
 
 =cut
 
+sub OPTIONAL (){ 0 }
+sub REQUIRED (){ 1 }
+
+sub STRING (){ 1 << 4 }
+sub INTEGER (){ 2 << 4 }
+
 =head1 SYNOPSIS
 
 ...
@@ -33,6 +39,14 @@ See L<Lim> for version.
 
 sub Module {
     confess 'Module not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub Calls {
+    confess 'Calls not overloaded';
 }
 
 =head2 function1

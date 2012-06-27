@@ -52,11 +52,11 @@ sub new {
         confess __PACKAGE__, ': Server parameter is not a Lim::RPC::Server';
     }
     
-#    $self->{plugins} = Lim::Plugins->new(server => $args{server});
-#    
-#    $args{server}->serve(
-#        $self->{plugins}
-#    );
+    $self->{plugins} = Lim::Plugins->new(server => $args{server});
+    
+    $args{server}->serve(
+        $self->{plugins}
+    );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
@@ -75,6 +75,13 @@ sub DESTROY {
 
 sub Module {
     'Agent';
+}
+
+=head2 function2
+
+=cut
+
+sub Calls {
 }
 
 =head2 function2

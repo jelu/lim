@@ -131,9 +131,73 @@ sub serve {
             my $name = lc($module->Module);
             
             if (exists $self->{module}->{$name}) {
-                $self->{logger}->warn('Can not serve ', $name, ', module already served');
+                $self->{logger}->warn('Can not serve ', $name, ': module already served');
                 next;
             }
+            
+            unless ($module->VERSION) {
+                $self->{logger}->warn('Can not serve ', $name, ': no VERSION specified in module');
+                next;
+            }
+            
+            my $calls = $module->Calls;
+            unless ($calls) {
+                $self->{logger}->info('Not serving ', $name, ', nothing to serve');
+                next;
+            }
+            unless (ref($calls) eq 'HASH') {
+                $self->{logger}->warn('Can not serve ', $name, ': Calls() return was invalid');
+                next;
+            }
+            unless (%$calls) {
+                $self->{logger}->info('Not serving ', $name, ', nothing to serve');
+                next;
+            }
+            foreach my $call (keys %$calls) {
+                unless ($module->can($call)) {
+                    $self->{logger}->warn('Can not serve ', $name, ': Missing specified call ', $call, ' function');
+                    undef($calls);
+                    last;
+                }
+                unless ($module->can('__lim_rpc_'.$call)) {
+                    my ($orig_call, $rpc_call, $valueof);
+                    
+                    if (exists $calls->{in}) {
+                        unless (ref($calls->{in}) eq 'HASH') {
+                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
+                            undef($calls);
+                            last;
+                        }
+                        
+                        my @keys = keys %{$calls->{in}};
+                        
+                        if (scalar @keys != 1) {
+                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
+                            undef($calls);
+                            last;
+                        }
+                        
+                        $valueof = '//'.shift(@keys).'/';
+                    }
+                    
+                    $orig_call = ref($module).'::'.$call;
+                    $call = '__lim_rpc_'.$call;;
+                    $rpc_call = ref($module).'::'.$call;
+                    
+                    no strict 'refs';
+                    *$rpc_call = \&$orig_call;
+                    *$orig_call = sub {
+                        my ($self, $cb, @args) = Lim::RPC::C(@_, $valueof);
+                        
+                        Lim::RPC::R($cb, $self->$call(@args));
+                    };
+                }
+            }
+            unless ($calls) {
+                next;
+            }
+            
+            # TODO: Generate wsdl defs
             
             Lim::DEBUG and $self->{logger}->debug('serving ', $name);
             

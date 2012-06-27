@@ -1,11 +1,8 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::CLI::Master;
 
 use common::sense;
-use Carp;
 
-use Log::Log4perl ();
-
-use base qw(Lim::Plugin::Base);
+use base qw(Lim::CLI::Base);
 
 =head1 NAME
 
@@ -13,11 +10,11 @@ use base qw(Lim::Plugin::Base);
 
 =head1 VERSION
 
-Version 0.1
+See L<Lim> for version.
 
 =cut
 
-our $VERSION = '0.1';
+our $VERSION = $Lim::Plugin::SoftHSM::VERSION;
 
 =head1 SYNOPSIS
 
@@ -28,18 +25,6 @@ our $VERSION = '0.1';
 =head2 function1
 
 =cut
-
-sub Init {
-    my $self = shift;
-    my %args = ( @_ );
-}
-
-=head2 function1
-
-=cut
-
-sub Destroy {
-}
 
 =head1 AUTHOR
 
@@ -58,7 +43,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Lim
+perldoc Lim
 
 
 You can also look for information at:
@@ -100,4 +85,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::CLI::Master

@@ -1,10 +1,9 @@
-package Lim::CLI::Master;
+package Lim::Plugin::Base;
 
 use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
 
 use Lim ();
 
@@ -33,67 +32,97 @@ our $VERSION = $Lim::VERSION;
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
-    my $real_self = $self;
-    weaken($self);
 
+    $self->Init(@_);
+    
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $real_self;
+    $self;
 }
 
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    delete $self->{current};
-    delete $self->{watchers};
-}
-
-=head2 function1
-
-=cut
-
-sub prompt {
-    my ($self) = @_;
-
-    return ' master'.(exists $self->{host} ? $self->{host} . (exists $self->{port} ? ':'.$self->{port} : '') : '');
-}
-
-=head2 function1
-
-=cut
-
-sub command {
-    my ($self, $cmd, $args) = @_;
-
-    my $func = 'cmd_'.$cmd;
-    if ($self->can($func)) {
-        $self->$func($args);
-    }
-    else {
-        print 'Unknown command: ', $cmd, "\n";
-    }
-}
-
-=head2 function1
-
-=cut
-
-sub cmd_connect {
-    my ($self, $args) = @_;
     
-    if ($args =~ /^\s*([a-zA-Z0-9\.]+)[\s:]*([0-9]*)/o) {
-        my ($host, $port) = ($1, $2);
-        
-        unless ($port) {
-            $port = 5353;
+    $self->Destroy;
+}
+
+=head2 function1
+
+=cut
+
+sub Init {
+}
+
+=head2 function1
+
+=cut
+
+sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub FileExists {
+    my ($self, $file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            Lim::DEBUG and $self->{logger}->debug('check file exists ', $real_file);
+            if (-f $real_file) {
+                return $real_file;
+            }
         }
-        
-        print 'Connecting to master ', $host, ':', $port, ' ... ';
     }
+    return;
+}
+
+=head2 function1
+
+=cut
+
+sub FileReadable {
+    my ($self, $file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            Lim::DEBUG and $self->{logger}->debug('check file readable ', $real_file);
+            if (-f $real_file and -r $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
+
+
+=head2 function1
+
+=cut
+
+sub FileWritable {
+    my ($self, $file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            Lim::DEBUG and $self->{logger}->debug('check file writable ', $real_file);
+            if (-f $real_file and -w $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
 }
 
 =head1 AUTHOR
@@ -113,7 +142,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-perldoc Lim
+    perldoc Lim
 
 
 You can also look for information at:
@@ -155,4 +184,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::CLI::Master
+1; # End of Lim::Plugin::Base

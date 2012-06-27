@@ -7,7 +7,7 @@ use Log::Log4perl ();
 use Fcntl qw(:seek);
 
 use base qw(
-    Lim::Plugin
+    Lim::Plugin::Base
     Lim::RPC
     );
 
@@ -17,10 +17,11 @@ use base qw(
 
 =head1 VERSION
 
-See L<Lim> for version.
+Version 0.1
 
 =cut
 
+our $VERSION = '0.1';
 our %ConfigFiles = (
     'softhsm.conf' => [
         '/etc/softhsm/softhsm.conf',
@@ -65,6 +66,22 @@ sub Module {
 
 =cut
 
+sub Calls {
+    {
+        ReadConfigs => {
+            out => {
+                file => Lim::RPC::STRING,
+                write => Lim::RPC::INTEGER,
+                read => Lim::RPC::INTEGER
+            }
+        }
+    };
+}
+
+=head2 function1
+
+=cut
+
 sub _ScanConfig {
     my ($self) = @_;
     my %file;
@@ -77,7 +94,7 @@ sub _ScanConfig {
                     next;
                 }
                 
-                $file{$file}->{
+                $file{$file} = {
                     file => $file,
                     write => 1,
                     read => 1
@@ -88,7 +105,7 @@ sub _ScanConfig {
                     next;
                 }
                 
-                $file{$file}->{
+                $file{$file} = {
                     file => $file,
                     write => 0,
                     read => 1
@@ -105,13 +122,12 @@ sub _ScanConfig {
 =cut
     
 sub ReadConfigs {
-    my ($self, $cb) = Lim::RPC::C(@_, undef);
+    my ($self) = @_;
+    my $files = $self->_ScanConfig;
     
-    Lim::RPC::R($cb, {
-       plugin => [ values %{$self->{plugin}} ]
-    }, {
-        'base.plugin' => [ 'name', 'module' ]
-    });    
+    {
+        file => [ values %$files ]
+    };
 }
 
 =head1 AUTHOR

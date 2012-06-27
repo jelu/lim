@@ -11,11 +11,11 @@ Lim - The great new Lim!
 
 =head1 VERSION
 
-Version 0.01
+Version 0.1
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.1';
 our $CONFIG;
 
 sub OBJ_DEBUG (){ 1 }
@@ -82,15 +82,42 @@ sub Module {
 
 =cut
 
+sub Calls {
+    {
+        ReadIndex => {
+            out => {
+                lim => {
+                    version => Lim::RPC::STRING,
+                    type => Lim::RPC::STRING
+                }
+            }
+        },
+        ReadVersion => {
+            out => {
+                version => Lim::RPC::STRING
+            }
+        },
+        ReadType => {
+            out => {
+                type => Lim::RPC::STRING
+            }
+        }
+    };
+}
+
+=head2 function1
+
+=cut
+
 sub ReadIndex {
-    my ($self, $cb) = Lim::RPC::C(@_, undef);
+    my ($self) = @_;
     
-    Lim::RPC::R($cb, {
+    {
         lim => {
             version => $VERSION,
             type => $self->{type}
         }
-    });
+    };
 }
 
 =head2 function1
@@ -98,11 +125,9 @@ sub ReadIndex {
 =cut
 
 sub ReadVersion {
-    my ($self, $cb) = Lim::RPC::C(@_, undef);
-    
-    Lim::RPC::R($cb, {
+    {
         version => $VERSION
-    });
+    };
 }
 
 =head2 function1
@@ -110,11 +135,11 @@ sub ReadVersion {
 =cut
 
 sub ReadType {
-    my ($self, $cb) = Lim::RPC::C(@_, undef);
+    my ($self) = @_;
     
-    Lim::RPC::R($cb, {
+    {
         type => $self->{type}
-    });
+    };
 }
 
 =head1 AUTHOR

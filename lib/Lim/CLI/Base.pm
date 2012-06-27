@@ -1,4 +1,4 @@
-package Lim::Plugin;
+package Lim::CLI::Base;
 
 use common::sense;
 use Carp;
@@ -32,12 +32,18 @@ our $VERSION = $Lim::VERSION;
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
+    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
 
-    $self->Init(@_);
+    unless (defined $args{cli}) {
+        confess __PACKAGE__, ': Missing cli';
+    }
+    $self->{cli} = delete $args{cli};
+
+    $self->Init(%args);
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
@@ -68,61 +74,32 @@ sub Destroy {
 
 =cut
 
-sub FileExists {
-    my ($self, $file) = @_;
-    
-    if (defined $file) {
-        $file =~ s/^\///o;
-        foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
-            Lim::DEBUG and $self->{logger}->debug('check file exists ', $real_file);
-            if (-f $real_file) {
-                return $real_file;
-            }
-        }
-    }
-    return;
+sub Module {
+    confess 'Module not overloaded';
 }
 
 =head2 function1
 
 =cut
 
-sub FileReadable {
-    my ($self, $file) = @_;
-    
-    if (defined $file) {
-        $file =~ s/^\///o;
-        foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
-            Lim::DEBUG and $self->{logger}->debug('check file readable ', $real_file);
-            if (-f $real_file and -r $real_file) {
-                return $real_file;
-            }
-        }
-    }
-    return;
+sub Prompt {
+    return lc($_[0]->Module);
 }
-
 
 =head2 function1
 
 =cut
 
-sub FileWritable {
-    my ($self, $file) = @_;
-    
-    if (defined $file) {
-        $file =~ s/^\///o;
-        foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
-            Lim::DEBUG and $self->{logger}->debug('check file writable ', $real_file);
-            if (-f $real_file and -w $real_file) {
-                return $real_file;
-            }
-        }
+sub Command {
+    my ($self, $cmd, $args) = @_;
+
+    my $func = 'cmd_'.$cmd;
+    if ($self->can($func)) {
+        $self->$func($args);
     }
-    return;
+    else {
+        $self->{cli}->print('Unknown command: ', $cmd, "\n");
+    }
 }
 
 =head1 AUTHOR
@@ -184,4 +161,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin
+1; # End of Lim::CLI::Base
