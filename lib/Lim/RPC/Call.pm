@@ -1,15 +1,13 @@
-package Lim::Agent;
+package Lim::RPC::Call;
 
 use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 
 use Lim ();
-use Lim::Plugins ();
-
-use base qw(Lim::RPC::Base);
+use Lim::RPC::Client ();
 
 =head1 NAME
 
@@ -22,6 +20,9 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+
+sub OK (){ 1 }
+sub ERROR (){ -1 }
 
 =head1 SYNOPSIS
 
@@ -38,55 +39,64 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        status => 0,
+        error => ''
     };
     bless $self, $class;
+    my $real_self = $self;
+    weaken($self);
     
-    unless (defined $args{server}) {
-        confess __PACKAGE__, ': Missing server';
+    unless (defined $args{cli}) {
+        unless (defined $args{host}) {
+            confess __PACKAGE__, ': No host specified';
+        }
+        unless (defined $args{port}) {
+            confess __PACKAGE__, ': No port specified';
+        }
     }
-    unless (blessed $args{server} and $args{server}->isa('Lim::RPC::Server')) {
-        confess __PACKAGE__, ': Server parameter is not a Lim::RPC::Server';
+    unless (defined $args{rpc}) {
+        confess __PACKAGE__, ': No rpc specified';
+    }
+    unless (defined $args{call}) {
+        confess __PACKAGE__, ': No call specified';
+    }
+    unless (defined $args{cb}) {
+        confess __PACKAGE__, ': No cb specified';
     }
     
-    $self->{plugins} = Lim::Plugins->new(server => $args{server});
-    
-    $args{server}->serve(
-        $self->{plugins}
-    );
-    
+    if (defined $args{cli}) {
+        unless (blessed($args{cli}) and $args{cli}->isa('Lim::CLI')) {
+            confess __PACKAGE__, ': cli parameter is not a Lim::CLI';
+        }
+    }
+    unless (blessed($args{rpc}) and $args{rpc}->isa('Lim::RPC::Base')) {
+        confess __PACKAGE__, ': rpc parameter is not a Lim::RPC::Base';
+    }
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
+    $real_self;
 }
 
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    delete $self->{plugins};
 }
 
-=head2 function2
+=head2 function1
 
 =cut
 
-sub Module {
-    'Agent';
+sub status {
+    $_[0]->{status};
 }
 
-=head2 function2
+=head2 function1
 
 =cut
 
-sub Calls {
-}
-
-=head2 function2
-
-=cut
-
-sub Notification {
-    my ($self, $notifier, $what, @parameters) = @_;
+sub error {
+    $_[0]->{error};
 }
 
 =head1 AUTHOR
@@ -148,4 +158,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Agent
+1; # End of Lim::RPC::Call

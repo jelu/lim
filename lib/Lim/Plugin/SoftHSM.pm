@@ -8,7 +8,7 @@ use Fcntl qw(:seek);
 
 use base qw(
     Lim::Plugin::Base
-    Lim::RPC
+    Lim::RPC::Base
     );
 
 =head1 NAME
@@ -70,9 +70,9 @@ sub Calls {
     {
         ReadConfigs => {
             out => {
-                file => Lim::RPC::STRING,
-                write => Lim::RPC::INTEGER,
-                read => Lim::RPC::INTEGER
+                file => 'string',
+                write => 'integer',
+                read => 'integer'
             }
         }
     };

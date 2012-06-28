@@ -5,9 +5,9 @@ use Carp;
 
 use Log::Log4perl ();
 use Scalar::Util qw(weaken);
+use Module::Find qw(findsubmod);
 
 use Lim ();
-use Lim::CLI::Master ();
 
 use IO::Handle ();
 use AnyEvent::Handle ();
@@ -39,7 +39,14 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        cli => {},
+        cli_obj => {},
+        busy => 0,
+        set => {
+            host => 'localhost',
+            port => 5353
+        }
     };
     bless $self, $class;
     my $real_self = $self;
@@ -52,6 +59,48 @@ sub new {
         confess __PACKAGE__, ': on_quit is not CODE';
     }
     $self->{on_quit} = $args{on_quit};
+
+    foreach my $module (findsubmod Lim::CLI) {
+        my ($name, $obj);
+        
+        if ($module eq 'Lim::CLI::Base') {
+            next;
+        }
+
+        if (exists $self->{cli}->{$module}) {
+            $self->{logger}->warn('CLI ', $module, ' already loaded');
+            next;
+        }
+        
+        eval {
+            eval "use $module ();";
+            die $@ if $@;
+            $obj = $module->new(cli => $self);
+        };
+        
+        if ($@) {
+            $self->{logger}->warn('Unable to load cli ', $module, ': ', $@);
+            next;
+        }
+        unless (defined $obj) {
+            $self->{logger}->warn('Unable to load cli ', $module, ': no object returned');
+            next;
+        }
+        
+        $name = lc($obj->Module);
+        
+        if (exists $self->{cli}->{$name}) {
+            $self->{logger}->warn('CLI ', $module, ' name ', $name, ' already in use');
+            next;
+        }
+        
+        $self->{cli}->{$name} = {
+            name => $name,
+            module => $module,
+            version => $obj->VERSION
+        };
+        $self->{cli_obj}->{$module} = $obj;
+    }
     
     $self->{stdin_watcher} = AnyEvent::Handle->new(
          fh => \*STDIN,
@@ -69,6 +118,10 @@ sub new {
              my ($handle) = @_;
              
              $handle->push_read(line => sub {
+                 if ($self->{busy}) {
+                     return;
+                 }
+                 
                  my ($handle, $line) = @_;
                  my ($cmd, $args) = split(/\s+/o, $line, 2);
                  $cmd = lc($cmd);
@@ -76,6 +129,7 @@ sub new {
                  if ($cmd eq 'quit' or $cmd eq 'exit') {
                      if (exists $self->{current}) {
                          delete $self->{current};
+                         $self->Prompt;
                      }
                      else {
                          $handle->destroy;
@@ -83,15 +137,48 @@ sub new {
                          return;
                      }
                  }
-                 
-                 if (exists $self->{current}) {
-                     $self->{current}->command($cmd, $args);
+                 elsif ($cmd eq 'set') {
+                     if ($args =~ /^(\S+)\s+(.+)$/o) {
+                         $self->{set}->{$1} = $2;
+                     }
+                     elsif ($args) {
+                         $self->println('usage: set key value', "\n");
+                     }
+                     else {
+                         foreach my $key (sort (keys %{$self->{set}})) {
+                             $self->printf("%-20s  %s\n", $key, ($self->{set}->{$key} eq '' ? "''" : $self->{set}->{$key}));
+                         }
+                     }
+                     $self->Prompt;
                  }
-                 elsif ($cmd eq 'master') {
-                     $self->{current} = Lim::CLI::Master->new(args => $args);
+                 else {
+                     if ($cmd) {
+                         if (exists $self->{current}) {
+                             if ($self->{current}->can('cmd_'.$cmd)) {
+                                 my $function = 'cmd_'.$cmd;
+                                 
+                                 $self->{busy} = 1;
+                                 $self->{current}->$function($args);
+                             }
+                             else {
+                                 $self->unknown_command($cmd);
+                                 $self->Prompt;
+                             }
+                         }
+                         elsif (exists $self->{cli}->{$cmd}) {
+                             $self->{current} = $self->{cli_obj}->{$self->{cli}->{$cmd}->{module}};
+                             $self->Prompt;
+                         }
+                         else {
+                             $self->unknown_command($cmd);
+                             $self->Prompt;
+                         }
+                     }
+                     else {
+                         $self->Prompt;
+                     }
                  }
 
-                 print 'lim',(exists $self->{current} ? $self->{current}->prompt : ''),'> ';
              });
          });
 
@@ -108,6 +195,96 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     delete $self->{current};
     delete $self->{stdin_watcher};
+    delete $self->{cli};
+    delete $self->{cli_obj};
+}
+
+=head2 function1
+
+=cut
+
+sub Prompt {
+    print 'lim',(exists $_[0]->{current} ? $_[0]->{current}->Prompt : ''),'> ';
+}
+
+=head2 function1
+
+=cut
+
+sub set {
+    if (defined $_[1]) {
+        $_[0]->{set}->{$_[1]} = $_[2];
+    }
+}
+
+=head2 function1
+
+=cut
+
+sub get {
+    if (defined $_[1]) {
+        return $_[0]->{set}->{$_[1]};
+    }
+}
+
+=head2 function1
+
+=cut
+
+sub unknown_command {
+    my ($self, $cmd) = @_;
+    
+    $self->println('unknown command: ', $cmd);
+}
+
+=head2 function1
+
+=cut
+
+sub print {
+    my $self = shift;
+    
+    print @_;
+}
+
+=head2 function1
+
+=cut
+
+sub printf {
+    my $self = shift;
+    
+    printf @_;
+}
+
+=head2 function1
+
+=cut
+
+sub println {
+    my $self = shift;
+    
+    print @_, "\n";
+}
+
+=head2 function1
+
+=cut
+
+sub Successful {
+    $_[0]->{busy} = 0;
+    $_[0]->Prompt;
+}
+
+=head2 function1
+
+=cut
+
+sub Error {
+    my $self = shift;
+    $self->println('command error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
+    $self->{busy} = 0;
+    $self->Prompt;
 }
 
 =head1 AUTHOR

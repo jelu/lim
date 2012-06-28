@@ -7,9 +7,8 @@ use Scalar::Util qw(blessed);
 
 use SOAP::Lite ();
 
+use Lim ();
 use Lim::DB ();
-
-use base qw(SOAP::Server::Parameters);
 
 =head1 NAME
 
@@ -21,33 +20,13 @@ See L<Lim> for version.
 
 =cut
 
-sub OPTIONAL (){ 0 }
-sub REQUIRED (){ 1 }
-
-sub STRING (){ 1 << 4 }
-sub INTEGER (){ 2 << 4 }
+our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
 ...
 
 =head1 SUBROUTINES/METHODS
-
-=head2 function1
-
-=cut
-
-sub Module {
-    confess 'Module not overloaded';
-}
-
-=head2 function1
-
-=cut
-
-sub Calls {
-    confess 'Calls not overloaded';
-}
 
 =head2 function1
 

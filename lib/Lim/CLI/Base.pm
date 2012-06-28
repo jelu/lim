@@ -4,6 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Scalar::Util qw(weaken);
 
 use Lim ();
 
@@ -42,6 +43,7 @@ sub new {
         confess __PACKAGE__, ': Missing cli';
     }
     $self->{cli} = delete $args{cli};
+    weaken($self->{cli});
 
     $self->Init(%args);
     
@@ -82,23 +84,42 @@ sub Module {
 
 =cut
 
-sub Prompt {
-    return lc($_[0]->Module);
+sub cli {
+    $_[0]->{cli};
 }
 
 =head2 function1
 
 =cut
 
-sub Command {
-    my ($self, $cmd, $args) = @_;
+sub Prompt {
+    return '/'.lc($_[0]->Module);
+}
 
-    my $func = 'cmd_'.$cmd;
-    if ($self->can($func)) {
-        $self->$func($args);
+=head2 function1
+
+=cut
+
+sub Successful {
+    my ($self) = @_;
+    
+    if (defined $self->{cli}) {
+        $self->{cli}->Successful;
+    }
+}
+
+=head2 function1
+
+=cut
+
+sub Error {
+    my $self = shift;
+    
+    if (defined $self->{cli}) {
+        $self->{cli}->Error(@_);
     }
     else {
-        $self->{cli}->print('Unknown command: ', $cmd, "\n");
+        $self->{logger}->error('Command returned error but CLI is gone [', $self, ']');
     }
 }
 

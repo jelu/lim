@@ -3,7 +3,7 @@ package Lim;
 use common::sense;
 use Carp;
 
-use base qw(Lim::RPC);
+use base qw(Lim::RPC::Base);
 
 =head1 NAME
 
@@ -87,19 +87,19 @@ sub Calls {
         ReadIndex => {
             out => {
                 lim => {
-                    version => Lim::RPC::STRING,
-                    type => Lim::RPC::STRING
+                    version => 'string',
+                    type => 'string'
                 }
             }
         },
         ReadVersion => {
             out => {
-                version => Lim::RPC::STRING
+                version => 'string'
             }
         },
         ReadType => {
             out => {
-                type => Lim::RPC::STRING
+                type => 'string'
             }
         }
     };

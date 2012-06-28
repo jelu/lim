@@ -8,7 +8,7 @@ use Scalar::Util qw(blessed);
 use Module::Find qw(findsubmod);
 
 use Lim ();
-use base qw(Lim::RPC);
+use base qw(Lim::RPC::Base);
 
 =head1 NAME
 
@@ -53,7 +53,7 @@ sub new {
     foreach my $module (findsubmod Lim::Plugin) {
         my ($name, $obj) = ($module, undef);
         
-        if ($name eq 'Lim::Plugin::Base') {
+        if ($module eq 'Lim::Plugin::Base') {
             next;
         }
 
@@ -112,9 +112,9 @@ sub Calls {
         ReadIndex => {
             out => {
                 plugin => {
-                    name => Lim::RPC::STRING,
-                    module => Lim::RPC::STRING,
-                    version => Lim::RPC::STRING
+                    name => 'string',
+                    module => 'string',
+                    version => 'string'
                 }
             }
         }

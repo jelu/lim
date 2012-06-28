@@ -11,6 +11,7 @@ use AnyEvent::Socket ();
 use AnyEvent::TLS ();
 
 use Lim ();
+use Lim::RPC ();
 use Lim::RPC::Server::Client ();
 
 =head1 NAME
@@ -127,7 +128,7 @@ sub serve {
     my ($self) = shift;
     
     foreach my $module (@_) {
-        if ($module->isa('Lim::RPC')) {
+        if ($module->isa('Lim::RPC::Base')) {
             my $name = lc($module->Module);
             
             if (exists $self->{module}->{$name}) {

@@ -1,7 +1,13 @@
-package Lim::Notification;
+package Lim::RPC::Base;
 
 use common::sense;
 use Carp;
+
+use SOAP::Lite ();
+
+use Lim ();
+
+use base qw(SOAP::Server::Parameters);
 
 =head1 NAME
 
@@ -13,6 +19,8 @@ See L<Lim> for version.
 
 =cut
 
+our $VERSION = $Lim::VERSION;
+
 =head1 SYNOPSIS
 
 ...
@@ -23,9 +31,18 @@ See L<Lim> for version.
 
 =cut
 
-sub Notification {
-    confess __PACKAGE__, ': Notification not overloaded';
+sub Module {
+    confess 'Module not overloaded';
 }
+
+=head2 function1
+
+=cut
+
+sub Calls {
+    confess 'Calls not overloaded';
+}
+
 
 =head1 AUTHOR
 
@@ -86,4 +103,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Notification
+1; # End of Lim::RPC::Base
