@@ -1,11 +1,14 @@
-package Lim::Plugin::Base;
+package Lim::Component::Server;
 
 use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use SOAP::Lite ();
 
 use Lim ();
+
+use base qw(SOAP::Server::Parameters);
 
 =head1 NAME
 
@@ -62,67 +65,6 @@ sub Init {
 =cut
 
 sub Destroy {
-}
-
-=head2 function1
-
-=cut
-
-sub FileExists {
-    my ($self, $file) = @_;
-    
-    if (defined $file) {
-        $file =~ s/^\///o;
-        foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
-            Lim::DEBUG and $self->{logger}->debug('check file exists ', $real_file);
-            if (-f $real_file) {
-                return $real_file;
-            }
-        }
-    }
-    return;
-}
-
-=head2 function1
-
-=cut
-
-sub FileReadable {
-    my ($self, $file) = @_;
-    
-    if (defined $file) {
-        $file =~ s/^\///o;
-        foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
-            Lim::DEBUG and $self->{logger}->debug('check file readable ', $real_file);
-            if (-f $real_file and -r $real_file) {
-                return $real_file;
-            }
-        }
-    }
-    return;
-}
-
-
-=head2 function1
-
-=cut
-
-sub FileWritable {
-    my ($self, $file) = @_;
-    
-    if (defined $file) {
-        $file =~ s/^\///o;
-        foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
-            Lim::DEBUG and $self->{logger}->debug('check file writable ', $real_file);
-            if (-f $real_file and -w $real_file) {
-                return $real_file;
-            }
-        }
-    }
-    return;
 }
 
 =head1 AUTHOR
@@ -184,4 +126,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::Base
+1; # End of Lim::RPC::Base

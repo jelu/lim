@@ -1,8 +1,10 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::Plugin::OpenDNSSEC::CLI;
 
 use common::sense;
 
-use base qw(Lim::Component);
+use Lim::Plugin::OpenDNSSEC ();
+
+use base qw(Lim::Component::CLI);
 
 =head1 NAME
 
@@ -14,7 +16,7 @@ Version 0.1
 
 =cut
 
-our $VERSION = '0.1';
+our $VERSION = $Lim::Plugin::OpenDNSSEC;
 
 =head1 SYNOPSIS
 
@@ -85,4 +87,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::Plugin::OpenDNSSEC::CLI

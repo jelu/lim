@@ -1,8 +1,8 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::Util;
 
 use common::sense;
 
-use base qw(Lim::Component);
+use Lim ();
 
 =head1 NAME
 
@@ -10,11 +10,11 @@ use base qw(Lim::Component);
 
 =head1 VERSION
 
-Version 0.1
+See L<Lim> for version.
 
 =cut
 
-our $VERSION = '0.1';
+our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
@@ -25,6 +25,63 @@ our $VERSION = '0.1';
 =head2 function1
 
 =cut
+
+sub FileExists {
+    my ($file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            
+            if (-f $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
+
+=head2 function1
+
+=cut
+
+sub FileReadable {
+    my ($file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            
+            if (-f $real_file and -r $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
+
+
+=head2 function1
+
+=cut
+
+sub FileWritable {
+    my ($file) = @_;
+    
+    if (defined $file) {
+        $file =~ s/^\///o;
+        foreach (@{Lim::Config->{prefix}}) {
+            my $real_file = $_.'/'.$file;
+            
+            if (-f $real_file and -w $real_file) {
+                return $real_file;
+            }
+        }
+    }
+    return;
+}
 
 =head1 AUTHOR
 
@@ -85,4 +142,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::Util

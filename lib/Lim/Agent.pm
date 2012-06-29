@@ -1,15 +1,10 @@
 package Lim::Agent;
 
 use common::sense;
-use Carp;
-
-use Log::Log4perl ();
-use Scalar::Util qw(blessed);
 
 use Lim ();
-use Lim::Plugins ();
 
-use base qw(Lim::RPC::Base);
+use base qw(Lim::Component);
 
 =head1 NAME
 
@@ -33,43 +28,6 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
-    bless $self, $class;
-    
-    unless (defined $args{server}) {
-        confess __PACKAGE__, ': Missing server';
-    }
-    unless (blessed $args{server} and $args{server}->isa('Lim::RPC::Server')) {
-        confess __PACKAGE__, ': Server parameter is not a Lim::RPC::Server';
-    }
-    
-    $self->{plugins} = Lim::Plugins->new(server => $args{server});
-    
-    $args{server}->serve(
-        $self->{plugins}
-    );
-    
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    delete $self->{plugins};
-}
-
-=head2 function2
-
-=cut
-
 sub Module {
     'Agent';
 }
@@ -79,14 +37,23 @@ sub Module {
 =cut
 
 sub Calls {
+    {
+        ReadVersion => {
+            out => {
+                version => 'string'
+            }
+        }
+    };
 }
 
 =head2 function2
 
 =cut
 
-sub Notification {
-    my ($self, $notifier, $what, @parameters) = @_;
+sub Commands {
+    {
+        version => 1
+    };
 }
 
 =head1 AUTHOR

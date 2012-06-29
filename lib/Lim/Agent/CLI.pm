@@ -1,8 +1,13 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::Agent::CLI;
 
 use common::sense;
 
-use base qw(Lim::Component);
+use Scalar::Util qw(weaken);
+
+use Lim ();
+use Lim::Agent ();
+
+use base qw(Lim::Component::CLI);
 
 =head1 NAME
 
@@ -14,7 +19,7 @@ Version 0.1
 
 =cut
 
-our $VERSION = '0.1';
+our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
@@ -25,6 +30,26 @@ our $VERSION = '0.1';
 =head2 function1
 
 =cut
+
+sub version {
+    my ($self) = @_;
+    my $agent = Lim::Agent->Client;
+    
+    weaken($self);
+    $agent->ReadVersion(sub {
+		my ($response) = @_;
+		
+		if ($agent->Successful) {
+			$self->println('agent version ', $response->{version});
+			$self->Successful;
+		}
+		else {
+			$self->Error($agent->Error);
+		}
+		undef($agent);
+    }) or
+    $self->Error($agent->Error);
+}
 
 =head1 AUTHOR
 
@@ -85,4 +110,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::Agent::CLI

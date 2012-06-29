@@ -8,7 +8,6 @@ use Scalar::Util qw(blessed);
 use Module::Find qw(findsubmod);
 
 use Lim ();
-use base qw(Lim::RPC::Base);
 
 =head1 NAME
 
@@ -21,6 +20,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our $INSTANCE;
 
 =head1 SYNOPSIS
 
@@ -32,56 +32,17 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub new {
+sub _new {
     my $this = shift;
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        plugin => {},
-        plugin_obj => {}
+        plugin => {}
     };
     bless $self, $class;
 
-    unless (defined $args{server}) {
-        confess __PACKAGE__, ': Missing server';
-    }
-    unless (blessed $args{server} and $args{server}->isa('Lim::RPC::Server')) {
-        confess __PACKAGE__, ': Server parameter is not a Lim::RPC::Server';
-    }
-    
-    foreach my $module (findsubmod Lim::Plugin) {
-        my ($name, $obj) = ($module, undef);
-        
-        if ($module eq 'Lim::Plugin::Base') {
-            next;
-        }
-
-        if (exists $self->{plugin}->{$module}) {
-            $self->{logger}->warn('Plugin ', $module, ' already loaded');
-            next;
-        }
-        
-        eval {
-            eval "use $module ();";
-            die $@ if $@;
-            $obj = $module->new;
-        };
-        
-        if ($@) {
-            $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
-            next;
-        }
-        
-        $name =~ s/.*:://o;
-        $self->{plugin}->{$module} = {
-            name => $name,
-            module => $module,
-            version => $obj->VERSION
-        };
-        $self->{plugin_obj}->{$module} = $obj;
-        $args{server}->serve($obj);
-    }
+    $self->Load;
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
@@ -92,45 +53,56 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     
     delete $self->{plugin};
-    delete $self->{plugin_obj};
 }
 
 =head2 function1
 
 =cut
 
-sub Module {
-    'Plugins';
+sub instance {
+    $INSTANCE ||= Lim::Plugins->_new;
 }
 
 =head2 function1
 
 =cut
 
-sub Calls {
-    {
-        ReadIndex => {
-            out => {
-                plugin => {
-                    name => 'string',
-                    module => 'string',
-                    version => 'string'
-                }
-            }
-        }
-    };
-}
-
-=head2 function1
-
-=cut
-
-sub ReadIndex {
+sub Load {
     my ($self) = @_;
     
-    {
-        plugin => [ values %{$self->{plugin}} ]
-    };
+    foreach my $module (findsubmod Lim::Plugin) {
+        if ($module eq 'Lim::Plugin::Base') {
+            next;
+        }
+
+        if (exists $self->{plugin}->{$module}) {
+            $self->{logger}->warn('Plugin ', $module, ' already loaded');
+            next;
+        }
+
+        my $name = $module;
+        $name =~ s/.*:://o;
+        
+        eval "require $module;";
+        
+        if ($@) {
+            $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
+            $self->{plugin}->{$module} = {
+                name => $name,
+                module => $module,
+                loaded => 0,
+                error => $@
+            };
+            next;
+        }
+        
+        $self->{plugin}->{$module} = {
+            name => $name,
+            module => $module,
+            version => $module->VERSION,
+            loaded => 1
+        };
+    }
 }
 
 =head1 AUTHOR

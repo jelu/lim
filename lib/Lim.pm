@@ -3,8 +3,6 @@ package Lim;
 use common::sense;
 use Carp;
 
-use base qw(Lim::RPC::Base);
-
 =head1 NAME
 
 Lim - The great new Lim!
@@ -36,109 +34,9 @@ sub SRV_LISTEN (){ 10 }
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
-    };
-    bless $self, $class;
-    
-    unless (defined $args{type}) {
-        confess __PACKAGE__, ': Missing type';
-    }
-    
-    $self->{type} = $args{type};
-
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-=head2 function1
-
-=cut
-
 sub Config {
     $CONFIG ||= {
         prefix => [qw(/ /usr /usr/local)]
-    };
-}
-
-=head2 function1
-
-=cut
-
-sub Module {
-    'Lim';
-}
-
-=head2 function1
-
-=cut
-
-sub Calls {
-    {
-        ReadIndex => {
-            out => {
-                lim => {
-                    version => 'string',
-                    type => 'string'
-                }
-            }
-        },
-        ReadVersion => {
-            out => {
-                version => 'string'
-            }
-        },
-        ReadType => {
-            out => {
-                type => 'string'
-            }
-        }
-    };
-}
-
-=head2 function1
-
-=cut
-
-sub ReadIndex {
-    my ($self) = @_;
-    
-    {
-        lim => {
-            version => $VERSION,
-            type => $self->{type}
-        }
-    };
-}
-
-=head2 function1
-
-=cut
-
-sub ReadVersion {
-    {
-        version => $VERSION
-    };
-}
-
-=head2 function1
-
-=cut
-
-sub ReadType {
-    my ($self) = @_;
-    
-    {
-        type => $self->{type}
     };
 }
 

@@ -1,8 +1,8 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::Plugin::OpenDNSSEC::Client;
 
 use common::sense;
 
-use base qw(Lim::Component);
+use base qw(Lim::Component::Client);
 
 =head1 NAME
 
@@ -85,4 +85,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::Plugin::OpenDNSSEC::Client

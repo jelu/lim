@@ -1,13 +1,11 @@
-package Lim::RPC::Base;
+package Lim::Component::Client;
 
 use common::sense;
 use Carp;
 
-use SOAP::Lite ();
+use Log::Log4perl ();
 
 use Lim ();
-
-use base qw(SOAP::Server::Parameters);
 
 =head1 NAME
 
@@ -31,18 +29,40 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub Module {
-    confess 'Module not overloaded';
+sub new {
+    my $this = shift;
+    my $class = ref($this) || $this;
+    my $self = {
+        logger => Log::Log4perl->get_logger
+    };
+    bless $self, $class;
+
+    $self->Init(@_);
+    
+    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
+    $self;
+}
+
+sub DESTROY {
+    my ($self) = @_;
+    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+    
+    $self->Destroy;
 }
 
 =head2 function1
 
 =cut
 
-sub Calls {
-    confess 'Calls not overloaded';
+sub Init {
 }
 
+=head2 function1
+
+=cut
+
+sub Destroy {
+}
 
 =head1 AUTHOR
 
@@ -103,4 +123,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Base
+1; # End of Lim::Component::Client

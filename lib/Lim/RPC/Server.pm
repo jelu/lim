@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
+use Scalar::Util qw(blessed weaken);
 
 use AnyEvent ();
 use AnyEvent::Socket ();
@@ -128,7 +128,18 @@ sub serve {
     my ($self) = shift;
     
     foreach my $module (@_) {
-        if ($module->isa('Lim::RPC::Base')) {
+        my $obj;
+
+        eval {
+            $obj = $module->Server;
+        };
+        
+        if ($@) {
+            $self->{logger}->warn('Can not serve ', $module, ': ', $@);
+            next;
+        }
+
+        if ($obj->isa('Lim::Component::Server')) {
             my $name = lc($module->Module);
             
             if (exists $self->{module}->{$name}) {
@@ -155,22 +166,22 @@ sub serve {
                 next;
             }
             foreach my $call (keys %$calls) {
-                unless ($module->can($call)) {
+                unless ($obj->can($call)) {
                     $self->{logger}->warn('Can not serve ', $name, ': Missing specified call ', $call, ' function');
                     undef($calls);
                     last;
                 }
-                unless ($module->can('__lim_rpc_'.$call)) {
+                unless ($obj->can('__lim_rpc_'.$call)) {
                     my ($orig_call, $rpc_call, $valueof);
                     
-                    if (exists $calls->{in}) {
+                    if (exists $call->{in}) {
                         unless (ref($calls->{in}) eq 'HASH') {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
                         
-                        my @keys = keys %{$calls->{in}};
+                        my @keys = keys %{$call->{in}};
                         
                         if (scalar @keys != 1) {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
@@ -181,9 +192,9 @@ sub serve {
                         $valueof = '//'.shift(@keys).'/';
                     }
                     
-                    $orig_call = ref($module).'::'.$call;
+                    $orig_call = ref($obj).'::'.$call;
                     $call = '__lim_rpc_'.$call;;
-                    $rpc_call = ref($module).'::'.$call;
+                    $rpc_call = ref($obj).'::'.$call;
                     
                     no strict 'refs';
                     *$rpc_call = \&$orig_call;
@@ -204,7 +215,8 @@ sub serve {
             
             $self->{module}->{$name} = {
                 name => $name,
-                module => $module
+                module => $module,
+                obj => $obj
             };
         }
     }

@@ -1,8 +1,12 @@
-package Lim::Plugin::OpenDNSSEC;
+package Lim::Component;
 
 use common::sense;
+use Carp;
 
-use base qw(Lim::Component);
+use Log::Log4perl ();
+
+use Lim ();
+use Lim::Plugins ();
 
 =head1 NAME
 
@@ -10,11 +14,11 @@ use base qw(Lim::Component);
 
 =head1 VERSION
 
-Version 0.1
+See L<Lim> for version.
 
 =cut
 
-our $VERSION = '0.1';
+our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
@@ -25,6 +29,77 @@ our $VERSION = '0.1';
 =head2 function1
 
 =cut
+
+sub CLI {
+    my ($self) = @_;
+    
+    if (ref($self)) {
+        confess __PACKAGE__, ': Should not be called with refered/blessed argument';
+    }
+    $self .= '::CLI';
+    
+    eval 'use '.$self.' ();';
+    die $self.' : '.$@ if $@;
+    $self->new;
+}
+
+=head2 function1
+
+=cut
+
+sub Client {
+    my ($self) = @_;
+    
+    if (ref($self)) {
+        confess __PACKAGE__, ': Should not be called with refered/blessed argument';
+    }
+    $self .= '::Client';
+    
+    eval 'use '.$self.' ();';
+    die $self.' : '.$@ if $@;
+    $self->new;
+}
+
+=head2 function1
+
+=cut
+
+sub Server {
+    my ($self) = @_;
+    
+    if (ref($self)) {
+        confess __PACKAGE__, ': Should not be called with refered/blessed argument';
+    }
+    $self .= '::Server';
+    
+    eval 'use '.$self.' ();';
+    die $self.' : '.$@ if $@;
+    $self->new;
+}
+
+=head2 function1
+
+=cut
+
+sub Module {
+    confess 'Module not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub Calls {
+    confess 'Calls not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub Commands {
+    confess 'Commands not overloaded';
+}
 
 =head1 AUTHOR
 
@@ -85,4 +160,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugin::OpenDNSSEC
+1; # End of Lim::Component

@@ -12,7 +12,7 @@ package Lim::Plugin::Example;
 
 use base qw(Lim::Component);
 
-sub Name {
+sub Module {
 	'Example';
 }
 

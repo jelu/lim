@@ -325,7 +325,7 @@ sub process {
         }
         undef($server);
     }
-    elsif ($uri =~ /^\/([a-zA-Z]+)(?:\/([a-zA-Z]+)\/{0,1}([^\?]*)){0,1}/o) {
+    elsif ($uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z]+)(?:\/([^\?]*)){0,1}/o) {
         my ($module, $function, $parameters) = ($1, $2, $3);
         
         $module = lc($module);
@@ -339,22 +339,18 @@ sub process {
             else {
                 $method = lc($request->method);
             }
-            unless (defined($function)) {
-                $function = 'index';
-            }
-            else {
-                $function = lc($function);
-            }
+            $function = lc($function);
             $call = ucfirst($method).ucfirst($function);
             
-            if ($server->{module}->{$module}->{module}->can($call)) {
-                $module = $server->{module}->{$module}->{module};
+            my $obj;
+            if ($server->{module}->{$module}->{obj}->can($call)) {
+                $obj = $server->{module}->{$module}->{obj};
             }
             
-            if (blessed($module)) {
+            if (blessed($obj)) {
                 my ($query, @parameters);
 
-                Lim::DEBUG and $self->{logger}->debug('API call ', $module->Module, '->', $call, '()');
+                Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
                 if (defined $parameters) {
                     foreach my $parameter (split(/\//o, $parameters)) {
@@ -411,7 +407,7 @@ sub process {
                 }
                 
                 weaken($self);
-                return $module->$call(Lim::RPC::Callback::JSON->new(sub {
+                return $obj->$call(Lim::RPC::Callback::JSON->new(sub {
                     my ($result) = @_;
                     my $response = $self->{response};
                     

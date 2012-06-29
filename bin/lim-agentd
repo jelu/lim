@@ -105,11 +105,7 @@ my $server = Lim::RPC::Server->new(
     html => $html,
     wsdl => $wsdl
 );
-$server->serve(
-    Lim->new(type => 'agent'),
-    Lim::Agent->new(
-        server => $server
-    ));
+$server->serve(qw(Lim::Agent));
 
 if (defined $server) {
     push(@watchers, $server);
