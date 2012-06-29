@@ -7,47 +7,11 @@ so you can manage it via a web GUI or via your OSS/BSS system with SOAP.
 
 ARCHITECTURE
 
-    User(s):                          Master:
-    +---------------+                 +------------+
-    |  Web browser  |    rpc api      |            |
-    |---------------| --------------> |   Master   |
-    |  Lim Web GUI  |                 |            |
-    +---------------+                 +------------+
-                         rpc api             |
-           +----------------+----------------+
- Node(s):  |                |                |
-    +-------------+  +-------------+  +-------------+
-    |    Agent    |  |    Agent    |  |    Agent    |
-    |-------------|  |-------------|  |-------------|
-    |  Executer   |  |  Executer   |  |  Executer   |
-    +-------------+  +-------------+  +-------------+
-
-	- All communications over HTTPS
-	- Master is chrooted, running not as root
-	- Agent is chrooted, running not as root
-	- Executer is not chrooted, running as root
-		- AppArmor/SELinux profiles on supported platforms
+    Changing...
 
 AUTHENTICATION
 
-	USER/CLIENT<->MASTER
-
-	- TBD
-
-	MASTER<->AGENT<->EXECUTER
-
-	- SSL certification based, clients/servers verifies each other
-	  certification
-	- API key for write operations using challenge <-> response (SHA256+)
-		1. Master sends write operation to Agent
-		2. Agent sends write operation to Executer
-		3. Executer returns ID of write operation and challenge
-		4. Agent sends ID + challenge to Master
-		5. Master sends ID + response to Agent
-		6. Agent sends ID + response to Executer
-		7. Executer does write operation if response is valid
-	- API key only available for Master and Executer, Agent does not have
-	  access to that information
+    Changing...
 
 REQUIRED PERL MODULES
 
