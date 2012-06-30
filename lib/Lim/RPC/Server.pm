@@ -201,7 +201,7 @@ sub serve {
                     *$orig_call = sub {
                         my ($self, $cb, @args) = Lim::RPC::C(@_, $valueof);
                         
-                        Lim::RPC::R($cb, $self->$call(@args));
+                        $self->$call($cb, @args);
                     };
                 }
             }

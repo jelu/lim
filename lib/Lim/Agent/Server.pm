@@ -29,11 +29,9 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub ReadVersion {
-    my ($self) = @_;
+    my ($self, $cb) = @_;
     
-    #$self->Successful({ version => $VERSION });
-    
-    { version => $VERSION };
+    $self->Successful($cb, { version => $VERSION });
 }
 
 =head1 AUTHOR

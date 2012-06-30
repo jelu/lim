@@ -51,19 +51,21 @@ sub Init {
 }
 
 sub ReadIndex {
-	my ($self) = @_;
+	my ($self, $cb) = @_;
 	
-	{
+	$self->Successful($cb, {
 		example => {
 			hello => $self->{hello}
 		}
-	};
+	});
 }
 
 sub UpdateHello {
-	my ($self, $in) = @_;
+	my ($self, $cb, $in) = @_;
 	
 	$self->{hello} = $in->{hello};
+	
+	$self->Successful($cb);
 }
 
 package Lim::Plugin::Example::Client;

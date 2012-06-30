@@ -7,6 +7,7 @@ use Log::Log4perl ();
 use SOAP::Lite ();
 
 use Lim ();
+use Lim::RPC ();
 
 use base qw(SOAP::Server::Parameters);
 
@@ -65,6 +66,26 @@ sub Init {
 =cut
 
 sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub Successful {
+    my ($self, $cb, @args) = @_;
+    
+    Lim::RPC::R($cb, @args);
+}
+
+=head2 function1
+
+=cut
+
+sub Error {
+    my ($self, $cb, @args) = @_;
+    
+    Lim::RPC::R($cb, @args);
 }
 
 =head1 AUTHOR
