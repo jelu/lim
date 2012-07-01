@@ -68,6 +68,9 @@ sub new {
     unless (defined $args{port}) {
         confess __PACKAGE__, ': No port specified';
     }
+    unless (defined $args{method}) {
+        confess __PACKAGE__, ': No method specified';
+    }
     unless (defined $args{uri}) {
         confess __PACKAGE__, ': No uri specified';
     }
@@ -81,7 +84,7 @@ sub new {
     if (defined $args{data}) {
         # TODO:
     }
-    $self->{request} = HTTP::Request->new('GET', $self->{uri});
+    $self->{request} = HTTP::Request->new($args{method}, $self->{uri});
     $self->{request}->protocol('HTTP/1.1');
     $self->{request}->header('Content-Length' => 0);
 

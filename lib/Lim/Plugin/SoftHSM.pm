@@ -6,10 +6,7 @@ use Carp;
 use Log::Log4perl ();
 use Fcntl qw(:seek);
 
-use base qw(
-    Lim::Plugin::Base
-    Lim::RPC::Base
-    );
+use base qw(Lim::Component);
 
 =head1 NAME
 
@@ -22,13 +19,6 @@ Version 0.1
 =cut
 
 our $VERSION = '0.1';
-our %ConfigFiles = (
-    'softhsm.conf' => [
-        '/etc/softhsm/softhsm.conf',
-        '/etc/softhsm.conf',
-        'softhsm.conf'
-    ]
-);
 
 =head1 SYNOPSIS
 
@@ -36,23 +26,6 @@ our %ConfigFiles = (
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
-
-=cut
-
-sub Init {
-    my $self = shift;
-    my %args = ( @_ );
-    
-    $self->{config} = {};
-}
-
-=head2 function1
-
-=cut
-
-sub Destroy {
-}
 
 =head2 function1
 
@@ -82,51 +55,9 @@ sub Calls {
 
 =cut
 
-sub _ScanConfig {
-    my ($self) = @_;
-    my %file;
-    
-    foreach my $config (keys %ConfigFiles) {
-        foreach my $file (@{$ConfigFiles{$config}}) {
-            if (defined ($file = $self->FileWritable($file))) {
-                if (exists $file{$file}) {
-                    $file{$file}->{write} = 1;
-                    next;
-                }
-                
-                $file{$file} = {
-                    file => $file,
-                    write => 1,
-                    read => 1
-                };
-            }
-            elsif (defined ($file = $self->FileReadable($file))) {
-                if (exists $file{$file}) {
-                    next;
-                }
-                
-                $file{$file} = {
-                    file => $file,
-                    write => 0,
-                    read => 1
-                };
-            }
-        }
-    }
-    
-    return \%file;
-}
-
-=head2 function1
-
-=cut
-    
-sub ReadConfigs {
-    my ($self) = @_;
-    my $files = $self->_ScanConfig;
-    
+sub Commands {
     {
-        file => [ values %$files ]
+        configs => 1
     };
 }
 

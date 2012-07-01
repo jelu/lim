@@ -37,7 +37,6 @@ sub ERROR (){ -1 }
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
         status => 0,
@@ -46,34 +45,81 @@ sub new {
     bless $self, $class;
     my $real_self = $self;
     weaken($self);
+
+    my $call = shift;
+    my $component = shift;
+    my ($data, $cb, $args);
     
-    unless (defined $args{cli}) {
-        unless (defined $args{host}) {
-            confess __PACKAGE__, ': No host specified';
+    $args = {};
+    if (scalar @_ == 1) {
+        unless (ref($_[0]) eq 'CODE') {
+            confess __PACKAGE__, ': Given one argument but its not a CODE callback';
         }
-        unless (defined $args{port}) {
-            confess __PACKAGE__, ': No port specified';
+        
+        $cb = $_[0];
+    }
+    elsif (scalar @_ == 2) {
+        if (ref($_[0]) eq 'CODE') {
+            $cb = $_[0];
+            $args = $_[1];
+        }
+        elsif (ref($_[1]) eq 'CODE') {
+            $data = $_[0];
+            $cb = $_[1];
+        }
+        else {
+            confess __PACKAGE__, ': Given two arguments but non are CODE callback';
         }
     }
-    unless (defined $args{rpc}) {
-        confess __PACKAGE__, ': No rpc specified';
+    elsif (scalar @_ == 3) {
+        unless (ref($_[1]) eq 'CODE') {
+            confess __PACKAGE__, ': Given three argument but second its not a CODE callback';
+        }
+        
+        $data = $_[0];
+        $cb = $_[1];
+        $args = $_[2];
     }
-    unless (defined $args{call}) {
-        confess __PACKAGE__, ': No call specified';
-    }
-    unless (defined $args{cb}) {
-        confess __PACKAGE__, ': No cb specified';
+    else {
+        confess __PACKAGE__, ': Too many arguments';
     }
     
-    if (defined $args{cli}) {
-        unless (blessed($args{cli}) and $args{cli}->isa('Lim::CLI')) {
-            confess __PACKAGE__, ': cli parameter is not a Lim::CLI';
-        }
-    }
-    unless (blessed($args{rpc}) and $args{rpc}->isa('Lim::RPC::Base')) {
-        confess __PACKAGE__, ': rpc parameter is not a Lim::RPC::Base';
+    unless (ref($args) eq 'HASH') {
+        confess __PACKAGE__, ': Given an arguments argument but its not an hash';
     }
 
+    unless (defined $call) {
+        confess __PACKAGE__, ': No call specified';
+    }
+    unless (defined $component) {
+        confess __PACKAGE__, ': No component specified';
+    }
+    unless (defined $cb) {
+        confess __PACKAGE__, ': No cb specified';
+    }
+
+    if (defined $args->{host}) {
+        $self->{host} = $args->{host};
+    }
+    else {
+        $self->{host} = Lim::Config->{host};
+    }
+    if (defined $args->{port}) {
+        $self->{port} = $args->{port};
+    }
+    else {
+        $self->{port} = Lim::Config->{port};
+    }
+    
+    unless (defined $self->{host}) {
+        confess __PACKAGE__, ': No host specified';
+    }
+    unless (defined $self->{port}) {
+        confess __PACKAGE__, ': No port specified';
+    }
+
+    # TODO Lim::RPC::Client->new
+    
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
 }

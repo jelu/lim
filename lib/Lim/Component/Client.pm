@@ -33,7 +33,8 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        call => {}
     };
     bless $self, $class;
 
@@ -62,6 +63,38 @@ sub Init {
 =cut
 
 sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub _addCall {
+    my ($self, $call) = @_;
+
+    # TODO unless bless isa
+    
+    unless (exists $self->{call}->{$call}) {
+        $self->{call}->{$call};
+    }
+    
+    $self;
+}
+
+=head2 function1
+
+=cut
+
+sub _deleteCall {
+    my ($self, $call) = @_;
+
+    # TODO unless bless isa
+    
+    if (exists $self->{call}->{$call}) {
+        delete $self->{call}->{$call};
+    }
+    
+    $self;
 }
 
 =head1 AUTHOR

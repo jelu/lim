@@ -31,7 +31,7 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub CLI {
-    my ($self) = @_;
+    my $self = shift;
     
     if (ref($self)) {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
@@ -40,7 +40,7 @@ sub CLI {
     
     eval 'use '.$self.' ();';
     die $self.' : '.$@ if $@;
-    $self->new;
+    $self->new(@_);
 }
 
 =head2 function1
@@ -48,16 +48,29 @@ sub CLI {
 =cut
 
 sub Client {
-    my ($self) = @_;
+    my $self = shift;
     
     if (ref($self)) {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
     }
+    my $calls = $self->Calls;
     $self .= '::Client';
     
     eval 'use '.$self.' ();';
     die $self.' : '.$@ if $@;
-    $self->new;
+
+    no strict 'refs';    
+    foreach my $call (keys %$calls) {
+        unless ($self->can($call)) {
+            my $sub = $self.'::'.$call;
+            
+            *$sub = sub {
+                Lim::RPC::Call->new($call, @_);
+            };
+        }
+    }
+    
+    $self->new(@_);
 }
 
 =head2 function1
@@ -65,7 +78,7 @@ sub Client {
 =cut
 
 sub Server {
-    my ($self) = @_;
+    my $self = shift;
     
     if (ref($self)) {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
@@ -74,7 +87,7 @@ sub Server {
     
     eval 'use '.$self.' ();';
     die $self.' : '.$@ if $@;
-    $self->new;
+    $self->new(@_);
 }
 
 =head2 function1

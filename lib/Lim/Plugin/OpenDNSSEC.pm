@@ -26,6 +26,24 @@ our $VERSION = '0.1';
 
 =cut
 
+sub Module {
+    'OpenDNSSEC';
+}
+
+=head2 function1
+
+=cut
+
+sub Calls {
+}
+
+=head2 function1
+
+=cut
+
+sub Commands {
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

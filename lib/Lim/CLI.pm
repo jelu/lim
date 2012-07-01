@@ -8,6 +8,7 @@ use Scalar::Util qw(weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
+use Lim::Plugins ();
 
 use IO::Handle ();
 use AnyEvent::Handle ();
@@ -41,7 +42,6 @@ sub new {
     my $self = {
         logger => Log::Log4perl->get_logger,
         cli => {},
-        cli_obj => {},
         busy => 0,
         set => {
             host => 'localhost',
@@ -60,46 +60,20 @@ sub new {
     }
     $self->{on_quit} = $args{on_quit};
 
-    foreach my $module (findsubmod Lim::CLI) {
-        my ($name, $obj);
-        
-        if ($module eq 'Lim::CLI::Base') {
-            next;
-        }
-
-        if (exists $self->{cli}->{$module}) {
-            $self->{logger}->warn('CLI ', $module, ' already loaded');
-            next;
-        }
-        
-        eval {
-            eval "use $module ();";
-            die $@ if $@;
-            $obj = $module->new(cli => $self);
-        };
-        
-        if ($@) {
-            $self->{logger}->warn('Unable to load cli ', $module, ': ', $@);
-            next;
-        }
-        unless (defined $obj) {
-            $self->{logger}->warn('Unable to load cli ', $module, ': no object returned');
-            next;
-        }
-        
-        $name = lc($obj->Module);
+    foreach my $module (Lim::Plugins->instance->Loaded) {
+        my $obj = $module->{module}->CLI(cli => $self);
+        my $name = lc($module->{name});
         
         if (exists $self->{cli}->{$name}) {
-            $self->{logger}->warn('CLI ', $module, ' name ', $name, ' already in use');
+            $self->{logger}->warn('Can not use CLI module ', $module->{name}, ': name ', $name, ' already in use');
             next;
         }
         
         $self->{cli}->{$name} = {
-            name => $name,
-            module => $module,
-            version => $obj->VERSION
+            name => $module->{name},
+            module => $module->{module},
+            obj => $obj
         };
-        $self->{cli_obj}->{$module} = $obj;
     }
     
     $self->{stdin_watcher} = AnyEvent::Handle->new(
@@ -154,11 +128,11 @@ sub new {
                  else {
                      if ($cmd) {
                          if (exists $self->{current}) {
-                             if ($self->{current}->can('cmd_'.$cmd)) {
-                                 my $function = 'cmd_'.$cmd;
-                                 
+                             if ($self->{current}->{module}->Commands->{$cmd} and
+                                 $self->{current}->{obj}->can($cmd))
+                             {
                                  $self->{busy} = 1;
-                                 $self->{current}->$function($args);
+                                 $self->{current}->{obj}->$cmd($args);
                              }
                              else {
                                  $self->unknown_command($cmd);
@@ -166,7 +140,7 @@ sub new {
                              }
                          }
                          elsif (exists $self->{cli}->{$cmd}) {
-                             $self->{current} = $self->{cli_obj}->{$self->{cli}->{$cmd}->{module}};
+                             $self->{current} = $self->{cli}->{$cmd};
                              $self->Prompt;
                          }
                          else {
@@ -196,7 +170,6 @@ sub DESTROY {
     delete $self->{current};
     delete $self->{stdin_watcher};
     delete $self->{cli};
-    delete $self->{cli_obj};
 }
 
 =head2 function1
@@ -204,7 +177,7 @@ sub DESTROY {
 =cut
 
 sub Prompt {
-    print 'lim',(exists $_[0]->{current} ? $_[0]->{current}->Prompt : ''),'> ';
+    print 'lim',(exists $_[0]->{current} ? $_[0]->{current}->{obj}->Prompt : '' ),'> ';
 }
 
 =head2 function1

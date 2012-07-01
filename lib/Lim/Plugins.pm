@@ -55,6 +55,10 @@ sub DESTROY {
     delete $self->{plugin};
 }
 
+END {
+    undef($INSTANCE);
+}
+
 =head2 function1
 
 =cut
@@ -80,10 +84,12 @@ sub Load {
             next;
         }
 
-        my $name = $module;
-        $name =~ s/.*:://o;
-        
-        eval "require $module;";
+        my $name;
+        eval {
+            eval "require $module;";
+            die $@ if $@;
+            $name = $module->Module;
+        };
         
         if ($@) {
             $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
@@ -103,6 +109,23 @@ sub Load {
             loaded => 1
         };
     }
+}
+
+=head2 function1
+
+=cut
+
+sub Loaded {
+    my ($self) = @_;
+    my @modules;
+    
+    foreach my $module (values %{$self->{plugin}}) {
+        if ($module->{loaded}) {
+            push(@modules, $module);
+        }
+    }
+    
+    return @modules;
 }
 
 =head1 AUTHOR

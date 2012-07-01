@@ -1,4 +1,4 @@
-package Lim::CLI::Base;
+package Lim::Component::CLI;
 
 use common::sense;
 use Carp;
@@ -76,14 +76,6 @@ sub Destroy {
 
 =cut
 
-sub Module {
-    confess 'Module not overloaded';
-}
-
-=head2 function1
-
-=cut
-
 sub cli {
     $_[0]->{cli};
 }
@@ -93,7 +85,14 @@ sub cli {
 =cut
 
 sub Prompt {
-    return '/'.lc($_[0]->Module);
+    my ($self) = @_;
+    
+    if (ref($self)) {
+        $self = ref($self);
+    }
+    $self =~ s/::[^:]+$//o;
+    
+    return '/'.lc($self->Module);
 }
 
 =head2 function1
@@ -182,4 +181,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::CLI::Base
+1; # End of Lim::Component::CLI

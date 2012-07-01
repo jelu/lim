@@ -1,11 +1,10 @@
-package Lim::CLI::SoftHSM;
+package Lim::Plugin::SoftHSM::CLI;
 
 use common::sense;
 
-use Lim::RPC::Call ();
 use Lim::Plugin::SoftHSM ();
 
-use base qw(Lim::CLI::Base);
+use base qw(Lim::Component::CLI);
 
 =head1 NAME
 
@@ -29,31 +28,24 @@ our $VERSION = $Lim::Plugin::SoftHSM::VERSION;
 
 =cut
 
-sub Module {
-    'SoftHSM';
-}
-
-=head2 function1
-
-=cut
-
-sub cmd_configs {
+sub configs {
     my ($self) = @_;
     
-    my $call; $call = Lim::RPC::Call->new(
-        cli => $self->cli,
-        rpc => Lim::Plugin::SoftHSM->new,
-        call => 'ReadConfigs',
-        cb => sub {
-            if ($call->status == Lim::RPC::Call::OK) {
-                $self->Successful;
-            }
-            else {
-                $self->Error($call->error);
-            }
-            undef($call);
-        }
-    );
+    $self->Successful;
+#    my $call; $call = Lim::RPC::Call->new(
+#        cli => $self->cli,
+#        rpc => Lim::Plugin::SoftHSM->new,
+#        call => 'ReadConfigs',
+#        cb => sub {
+#            if ($call->status == Lim::RPC::Call::OK) {
+#                $self->Successful;
+#            }
+#            else {
+#                $self->Error($call->error);
+#            }
+#            undef($call);
+#        }
+#    );
 }
 
 =head1 AUTHOR
@@ -115,4 +107,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::CLI::SoftHSM
+1; # End of Lim::Plugin::SoftHSM::CLI
