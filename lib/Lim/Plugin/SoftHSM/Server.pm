@@ -93,7 +93,7 @@ sub _ScanConfig {
 =head2 function1
 
 =cut
-    
+
 sub ReadConfigs {
     my ($self, $cb) = @_;
     my $files = $self->_ScanConfig;
@@ -101,6 +101,86 @@ sub ReadConfigs {
     $self->Successful($cb, {
         file => [ values %$files ]
     });
+}
+
+=head2 function1
+
+=cut
+
+sub CreateConfig {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub ReadConfig {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub UpdateConfig {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub DeleteConfig {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub ReadShowSlots {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub CreateInitToken {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub CreateImport {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub ReadExport {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub UpdateOptimize {
+    my ($self, $cb) = @_;
+}
+
+=head2 function1
+
+=cut
+
+sub UpdateTrusted {
+    my ($self, $cb) = @_;
 }
 
 =head1 AUTHOR

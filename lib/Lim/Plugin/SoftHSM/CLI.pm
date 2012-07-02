@@ -39,8 +39,20 @@ sub configs {
 		my ($call, $response) = @_;
 		
 		if ($call->Successful) {
-		    use Data::Dumper;
-		    $self->cli->println(Dumper($response));
+		    $self->cli->println('SoftHSM config files found:');
+		    if (exists $response->{file}) {
+		        unless (ref($response->{file}) eq 'ARRAY') {
+		            $response->{file} = [ $response->{file} ];
+		        }
+		        foreach my $file (@{$response->{file}}) {
+		            $self->cli->println($file->{name},
+		              ' (readable: ', ($file->{read} ? 'yes' : 'no'),
+		              ' writable: ', ($file->{read} ? 'yes' : 'no'),
+		              ')'
+		              );
+		        }
+		    }
+
 			$self->Successful;
 		}
 		else {

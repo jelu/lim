@@ -49,6 +49,108 @@ sub Calls {
                     read => 'integer'
                 }
             }
+        },
+        CreateConfig => {
+            in => {
+                file => {
+                    name => 'string',
+                    content => 'string'
+                }
+            }
+        },
+        ReadConfig => {
+            in => {
+                file => {
+                    name => 'string'
+                }
+            },
+            out => {
+                file => {
+                    name => 'string',
+                    content => 'string'
+                }
+            }
+        },
+        UpdateConfig => {
+            in => {
+                file => {
+                    name => 'string',
+                    content => 'string'
+                }
+            }
+        },
+        DeleteConfig => {
+            in => {
+                file => {
+                    name => 'string'
+                }
+            }
+        },
+        ReadShowSlots => {
+            out => {
+                slot => {
+                    slot => 'integer',
+                    label => 'string',
+                    token_present => 'bool',
+                    token_initialized => 'bool',
+                    user_pin_initialized => 'bool',
+                }
+            }
+        },
+        CreateInitToken => {
+            in => {
+                slot => {
+                    slot => 'integer',
+                    label => 'string',
+                    so_pin => 'integer',
+                    pin => 'integer'
+                }
+            }
+        },
+        CreateImport => {
+            in => {
+                key_pair => {
+                    file_pin => 'integer',
+                    slot => 'integer',
+                    pin => 'integer',
+                    label => 'string',
+                    id => 'string'
+                }
+            }
+        },
+        ReadExport => {
+            in => {
+                key_pair => {
+                    file_pin => 'integer',
+                    slot => 'integer',
+                    pin => 'integer',
+                    id => 'string'
+                }
+            },
+            out => {
+                key_pair => {
+                }
+            }
+        },
+        UpdateOptimize => {
+            in => {
+                slot => {
+                    slot => 'integer',
+                    pin => 'integer'
+                }
+            }
+        },
+        UpdateTrusted => {
+            in => {
+                key_pair => {
+                    trusted => 'bool',
+                    slot => 'integer',
+                    so_pin => 'integer',
+                    type => 'string',
+                    label => 'string',
+                    id => 'string'
+                }
+            }
         }
     };
 }
