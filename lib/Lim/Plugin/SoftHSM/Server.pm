@@ -4,6 +4,8 @@ use common::sense;
 
 use Lim::Plugin::SoftHSM ();
 
+use Lim::Util ();
+
 use base qw(Lim::Component::Server);
 
 =head1 NAME
@@ -59,25 +61,25 @@ sub _ScanConfig {
     
     foreach my $config (keys %ConfigFiles) {
         foreach my $file (@{$ConfigFiles{$config}}) {
-            if (defined ($file = $self->FileWritable($file))) {
+            if (defined ($file = Lim::Util::FileWritable($file))) {
                 if (exists $file{$file}) {
                     $file{$file}->{write} = 1;
                     next;
                 }
                 
                 $file{$file} = {
-                    file => $file,
+                    name => $file,
                     write => 1,
                     read => 1
                 };
             }
-            elsif (defined ($file = $self->FileReadable($file))) {
+            elsif (defined ($file = Lim::Util::FileReadable($file))) {
                 if (exists $file{$file}) {
                     next;
                 }
                 
                 $file{$file} = {
-                    file => $file,
+                    name => $file,
                     write => 0,
                     read => 1
                 };
@@ -93,12 +95,12 @@ sub _ScanConfig {
 =cut
     
 sub ReadConfigs {
-    my ($self) = @_;
+    my ($self, $cb) = @_;
     my $files = $self->_ScanConfig;
     
-    {
+    $self->Successful($cb, {
         file => [ values %$files ]
-    };
+    });
 }
 
 =head1 AUTHOR

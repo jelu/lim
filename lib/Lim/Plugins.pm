@@ -121,7 +121,7 @@ sub Loaded {
     
     foreach my $module (values %{$self->{plugin}}) {
         if ($module->{loaded}) {
-            push(@modules, $module);
+            push(@modules, $module->{module});
         }
     }
     

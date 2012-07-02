@@ -37,18 +37,17 @@ sub version {
     
     weaken($self);
     $agent->ReadVersion(sub {
-		my ($response) = @_;
+		my ($call, $response) = @_;
 		
-		if ($agent->Successful) {
-			$self->println('agent version ', $response->{version});
+		if ($call->Successful) {
+			$self->cli->println('agent version ', $response->{version});
 			$self->Successful;
 		}
 		else {
-			$self->Error($agent->Error);
+			$self->Error($call->Error);
 		}
 		undef($agent);
-    }) or
-    $self->Error($agent->Error);
+    });
 }
 
 =head1 AUTHOR

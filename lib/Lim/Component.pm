@@ -6,7 +6,7 @@ use Carp;
 use Log::Log4perl ();
 
 use Lim ();
-use Lim::Plugins ();
+use Lim::RPC::Call ();
 
 =head1 NAME
 
@@ -54,6 +54,7 @@ sub Client {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
     }
     my $calls = $self->Calls;
+    my $module = $self->Module;
     $self .= '::Client';
     
     eval 'use '.$self.' ();';
@@ -65,7 +66,9 @@ sub Client {
             my $sub = $self.'::'.$call;
             
             *$sub = sub {
-                Lim::RPC::Call->new($call, @_);
+                unless (Lim::RPC::Call->new($module, $call, @_)) {
+                    confess __PACKAGE__, ': Unable to create Lim::RPC::Call for ', $sub;
+                }
             };
         }
     }

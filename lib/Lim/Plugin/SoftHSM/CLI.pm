@@ -2,6 +2,8 @@ package Lim::Plugin::SoftHSM::CLI;
 
 use common::sense;
 
+use Scalar::Util qw(weaken);
+
 use Lim::Plugin::SoftHSM ();
 
 use base qw(Lim::Component::CLI);
@@ -30,22 +32,22 @@ our $VERSION = $Lim::Plugin::SoftHSM::VERSION;
 
 sub configs {
     my ($self) = @_;
+    my $softhsm = Lim::Plugin::SoftHSM->Client;
     
-    $self->Successful;
-#    my $call; $call = Lim::RPC::Call->new(
-#        cli => $self->cli,
-#        rpc => Lim::Plugin::SoftHSM->new,
-#        call => 'ReadConfigs',
-#        cb => sub {
-#            if ($call->status == Lim::RPC::Call::OK) {
-#                $self->Successful;
-#            }
-#            else {
-#                $self->Error($call->error);
-#            }
-#            undef($call);
-#        }
-#    );
+    weaken($self);
+    $softhsm->ReadConfigs(sub {
+		my ($call, $response) = @_;
+		
+		if ($call->Successful) {
+		    use Data::Dumper;
+		    $self->cli->println(Dumper($response));
+			$self->Successful;
+		}
+		else {
+			$self->Error($call->Error);
+		}
+		undef($softhsm);
+    });
 }
 
 =head1 AUTHOR

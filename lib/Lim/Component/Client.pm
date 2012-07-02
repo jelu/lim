@@ -4,6 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Scalar::Util qw(blessed);
 
 use Lim ();
 
@@ -72,10 +73,12 @@ sub Destroy {
 sub _addCall {
     my ($self, $call) = @_;
 
-    # TODO unless bless isa
+    unless (blessed $call and $call->isa('Lim::RPC::Call')) {
+        confess __PACKAGE__, ': call is not a Lim::RPC::Call';
+    }
     
     unless (exists $self->{call}->{$call}) {
-        $self->{call}->{$call};
+        $self->{call}->{$call} = $call;
     }
     
     $self;
@@ -88,7 +91,9 @@ sub _addCall {
 sub _deleteCall {
     my ($self, $call) = @_;
 
-    # TODO unless bless isa
+    unless (blessed $call and $call->isa('Lim::RPC::Call')) {
+        confess __PACKAGE__, ': call is not a Lim::RPC::Call';
+    }
     
     if (exists $self->{call}->{$call}) {
         delete $self->{call}->{$call};

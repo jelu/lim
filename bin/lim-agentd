@@ -12,6 +12,7 @@ use Lim ();
 use Lim::DB ();
 use Lim::RPC::Server ();
 use Lim::Agent ();
+use Lim::Plugins ();
 
 my $help = 0;
 my $host = '0.0.0.0';
@@ -106,6 +107,7 @@ my $server = Lim::RPC::Server->new(
     wsdl => $wsdl
 );
 $server->serve(qw(Lim::Agent));
+$server->serve(Lim::Plugins->instance->Loaded);
 
 if (defined $server) {
     push(@watchers, $server);

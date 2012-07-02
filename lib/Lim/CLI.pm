@@ -8,6 +8,7 @@ use Scalar::Util qw(weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
+use Lim::Agent ();
 use Lim::Plugins ();
 
 use IO::Handle ();
@@ -60,18 +61,34 @@ sub new {
     }
     $self->{on_quit} = $args{on_quit};
 
-    foreach my $module (Lim::Plugins->instance->Loaded) {
-        my $obj = $module->{module}->CLI(cli => $self);
-        my $name = lc($module->{name});
+    foreach my $module (qw(Lim::Agent)) {
+        my $obj = $module->CLI(cli => $self);
+        my $name = lc($module->Module);
         
         if (exists $self->{cli}->{$name}) {
-            $self->{logger}->warn('Can not use CLI module ', $module->{name}, ': name ', $name, ' already in use');
+            $self->{logger}->warn('Can not load internal CLI module ', $module, ': name ', $name, ' already in use');
             next;
         }
         
         $self->{cli}->{$name} = {
-            name => $module->{name},
-            module => $module->{module},
+            name => $name,
+            module => $module,
+            obj => $obj
+        };
+    }
+    
+    foreach my $module (Lim::Plugins->instance->Loaded) {
+        my $obj = $module->CLI(cli => $self);
+        my $name = lc($module->Module);
+        
+        if (exists $self->{cli}->{$name}) {
+            $self->{logger}->warn('Can not use CLI module ', $module, ': name ', $name, ' already in use');
+            next;
+        }
+        
+        $self->{cli}->{$name} = {
+            name => $name,
+            module => $module,
             obj => $obj
         };
     }

@@ -1,6 +1,7 @@
 package Lim::Util;
 
 use common::sense;
+use Carp;
 
 use Lim ();
 
@@ -15,6 +16,12 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our %CALL_METHOD = (
+    Create => 'PUT',
+    Read => 'GET',
+    Update => 'POST',
+    Delete => 'DELETE'
+);
 
 =head1 SYNOPSIS
 
@@ -81,6 +88,36 @@ sub FileWritable {
         }
     }
     return;
+}
+
+=head2 function1
+
+=cut
+
+sub URIize {
+    my @parts = split(/([A-Z][^A-Z]*)/o, $_[0]);
+    my ($part, $method, $uri);
+    
+    while (scalar @parts) {
+        $part = shift(@parts);
+        if ($part ne '') {
+            last;
+        }
+    }
+    
+    unless (exists $CALL_METHOD{$part}) {
+        confess __PACKAGE__, ': No conversion found for ', $part, ' (', $_[0], ')';
+    }
+    
+    $method = $CALL_METHOD{$part};
+    
+    @parts = grep !/^$/o, @parts;
+    unless (scalar @parts) {
+        confess __PACKAGE__, ': Could not build URI (', $_[0], ')';
+    }
+    $uri = lc(join('_', @parts));
+    
+    return ($method, '/'.$uri);
 }
 
 =head1 AUTHOR

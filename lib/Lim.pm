@@ -36,7 +36,9 @@ sub SRV_LISTEN (){ 10 }
 
 sub Config {
     $CONFIG ||= {
-        prefix => [qw(/ /usr /usr/local)]
+        prefix => [qw(/ /usr /usr/local)],
+        host => 'localhost',
+        port => 5353
     };
 }
 

@@ -43,9 +43,11 @@ sub Calls {
     {
         ReadConfigs => {
             out => {
-                file => 'string',
-                write => 'integer',
-                read => 'integer'
+                file => {
+                    name => 'string',
+                    write => 'integer',
+                    read => 'integer'
+                }
             }
         }
     };

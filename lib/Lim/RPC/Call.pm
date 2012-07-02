@@ -7,6 +7,7 @@ use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 
 use Lim ();
+use Lim::Util ();
 use Lim::RPC::Client ();
 
 =head1 NAME
@@ -46,9 +47,10 @@ sub new {
     my $real_self = $self;
     weaken($self);
 
-    my $call = shift;
-    my $component = shift;
-    my ($data, $cb, $args);
+    $self->{module} = shift;
+    $self->{call} = shift;
+    $self->{component} = shift;
+    my ($data, $cb, $args, $method, $uri);
     
     $args = {};
     if (scalar @_ == 1) {
@@ -88,11 +90,11 @@ sub new {
         confess __PACKAGE__, ': Given an arguments argument but its not an hash';
     }
 
-    unless (defined $call) {
+    unless (defined $self->{call}) {
         confess __PACKAGE__, ': No call specified';
     }
-    unless (defined $component) {
-        confess __PACKAGE__, ': No component specified';
+    unless (blessed $self->{component} and $self->{component}->isa('Lim::Component::Client')) {
+        confess __PACKAGE__, ': No component specified or not a Lim::Component::Client';
     }
     unless (defined $cb) {
         confess __PACKAGE__, ': No cb specified';
@@ -110,6 +112,7 @@ sub new {
     else {
         $self->{port} = Lim::Config->{port};
     }
+    $self->{cb} = $cb;
     
     unless (defined $self->{host}) {
         confess __PACKAGE__, ': No host specified';
@@ -117,8 +120,38 @@ sub new {
     unless (defined $self->{port}) {
         confess __PACKAGE__, ': No port specified';
     }
+    
+    ($method, $uri) = Lim::Util::URIize($self->{call});
+    
+    $uri = '/'.lc($self->{module}).$uri;
 
-    # TODO Lim::RPC::Client->new
+    Lim::DEBUG and $self->{logger}->debug('Calling ', $self->{host}, ':', $self->{port}, ' ', $method, ' ', $uri);
+
+    $self->{component}->_addCall($real_self);
+    $self->{client} = Lim::RPC::Client->new(
+        host => $self->{host},
+        port => $self->{port},
+        method => $method,
+        uri => $uri,
+        data => $data,
+        cb => sub {
+            my (undef, $data) = @_;
+
+            Lim::DEBUG and $self->{logger}->debug('Called ', $self->{host}, ':', $self->{port}, ' ', $method, ' ', $uri);
+            
+            if ($self->{client}->status == Lim::RPC::Client::OK) {
+                $self->{status} = OK;
+            }
+            else {
+                $self->{status} = ERROR;
+                $self->{error} = $self->{client}->error;
+            }
+            
+            delete $self->{client};
+            $self->{cb}->($self, $data);
+            $self->{component}->_deleteCall($self);
+        }
+    );
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
@@ -133,15 +166,15 @@ sub DESTROY {
 
 =cut
 
-sub status {
-    $_[0]->{status};
+sub Successful {
+    $_[0]->{status} == OK;
 }
 
 =head2 function1
 
 =cut
 
-sub error {
+sub Error {
     $_[0]->{error};
 }
 

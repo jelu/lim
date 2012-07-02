@@ -82,18 +82,17 @@ sub hi {
 
 	weaken($self);
 	$client->ReadIndex(sub {
-		my ($response) = @_;
+		my ($call, $response) = @_;
 		
-		if ($client->Successful) {
+		if ($call->Successful) {
 			$self->println('hello ', $response->{example}->{hello});
 			$self->Successful;
 		}
 		else {
-			$self->Error('Error talking to remote Example: ', $client->Error);
+			$self->Error('Error talking to remote Example: ', $call->Error);
 		}
 		undef($client);
-	}) or
-	$self->Error('Error talking to remote Example: ', $client->Error);
+	});
 }
 
 sub hello {
@@ -104,18 +103,17 @@ sub hello {
 	unless ($client->UpdateHello({
 		hello => $hello
 	}, sub {
-		my ($response) = @_;
+		my ($call, $response) = @_;
 		
-		if ($client->Successful) {
+		if ($call->Successful) {
 			$self->println('Updated successfully');
 			$self->Successful;
 		}
 		else {
-			$self->Error('Error talking to remote Example: ', $client->Error);
+			$self->Error('Error talking to remote Example: ', $call->Error);
 		}
 		undef($client);
-	})) or
-	$self->Error('Error talking to remote Example: ', $client->Error);
+	}));
 }
 
 1;

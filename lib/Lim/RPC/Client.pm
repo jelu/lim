@@ -81,12 +81,16 @@ sub new {
     if (defined $args{cb} and ref($args{cb}) eq 'CODE') {
         $self->{cb} = $args{cb};
     }
-    if (defined $args{data}) {
-        # TODO:
-    }
     $self->{request} = HTTP::Request->new($args{method}, $self->{uri});
     $self->{request}->protocol('HTTP/1.1');
-    $self->{request}->header('Content-Length' => 0);
+    if (defined $args{data}) {
+        my $json = $JSON->encode($args{data});
+        $self->{request}->content($json);
+        $self->{request}->header('Content-Length' => length($json));
+    }
+    else {
+        $self->{request}->header('Content-Length' => 0);
+    }
 
     $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
