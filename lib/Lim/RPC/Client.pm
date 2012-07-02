@@ -107,6 +107,8 @@ sub new {
             return;
         }
         
+        # TODO: timeout on query, close conn, call cb
+        
         my $handle;
         $handle = AnyEvent::Handle->new(
             fh => $fh,
@@ -174,6 +176,7 @@ sub new {
                     eval {
                         $data = $JSON->decode($response->decoded_content);
                     };
+                    # TODO: handle HTTP status != 200
                     $self->{status} = OK;
                     
                     if (exists $self->{cb}) {

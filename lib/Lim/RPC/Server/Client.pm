@@ -96,6 +96,9 @@ sub new {
     }
     $self->{server} = $args{server};
     weaken($self->{server});
+    
+    # TODO: timeout on client, close conn
+    
     $self->{handle} = AnyEvent::Handle->new(
         fh => $args{fh},
         tls => 'accept',
