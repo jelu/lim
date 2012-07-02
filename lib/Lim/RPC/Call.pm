@@ -125,8 +125,6 @@ sub new {
     
     $uri = '/'.lc($self->{module}).$uri;
 
-    Lim::DEBUG and $self->{logger}->debug('Calling ', $self->{host}, ':', $self->{port}, ' ', $method, ' ', $uri);
-
     $self->{component}->_addCall($real_self);
     $self->{client} = Lim::RPC::Client->new(
         host => $self->{host},
@@ -137,8 +135,6 @@ sub new {
         cb => sub {
             my (undef, $data) = @_;
 
-            Lim::DEBUG and $self->{logger}->debug('Called ', $self->{host}, ':', $self->{port}, ' ', $method, ' ', $uri);
-            
             if ($self->{client}->status == Lim::RPC::Client::OK) {
                 $self->{status} = OK;
             }

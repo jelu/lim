@@ -37,6 +37,14 @@ else {
     ) );
 }
 
+if (defined $host) {
+    Lim::Config->{host} = $host;
+}
+
+if (defined $port) {
+    Lim::Config->{port} = $port;
+}
+
 my $cv = AnyEvent->condvar;
 my @watchers;
 

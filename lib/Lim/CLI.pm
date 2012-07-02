@@ -43,11 +43,7 @@ sub new {
     my $self = {
         logger => Log::Log4perl->get_logger,
         cli => {},
-        busy => 0,
-        set => {
-            host => 'localhost',
-            port => 5353
-        }
+        busy => 0
     };
     bless $self, $class;
     my $real_self = $self;
@@ -128,20 +124,6 @@ sub new {
                          return;
                      }
                  }
-                 elsif ($cmd eq 'set') {
-                     if ($args =~ /^(\S+)\s+(.+)$/o) {
-                         $self->{set}->{$1} = $2;
-                     }
-                     elsif ($args) {
-                         $self->println('usage: set key value', "\n");
-                     }
-                     else {
-                         foreach my $key (sort (keys %{$self->{set}})) {
-                             $self->printf("%-20s  %s\n", $key, ($self->{set}->{$key} eq '' ? "''" : $self->{set}->{$key}));
-                         }
-                     }
-                     $self->Prompt;
-                 }
                  else {
                      if ($cmd) {
                          if (exists $self->{current}) {
@@ -195,26 +177,6 @@ sub DESTROY {
 
 sub Prompt {
     print 'lim',(exists $_[0]->{current} ? $_[0]->{current}->{obj}->Prompt : '' ),'> ';
-}
-
-=head2 function1
-
-=cut
-
-sub set {
-    if (defined $_[1]) {
-        $_[0]->{set}->{$_[1]} = $_[2];
-    }
-}
-
-=head2 function1
-
-=cut
-
-sub get {
-    if (defined $_[1]) {
-        return $_[0]->{set}->{$_[1]};
-    }
 }
 
 =head2 function1
