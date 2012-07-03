@@ -42,6 +42,8 @@ sub Calls {
             out => {
                 version => 'string'
             }
+        },
+        ReadError => {
         }
     };
 }

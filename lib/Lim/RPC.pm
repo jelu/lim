@@ -9,6 +9,7 @@ use SOAP::Lite ();
 
 use Lim ();
 use Lim::DB ();
+use Lim::Error ();
 
 =head1 NAME
 
@@ -163,6 +164,12 @@ sub R {
             }
             $data = { $c => \@r };
         }
+        elsif ($data->isa('Lim::Error')) {
+            # TODO handle error
+        }
+    }
+    elsif (ref($data) ne 'HASH') {
+        confess __PACKAGE__, ': data not a hash';
     }
     
     if ($cb->isa('Lim::RPC::Callback::SOAP')) {
@@ -174,65 +181,7 @@ sub R {
         }
     }
 
-    if (ref($data) eq 'ARRAY' or ref($data) eq 'HASH') {
-        return $cb->cb->($data);
-    }
-    $cb->cb->([ $data ]);
-}
-
-=head2 function1
-
-=cut
-
-sub E {
-    my ($cb, $e) = @_;
-    
-    unless (blessed($cb)) {
-        confess __PACKAGE__, ': cb not blessed';
-    }
-    if (blessed($e)) {
-        if ($e->isa('Lim::Error')) {
-            $e = {
-                code => $e->code,
-                module => $e->module,
-                message => $e->message
-            };
-        }
-        else {
-            confess __PACKAGE__, ': blessed object given as error but was not Lim::Error';
-        }
-    }
-    if (ref($e) eq 'SCALAR' or scalar @_ > 2) {
-        shift;
-        my $module = shift;
-        $e = {
-            code => 500,
-            module => $module,
-            message => join(' ', @_)
-        };
-    }
-    unless (ref($e) eq 'HASH') {
-        confess __PACKAGE__, ': error is not a hash';
-    }
-    unless (exists($e->{message})) {
-        confess __PACKAGE__, ': required parameter message does not exists in error';
-    }
-    unless (exists($e->{module})) {
-        confess __PACKAGE__, ': required parameter module does not exists in error';
-    }
-    unless (exists($e->{code})) {
-        $e->{code} = 500;
-    }
-    
-    $e = { error => $e };
-    
-    if ($cb->isa('Lim::RPC::Callback::SOAP')) {
-        return $cb->cb->(SOAP::Data->value(Lim::RPC::__result('base', $e, {
-            'base.error' => [ 'code', 'module', 'message' ]
-        })));
-    }
-
-    return $cb->cb->($e);
+    return $cb->cb->($data);
 }
 
 =head1 AUTHOR

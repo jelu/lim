@@ -5,9 +5,11 @@ use Carp;
 
 use Log::Log4perl ();
 use SOAP::Lite ();
+use Scalar::Util qw(blessed);
 
 use Lim ();
 use Lim::RPC ();
+use Lim::Error ();
 
 use base qw(SOAP::Server::Parameters);
 
@@ -83,9 +85,17 @@ sub Successful {
 =cut
 
 sub Error {
-    my ($self, $cb, @args) = @_;
+    my ($self, $cb, $error) = @_;
     
-    Lim::RPC::R($cb, @args);
+    if (blessed($error) and $error->isa('Lim::Error')) {
+        Lim::RPC::R($cb, $error);
+    }
+    elsif (ref($error) eq 'SCALAR') {
+        Lim::RPC::R($cb, Lim::Error->new(module => $self, message => $error));
+    }
+    else {
+        Lim::RPC::R($cb, Lim::Error->new(module => $self));
+    }
 }
 
 =head1 AUTHOR

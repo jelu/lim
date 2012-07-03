@@ -32,7 +32,9 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        code => 500
+        code => 500,
+        message => 'Generic Error',
+        module => 'UNKNOWN'
     };
     bless $self, $class;
     
@@ -45,10 +47,12 @@ sub new {
     }
     $self->{message} = $args{message};
     if (defined $args{module}) {
-        $self->{module} = $args{module};
-    }
-    if (exists $self->{module} and blessed($self->{module})) {
-        $self->{module} = ref($self->{module});
+        if (blessed($args{module})) {
+            $self->{module} = ref($args{module});
+        }
+        else {
+            $self->{module} = $args{module};
+        }
     }
 
     $self;

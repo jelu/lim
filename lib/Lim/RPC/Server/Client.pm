@@ -517,6 +517,7 @@ sub result {
     }
     
     if ($response->code != HTTP_OK and !length($response->content)) {
+        $response->header('Content-Type' => 'text/plain; charset=utf-8');
         $response->content($response->code.' '.HTTP::Status::status_message($response->code)."\r\n");
     }
     

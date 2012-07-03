@@ -34,6 +34,16 @@ sub ReadVersion {
     $self->Successful($cb, { version => $VERSION });
 }
 
+=head2 function1
+
+=cut
+
+sub ReadError {
+    my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Error');
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
