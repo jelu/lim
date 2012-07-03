@@ -5,19 +5,28 @@ RESTful
 	PUT = Create new object
 	DELETE = Delete object
 	
-JSON
-
-	HTTP GET/POST/PUT/DELETE /<module>/<function>/<parameters ...>
+	HTTP:
+	GET/POST/PUT/DELETE /<module>/<function>/<parameters ...>
 	<data>
 
-	Module->(Get/Post/Put/Delete)<Function>(<data>, <parameters ...>)
+	Module->(Create/Read/Update/Delete)<Function>(<data>, <parameters ...>)
+	
+	JSON:
+	as Request: Content-Type: application/json
+	as Response: Accept: */json
+	
+	XML:
+	as Request: Content-Type: text/xml
+	as Response: Accept: */xml
 
 SOAP 1.1
 
 	- All WSDL's/Request/Response XML has been verified with SoapUI
 
-	WSDL: /wsdl/<module>
-	EndPoint: /soap/<module>
+	WSDL: /<module>.wsdl
+	Endpoint: /<module>
+	Explicit endpoint: /<module>.soap
+	Content-Type: application/soap+xml
 
 	RESTful to CRUD name conversion:
 	GET => READ
@@ -34,8 +43,16 @@ SOAP 1.1
 
 XML-RPC
 
+	Endpoint: /<module>
+	Explicit endpoint: /<module>.xml-rpc
+	Content-Type: text/xml
+
 JSON-RPC
 	
+	Endpoint: /<module>
+	Explicit endpoint: /<module>.json-rpc
+	Content-Type: application/json
+
 Limitations
 	- No starting arrays
 	- No arrays in arrays
