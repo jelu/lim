@@ -21,6 +21,7 @@ use SOAP::Transport::HTTP ();
 use JSON::XS ();
 
 use Lim ();
+use Lim::Error ();
 use Lim::RPC::Callback::SOAP;
 use Lim::RPC::Callback::JSON;
 
@@ -35,7 +36,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $JSON = JSON::XS->new->ascii;
+our $JSON = JSON::XS->new->ascii->convert_blessed;
 our %REST_CRUD = (
     GET => 'READ',
     POST => 'UPDATE',
@@ -414,17 +415,39 @@ sub process {
                     my ($result) = @_;
                     my $response = $self->{response};
                     
-                    if (ref($result) eq 'HASH' or ref($result) eq 'ARRAY') {
-                        # TODO: handle JSON error
+                    if (blessed $result and $result->isa('Lim::Error')) {
+                        $response->code($result->code);
                         eval {
                             $response->content($JSON->encode($result));
                         };
-                        $response->header(
-                            'Content-Type' => 'application/json; charset=utf-8',
-                            'Cache-Control' => 'no-cache',
-                            'Pragma' => 'no-cache'
-                            );
-                        $response->code(HTTP_OK);
+                        if ($@) {
+                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                            $self->{logger}->warn('JSON encode error: ', $@);
+                        }
+                        else {
+                            $response->header(
+                                'Content-Type' => 'application/json; charset=utf-8',
+                                'Cache-Control' => 'no-cache',
+                                'Pragma' => 'no-cache'
+                                );
+                        }
+                    }
+                    elsif (ref($result) eq 'HASH') {
+                        eval {
+                            $response->content($JSON->encode($result));
+                        };
+                        if ($@) {
+                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                            $self->{logger}->warn('JSON encode error: ', $@);
+                        }
+                        else {
+                            $response->header(
+                                'Content-Type' => 'application/json; charset=utf-8',
+                                'Cache-Control' => 'no-cache',
+                                'Pragma' => 'no-cache'
+                                );
+                            $response->code(HTTP_OK);
+                        }
                     }
                     else {
                         $response->code(HTTP_INTERNAL_SERVER_ERROR);

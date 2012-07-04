@@ -61,81 +61,41 @@ sub C {
 
 =cut
 
-sub __result {
+sub __soap_result {
     my @a;
     
-    if (defined $_[2] and exists $_[2]->{$_[0]}) {
-        foreach my $k (@{$_[2]->{$_[0]}}) {
-            if (exists $_[1]->{$k}) {
-                if (ref($_[1]->{$k}) eq 'ARRAY') {
-                    foreach my $v (@{$_[1]->{$k}}) {
-                        if (ref($v) eq 'HASH') {
-                            push(@a,
-                                SOAP::Data->new->name(lc($k))
-                                ->value(Lim::RPC::__result($_[0].'.'.$k, $v, $_[2]))
-                                ->prefix('lim1')
-                                );
-                        }
-                        else {
-                            push(@a,
-                                SOAP::Data->new->name(lc($k))
-                                ->value($v)
-                                ->prefix('lim1')
-                                );
-                        }
-                    }
-                }
-                elsif (ref($_[1]->{$k}) eq 'HASH') {
+    foreach my $k (keys %{$_[1]}) {
+        if (ref($_[1]->{$k}) eq 'ARRAY') {
+            foreach my $v (@{$_[1]->{$k}}) {
+                if (ref($v) eq 'HASH') {
                     push(@a,
                         SOAP::Data->new->name(lc($k))
-                        ->value(Lim::RPC::__result($_[0].'.'.$k, $_[1]->{$k}, $_[2]))
+                        ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $v))
                         ->prefix('lim1')
                         );
                 }
                 else {
                     push(@a,
                         SOAP::Data->new->name(lc($k))
-                        ->value($_[1]->{$k})
+                        ->value($v)
                         ->prefix('lim1')
                         );
                 }
             }
         }
-    }
-    else {
-        foreach my $k (keys %{$_[1]}) {
-            if (ref($_[1]->{$k}) eq 'ARRAY') {
-                foreach my $v (@{$_[1]->{$k}}) {
-                    if (ref($v) eq 'HASH') {
-                        push(@a,
-                            SOAP::Data->new->name(lc($k))
-                            ->value(Lim::RPC::__result($_[0].'.'.$k, $v, $_[2]))
-                            ->prefix('lim1')
-                            );
-                    }
-                    else {
-                        push(@a,
-                            SOAP::Data->new->name(lc($k))
-                            ->value($v)
-                            ->prefix('lim1')
-                            );
-                    }
-                }
-            }
-            elsif (ref($_[1]->{$k}) eq 'HASH') {
-                push(@a,
-                    SOAP::Data->new->name(lc($k))
-                    ->value(Lim::RPC::__result($_[0].'.'.$k, $_[1]->{$k}, $_[2]))
-                    ->prefix('lim1')
-                    );
-            }
-            else {
-                push(@a,
-                    SOAP::Data->new->name(lc($k))
-                    ->value($_[1]->{$k})
-                    ->prefix('lim1')
-                    );
-            }
+        elsif (ref($_[1]->{$k}) eq 'HASH') {
+            push(@a,
+                SOAP::Data->new->name(lc($k))
+                ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $_[1]->{$k}))
+                ->prefix('lim1')
+                );
+        }
+        else {
+            push(@a,
+                SOAP::Data->new->name(lc($k))
+                ->value($_[1]->{$k})
+                ->prefix('lim1')
+                );
         }
     }
 
@@ -148,7 +108,7 @@ sub __result {
 }
 
 sub R {
-    my ($cb, $data, $map) = @_;
+    my ($cb, $data) = @_;
     
     unless (blessed($cb)) {
         confess __PACKAGE__, ': cb not blessed';
@@ -165,7 +125,12 @@ sub R {
             $data = { $c => \@r };
         }
         elsif ($data->isa('Lim::Error')) {
-            # TODO handle error
+            if ($cb->isa('Lim::RPC::Callback::SOAP')) {
+                # TODO generate SOAP Error
+            }
+            else {
+                return $cb->cb->($data);
+            }
         }
     }
     elsif (ref($data) ne 'HASH') {
@@ -173,12 +138,7 @@ sub R {
     }
     
     if ($cb->isa('Lim::RPC::Callback::SOAP')) {
-        if (ref($data) eq 'HASH') {
-            return $cb->cb->(SOAP::Data->value(Lim::RPC::__result('base', $data, $map)));
-        }
-        else {
-            return $cb->cb->(SOAP::Data->value($data));
-        }
+        return $cb->cb->(SOAP::Data->value(Lim::RPC::__soap_result('base', $data)));
     }
 
     return $cb->cb->($data);

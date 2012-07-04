@@ -90,7 +90,7 @@ sub Error {
     if (blessed($error) and $error->isa('Lim::Error')) {
         Lim::RPC::R($cb, $error);
     }
-    elsif (ref($error) eq 'SCALAR') {
+    elsif (defined $error) {
         Lim::RPC::R($cb, Lim::Error->new(module => $self, message => $error));
     }
     else {

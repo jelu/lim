@@ -38,11 +38,10 @@ sub new {
     };
     bless $self, $class;
     
-    unless (defined $args{message}) {
-        confess __PACKAGE__, ': Missing message';
-    }
-    
     if (defined $args{code}) {
+        unless ($args{code} >= 300 and $args{code} < 600) {
+            confess __PACKAGE__, ': Invalid code [', $args{code}, '] given in error';
+        }
         $self->{code} = $args{code};
     }
     $self->{message} = $args{message};
@@ -107,6 +106,20 @@ sub module {
 
 sub set_module {
     $_[0]->{module} = $_[1];
+}
+
+=head2 function1
+
+=cut
+
+sub TO_JSON {
+    {
+        'Lim::Error' => {
+            code => $_[0]->{code},
+            message => $_[0]->{message},
+            module => $_[0]->{module}
+        }
+    };
 }
 
 =head1 AUTHOR
