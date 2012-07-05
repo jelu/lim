@@ -236,12 +236,17 @@ sub Successful {
 sub Error {
     my $self = shift;
     
-    if (blessed $_[0] and $_[0]->isa('Lim::Error')) {
-        $self->println('Command Error: Module: ', $_[0]->module, ' Code: ', $_[0]->code, ' Message: ', $_[0]->message);
+    $self->print('Command Error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
+    foreach (@_) {
+        if (blessed $_ and $_->isa('Lim::Error')) {
+            $self->print('Module: ', $_[0]->module, ' Code: ', $_[0]->code, ' Message: ', $_[0]->message);
+        }
+        else {
+            $self->print($_);
+        }
     }
-    else {
-        $self->println('Command Error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
-    }
+    $self->println;
+    
     $self->{busy} = 0;
     $self->Prompt;
 }
