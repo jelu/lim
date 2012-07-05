@@ -8,8 +8,7 @@ WriteMakefile(
     AUTHOR              => q{Jerry Lundström <lundstrom.jerry@gmail.com>},
     VERSION_FROM        => 'lib/Lim.pm',
     ABSTRACT_FROM       => 'lib/Lim.pm',
-    EXE_FILES           => [ 'bin/lim-masterd',
-                             'bin/lim-agentd',
+    EXE_FILES           => [ 'bin/lim-agentd',
                              'bin/lim-cli' ],
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
