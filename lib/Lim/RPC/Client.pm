@@ -13,6 +13,7 @@ use AnyEvent::TLS ();
 
 use HTTP::Request ();
 use HTTP::Response ();
+use HTTP::Status qw(:constants);
 use URI ();
 use URI::QueryParam ();
 
@@ -108,12 +109,11 @@ sub new {
             return;
         }
         
-        # TODO: timeout on query, close conn, call cb
-        
         my $handle;
         $handle = AnyEvent::Handle->new(
             fh => $fh,
             tls => 'connect',
+            timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
                 
@@ -122,7 +122,27 @@ sub new {
                 $self->{error} = $message;
                 
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self);
+                    $self->{cb}->($self, Lim::Error->new(
+                        message => $self->{error},
+                        module => $self
+                    ));
+                    delete $self->{cb};
+                }
+                $handle->destroy;
+            },
+            on_timeout => sub {
+                my ($handle) = @_;
+                
+                $self->{logger}->warn($handle, ' TIMEOUT');
+                $self->{status} = ERROR;
+                $self->{error} = 'Connection/Request/Response Timeout';
+                
+                if (exists $self->{cb}) {
+                    $self->{cb}->($self, Lim::Error->new(
+                        code => HTTP_REQUEST_TIMEOUT,
+                        message => $self->{error},
+                        module => $self
+                    ));
                     delete $self->{cb};
                 }
                 $handle->destroy;

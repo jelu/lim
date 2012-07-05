@@ -98,12 +98,11 @@ sub new {
     $self->{server} = $args{server};
     weaken($self->{server});
     
-    # TODO: timeout on client, close conn
-    
     $self->{handle} = AnyEvent::Handle->new(
         fh => $args{fh},
         tls => 'accept',
         tls_ctx => $args{tls_ctx},
+        timeout => Lim::Config->{rpc}->{timeout},
         on_error => sub {
             my ($handle, $fatal, $message) = @_;
             
@@ -111,6 +110,16 @@ sub new {
 
             if (exists $self->{on_error}) {
                 $self->{on_error}->($self, $fatal, $message);
+            }
+            $handle->destroy;
+        },
+        on_timeout => sub {
+            my ($handle) = @_;
+            
+            $self->{logger}->warn($handle, ' TIMEOUT');
+            
+            if (exists $self->{on_eof}) {
+                $self->{on_eof}->($self);
             }
             $handle->destroy;
         },
@@ -153,7 +162,6 @@ sub new {
                     $self->{headers} = $headers;
                     $self->{content} = $content;
                     $self->{request} = HTTP::Request->parse($self->{headers});
-                    # TODO: what if error in parse?
                 }
             }
             else {

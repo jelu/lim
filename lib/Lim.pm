@@ -36,7 +36,10 @@ sub SRV_LISTEN (){ 10 }
 
 sub Config {
     $CONFIG ||= {
-        prefix => ['', '/usr', '/usr/local']
+        prefix => ['', '/usr', '/usr/local'],
+        rpc => {
+            timeout => 30
+        }
     };
 }
 
