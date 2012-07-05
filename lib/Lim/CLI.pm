@@ -239,7 +239,7 @@ sub Error {
     $self->print('Command Error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
     foreach (@_) {
         if (blessed $_ and $_->isa('Lim::Error')) {
-            $self->print('Module: ', $_[0]->module, ' Code: ', $_[0]->code, ' Message: ', $_[0]->message);
+            $self->print($_->toString);
         }
         else {
             $self->print($_);

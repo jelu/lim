@@ -134,15 +134,15 @@ use Lim::Plugin::Example;
 Lim::Config->{host} = 'remote.host.net';
 my $client = Lim::Plugin::Example->Client;
 $client->ReadIndex(sub {
-	my ($response) = @_;
+	my ($call, $response) = @_;
 	
-	if ($client->Successful) {
+	if ($call->Successful) {
 		print 'hello ', $response->{example}->{hello}, "\n";
 	}
 	else {
-		print STDERR 'Error talking to remote Example: ', $client->Error, "\n";
+		print STDERR 'Error talking to remote Example: ', $call->Error->toString, "\n";
 	}
 	undef($client);
 }) or
-print STDERR 'Error talking to remote Example: ', $client->Error, "\n";
+print STDERR 'Error talking to remote Example', "\n";
 Lim::Run;

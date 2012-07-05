@@ -146,6 +146,14 @@ sub TO_JSON {
     };
 }
 
+=head2 function1
+
+=cut
+
+sub toString {
+    'Module: ', $_[0]->{module}, ' Code: ', $_[0]->{code}, ' Message: ', $_[0]->{message};
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

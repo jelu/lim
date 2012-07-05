@@ -140,7 +140,15 @@ sub new {
             }
             else {
                 $self->{status} = ERROR;
-                $self->{error} = $data;
+                if (blessed $data and $data->isa('Lim::Error')) {
+                    $self->{error} = $data;
+                }
+                else {
+                    $self->{error} = Lim::Error->new(
+                        message => $data,
+                        module => $self
+                    );
+                }
                 undef($data);
             }
             
