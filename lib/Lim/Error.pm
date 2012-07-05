@@ -64,6 +64,24 @@ sub DESTROY {
 
 =cut
 
+sub set {
+    if (ref($_[1]) eq 'HASH') {
+        if (exists $_[1]->{'Lim::Error'}) {
+            foreach (qw(code message module)) {
+                if (exists $_[1]->{'Lim::Error'}->{$_}) {
+                    $_[0]->{$_} = $_[1]->{'Lim::Error'}->{$_};
+                }
+            }
+        }
+    }
+    
+    $_[0];
+}
+
+=head2 function1
+
+=cut
+
 sub code {
     $_[0]->{code};
 }
@@ -74,6 +92,8 @@ sub code {
 
 sub set_code {
     $_[0]->{code} = $_[1];
+    
+    $_[0];
 }
 
 =head2 function1
@@ -90,6 +110,8 @@ sub message {
 
 sub set_message {
     $_[0]->{message} = $_[1];
+    
+    $_[0];
 }
 
 =head2 function1
@@ -106,6 +128,8 @@ sub module {
 
 sub set_module {
     $_[0]->{module} = $_[1];
+    
+    $_[0];
 }
 
 =head2 function1

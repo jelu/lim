@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
+use Scalar::Util qw(blessed weaken);
 
 use AnyEvent ();
 use AnyEvent::Socket ();
@@ -19,6 +19,7 @@ use URI::QueryParam ();
 use JSON::XS ();
 
 use Lim ();
+use Lim::Error ();
 
 =head1 NAME
 
@@ -171,14 +172,50 @@ sub new {
                     delete $self->{content};
                     $self->{headers} = '';
                     
-                    # TODO: handle JSON error
                     my $data;
-                    eval {
-                        $data = $JSON->decode($response->decoded_content);
-                    };
-                    # TODO: handle HTTP status != 200
-                    $self->{status} = OK;
                     
+                    if ($response->code == 200) {
+                        $self->{status} = OK;
+                    }
+                    else {
+                        $self->{status} = ERROR;
+                    }
+
+                    if ($response->header('Content-Length')) {
+                        if ($response->header('Content-Type') =~ /application\/json/io) {
+                            eval {
+                                $data = $JSON->decode($response->decoded_content);
+                            };
+                            if ($@) {
+                                $self->{status} = ERROR;
+                                $self->{error} = $@;
+                                undef($data);
+                            }
+                            else {
+                                if ($self->{status} == ERROR) {
+                                    $data = Lim::Error->new->set($data);
+                                }
+                            }
+                        }
+                        else {
+                            $self->{status} = ERROR;
+                            $self->{error} = 'Unknown content type ['.$response->header('Content-Type').'] returned';
+                        }
+                    }
+                    
+                    if ($self->{status} == ERROR) {
+                        unless (defined $data) {
+                            $data = Lim::Error->new(
+                                code => $response->code,
+                                message => $self->{error},
+                                module => $self
+                                );
+                        }
+                        unless (blessed $data and $data->isa('Lim::Error')) {
+                            confess __PACKAGE__, ': status is ERROR but data is not a Lim::Error object';
+                        }
+                    }
+
                     if (exists $self->{cb}) {
                         $self->{cb}->($self, $data);
                         delete $self->{cb};

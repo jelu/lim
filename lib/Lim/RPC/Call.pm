@@ -7,6 +7,7 @@ use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 
 use Lim ();
+use Lim::Error ();
 use Lim::Util ();
 use Lim::RPC::Client ();
 
@@ -40,8 +41,7 @@ sub new {
     my $class = ref($this) || $this;
     my $self = {
         logger => Log::Log4perl->get_logger,
-        status => 0,
-        error => ''
+        status => 0
     };
     bless $self, $class;
     my $real_self = $self;
@@ -140,7 +140,8 @@ sub new {
             }
             else {
                 $self->{status} = ERROR;
-                $self->{error} = $self->{client}->error;
+                $self->{error} = $data;
+                undef($data);
             }
             
             delete $self->{client};

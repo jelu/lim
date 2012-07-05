@@ -4,10 +4,11 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
+use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
+use Lim::Error ();
 use Lim::Agent ();
 use Lim::Plugins ();
 
@@ -234,7 +235,13 @@ sub Successful {
 
 sub Error {
     my $self = shift;
-    $self->println('command error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
+    
+    if (blessed $_[0] and $_[0]->isa('Lim::Error')) {
+        $self->println('Command Error: Module: ', $_[0]->module, ' Code: ', $_[0]->code, ' Message: ', $_[0]->message);
+    }
+    else {
+        $self->println('Command Error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
+    }
     $self->{busy} = 0;
     $self->Prompt;
 }
