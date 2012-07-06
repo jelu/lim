@@ -174,6 +174,8 @@ sub new {
                 delete $self->{content};
                 $self->{headers} = '';
                 
+                Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Request: ', $self->{request}->as_string);
+                
                 $self->{process_watcher} = AnyEvent->timer(
                     after => 0,
                     cb => sub {
@@ -310,7 +312,7 @@ sub process {
         }
         undef($server);
     }
-    elsif ($uri =~ /^\/wsdl\/([a-zA-Z_]+)/o) {
+    elsif ($uri =~ /^\/([a-zA-Z]+)\.wsdl/o) {
         my $module = lc($1);
         my $server = $self->{server}; # make a copy of server ref to make it strong
         if (defined $server) {
@@ -561,10 +563,9 @@ sub result {
         $response->protocol('HTTP/1.1');
     }
     
-    $handle->push_write($response->protocol.' '.$response->code.' '.HTTP::Status::status_message($response->code)."\r\n");
-    $handle->push_write($response->headers_as_string("\r\n"));
-    $handle->push_write("\r\n");
-    $handle->push_write($response->content);
+    Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Response: ', $response->as_string);
+
+    $handle->push_write($response->as_string("\r\n"));
 
     delete $self->{request};
     delete $self->{response};

@@ -17,6 +17,7 @@ our $VERSION = '0.1';
 our $CONFIG;
 
 sub OBJ_DEBUG (){ 1 }
+sub RPC_DEBUG (){ 1 }
 sub DEBUG (){ 1 }
 sub INFO (){ 1 }
 sub WARN (){ 1 }

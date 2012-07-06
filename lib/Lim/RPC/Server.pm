@@ -209,14 +209,127 @@ sub serve {
                 next;
             }
             
-            # TODO: Generate wsdl defs
+            my $wsdl;
+            {
+                my ($tns, $soap_name);
+                
+                $tns = $module;
+                ($soap_name = $module) =~ s/:://o;
+                
+                $wsdl =
+'<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<wsdl:definitions
+ xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+ xmlns:tns="urn:'.$tns.'"
+ xmlns:lim="urn:Lim"
+ xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ name="'.$soap_name.'"
+ targetNamespace="urn:'.$tns.'">
+
+';
+
+                # Generate types
+                $wsdl .= ' <wsdl:types>
+  <xsd:schema targetNamespace="urn:'.$tns.'">
+';
+                foreach my $call (keys %$calls) {
+                    my $h = $calls->{$call};
+                    
+                    if (exists $h->{in}) {
+                        $wsdl .= '   <xsd:element name="'.$call.'Request">
+';
+                        $wsdl .= '   </xsd:element>
+';
+                    }
+                    else {
+                        $wsdl .= '   <xsd:element name="'.$call.'Request" />
+';
+                    }
+                    
+                    if (exists $h->{out}) {
+                        $wsdl .= '   <xsd:element name="'.$call.'Response">
+';
+                        $wsdl .= '   </xsd:element>
+';
+                    }
+                    else {
+                        $wsdl .= '   <xsd:element name="'.$call.'Response" />
+';
+                    }
+                }
+                $wsdl .= '  </xsd:schema>
+ </wsdl:types>
+
+';
+                
+                # Generate message
+                foreach my $call (keys %$calls) {
+                    $wsdl .= ' <wsdl:message name="'.$call.'Request">
+  <wsdl:part element="tns:'.$call.'Request" name="parameters" />
+ </wsdl:message>
+';
+                    $wsdl .= ' <wsdl:message name="'.$call.'Response">
+  <wsdl:part element="tns:'.$call.'Response" name="parameters" />
+ </wsdl:message>
+';
+                }
+                $wsdl .= '
+';
+                
+                # Generate portType
+                $wsdl .= ' <wsdl:portType name="'.$soap_name.'">
+';
+                foreach my $call (keys %$calls) {
+                    $wsdl .= '  <wsdl:operation name="'.$call.'">
+   <wsdl:input message="tns:'.$call.'Request" />
+   <wsdl:output message="tns:'.$call.'Response" />
+  </wsdl:operation>
+';
+                }
+                $wsdl .= ' </wsdl:portType>
+
+';
+                
+                # Generate binding
+                $wsdl .= ' <wsdl:binding name="'.$soap_name.'SOAP" type="tns:'.$soap_name.'">
+  <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+';
+                foreach my $call (keys %$calls) {
+                    $wsdl .= '  <wsdl:operation name="'.$call.'">
+   <soap:operation soapAction="urn:'.$tns.'#'.$call.'" />
+   <wsdl:input>
+    <soap:body use="literal" />
+   </wsdl:input>
+   <wsdl:output>
+    <soap:body use="literal" />
+   </wsdl:output>
+  </wsdl:operation>
+';
+                }
+                $wsdl .= ' </wsdl:binding>
+
+';
+
+                # Generate service
+                $wsdl .= ' <wsdl:service name="'.$soap_name.'">
+  <wsdl:port binding="tns:'.$soap_name.'SOAP" name="'.$soap_name.'SOAP">
+   <soap:address location="https://'.$self->{host}.':'.$self->{port}.'/'.$name.'" />
+  </wsdl:port>
+ </wsdl:service>
+
+';
+
+                $wsdl .= '</wsdl:definitions>';
+            }
             
             Lim::DEBUG and $self->{logger}->debug('serving ', $name);
             
             $self->{module}->{$name} = {
                 name => $name,
                 module => $module,
-                obj => $obj
+                obj => $obj,
+                wsdl => $wsdl
             };
         }
     }
