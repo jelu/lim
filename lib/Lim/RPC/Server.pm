@@ -12,6 +12,7 @@ use AnyEvent::TLS ();
 
 use Lim ();
 use Lim::RPC ();
+use Lim::RPC::Value ();
 use Lim::RPC::Server::Client ();
 
 =head1 NAME
@@ -174,32 +175,113 @@ sub serve {
                 unless ($obj->can('__lim_rpc_'.$call)) {
                     my ($orig_call, $rpc_call, $valueof);
                     
-                    if (exists $call->{in}) {
-                        unless (ref($calls->{in}) eq 'HASH') {
+                    if (exists $calls->{$call}->{in}) {
+                        unless (ref($calls->{$call}->{in}) eq 'HASH') {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
                         
-                        my @keys = keys %{$call->{in}};
-                        
-                        if (scalar @keys != 1) {
+                        my @keys = keys %{$calls->{$call}->{in}};
+                        unless (scalar @keys) {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
                         
                         $valueof = '//'.shift(@keys).'/';
+                        
+                        my @values = ($calls->{$call}->{in});
+                        while (defined $calls and (my $value = shift(@values))) {
+                            foreach my $key (keys %$value) {
+                                if (ref($value->{$key}) eq 'HASH') {
+                                    push(@values, $value->{$key});
+                                    next;
+                                }
+                                elsif (blessed $value->{$key}) {
+                                    if ($value->{$key}->isa('Lim::Value')) {
+                                        next;
+                                    }
+                                }
+                                else {
+                                    eval {
+                                        $value->{$key} = Lim::RPC::Value->new($value->{$key});
+                                    };
+                                    unless ($@) {
+                                        next;
+                                    }
+                                    $self->{logger}->warn('Unable to create Lim::RPC::Value: ', $@);
+                                }
+
+                                $self->{logger}->warn('Can not server ', $name, ': call ', $call, ' has invalid in parameter definition');
+                                undef($calls);
+                            }
+                        }
+                        
+                        unless (defined $calls) {
+                            last;
+                        }
+                    }
+                    
+                    if (exists $calls->{$call}->{out}) {
+                        unless (ref($calls->{$call}->{out}) eq 'HASH') {
+                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
+                            undef($calls);
+                            last;
+                        }
+                        
+                        my @keys = keys %{$calls->{$call}->{out}};
+                        unless (scalar @keys) {
+                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
+                            undef($calls);
+                            last;
+                        }
+
+                        my @values = ($calls->{$call}->{out});
+                        while (defined $calls and (my $value = shift(@values))) {
+                            foreach my $key (keys %$value) {
+                                if (ref($value->{$key}) eq 'HASH') {
+                                    push(@values, $value->{$key});
+                                    next;
+                                }
+                                elsif (blessed $value->{$key}) {
+                                    if ($value->{$key}->isa('Lim::Value')) {
+                                        next;
+                                    }
+                                }
+                                else {
+                                    eval {
+                                        $value->{$key} = Lim::RPC::Value->new($value->{$key});
+                                    };
+                                    unless ($@) {
+                                        next;
+                                    }
+                                    $self->{logger}->warn('Unable to create Lim::RPC::Value: ', $@);
+                                }
+
+                                $self->{logger}->warn('Can not server ', $name, ': call ', $call, ' has invalid out parameter definition');
+                                undef($calls);
+                            }
+                        }
+                        
+                        unless (defined $calls) {
+                            last;
+                        }
                     }
                     
                     $orig_call = ref($obj).'::'.$call;
                     $call = '__lim_rpc_'.$call;;
                     $rpc_call = ref($obj).'::'.$call;
                     
+                    my $self2 = $self;
+                    weaken($self2);
+                    
                     no strict 'refs';
                     *$rpc_call = \&$orig_call;
                     *$orig_call = sub {
                         my ($self, $cb, @args) = Lim::RPC::C(@_, $valueof);
+                        
+                        Lim::RPC_DEBUG and defined $self2 and $self2->{logger}->debug('Call to ', $self, '->', $call);
                         
                         $self->$call($cb, @args);
                     };
@@ -213,7 +295,7 @@ sub serve {
             {
                 my ($tns, $soap_name);
                 
-                $tns = $module;
+                $tns = $module.'::Server';
                 ($soap_name = $module) =~ s/:://o;
                 
                 $wsdl =
@@ -221,7 +303,6 @@ sub serve {
 <wsdl:definitions
  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
  xmlns:tns="urn:'.$tns.'"
- xmlns:lim="urn:Lim"
  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
  name="'.$soap_name.'"
@@ -237,20 +318,30 @@ sub serve {
                     my $h = $calls->{$call};
                     
                     if (exists $h->{in}) {
-                        $wsdl .= '   <xsd:element name="'.$call.'Request">
+                        $wsdl .= '   <xsd:element name="'.$call.'">
+<xsd:complexType>
+<xsd:choice minOccurs="0" maxOccurs="unbounded">
 ';
-                        $wsdl .= '   </xsd:element>
+                        $wsdl .= Lim::RPC::Server::__wsdl_gen_complex_types($h->{in});
+                        $wsdl .= '</xsd:choice>
+</xsd:complexType>
+   </xsd:element>
 ';
                     }
                     else {
-                        $wsdl .= '   <xsd:element name="'.$call.'Request" />
+                        $wsdl .= '   <xsd:element name="'.$call.'" />
 ';
                     }
                     
                     if (exists $h->{out}) {
                         $wsdl .= '   <xsd:element name="'.$call.'Response">
+<xsd:complexType>
+<xsd:choice minOccurs="0" maxOccurs="unbounded">
 ';
-                        $wsdl .= '   </xsd:element>
+                        $wsdl .= Lim::RPC::Server::__wsdl_gen_complex_types($h->{out});
+                        $wsdl .= '</xsd:choice>
+</xsd:complexType>
+   </xsd:element>
 ';
                     }
                     else {
@@ -265,8 +356,8 @@ sub serve {
                 
                 # Generate message
                 foreach my $call (keys %$calls) {
-                    $wsdl .= ' <wsdl:message name="'.$call.'Request">
-  <wsdl:part element="tns:'.$call.'Request" name="parameters" />
+                    $wsdl .= ' <wsdl:message name="'.$call.'">
+  <wsdl:part element="tns:'.$call.'" name="parameters" />
  </wsdl:message>
 ';
                     $wsdl .= ' <wsdl:message name="'.$call.'Response">
@@ -282,7 +373,7 @@ sub serve {
 ';
                 foreach my $call (keys %$calls) {
                     $wsdl .= '  <wsdl:operation name="'.$call.'">
-   <wsdl:input message="tns:'.$call.'Request" />
+   <wsdl:input message="tns:'.$call.'" />
    <wsdl:output message="tns:'.$call.'Response" />
   </wsdl:operation>
 ';
@@ -329,12 +420,65 @@ sub serve {
                 name => $name,
                 module => $module,
                 obj => $obj,
-                wsdl => $wsdl
+                wsdl => $wsdl,
+                calls => $calls
             };
         }
     }
     
     $self;
+}
+
+=head2 function2
+
+=cut
+
+sub __wsdl_gen_complex_types {
+    my @values = @_;
+    my $wsdl = '';
+
+    while (scalar @values) {
+        my $values = pop(@values);
+        
+        if (ref($values) eq 'ARRAY' and scalar @$values == 2) {
+            my $key = $values->[0];
+            $values = $values->[1];
+            
+            $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice>
+';
+        }
+        
+        if (ref($values) eq 'HASH') {
+            my $nested = 0;
+            
+            foreach my $key (keys %$values) {
+                if (ref($values->{$key}) eq 'HASH') {
+                    unless ($nested) {
+                        $nested = 1;
+                        push(@values, 1);
+                    }
+                    push(@values, [$key, $values->{$key}]);
+                }
+                else {
+                    $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'" type="'.$values->{$key}->xsd_type.'" />
+    ';
+                }
+            }
+            
+            if ($nested) {
+                next;
+            }
+        }
+        
+        unless (scalar @values) {
+            last;
+        }
+        
+        $wsdl .= '</xsd:choice></xsd:complexType></xsd:element>
+';
+    }
+    
+    $wsdl;
 }
 
 =head2 function2

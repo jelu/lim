@@ -71,14 +71,12 @@ sub __soap_result {
                     push(@a,
                         SOAP::Data->new->name(lc($k))
                         ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $v))
-                        ->prefix('lim1')
                         );
                 }
                 else {
                     push(@a,
                         SOAP::Data->new->name(lc($k))
                         ->value($v)
-                        ->prefix('lim1')
                         );
                 }
             }
@@ -87,14 +85,12 @@ sub __soap_result {
             push(@a,
                 SOAP::Data->new->name(lc($k))
                 ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $_[1]->{$k}))
-                ->prefix('lim1')
                 );
         }
         else {
             push(@a,
                 SOAP::Data->new->name(lc($k))
                 ->value($_[1]->{$k})
-                ->prefix('lim1')
                 );
         }
     }

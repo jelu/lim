@@ -3,8 +3,6 @@ package Lim::RPC::Value;
 use common::sense;
 use Carp;
 
-use Log::Log4perl ();
-
 use Lim ();
 
 =head1 NAME
@@ -19,6 +17,21 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
+sub STRING (){ 'string' }
+sub INTEGER (){ 'integer' }
+sub BOOL (){ 'bool' }
+
+our %TYPE = (
+    STRING() => STRING,
+    INTEGER() => INTEGER,
+    BOOL() => BOOL
+);
+our %XSD_TYPE = (
+    STRING() => 'xsd:string',
+    INTEGER() => 'xsd:integer',
+    BOOL() => 'xsd:bool'
+);
+
 =head1 SYNOPSIS
 
 ...
@@ -32,19 +45,56 @@ our $VERSION = $Lim::VERSION;
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
+    my %args = scalar @_ > 1 ? ( @_ ) : ( textual => $_[0] );
     my $self = {
-        logger => Log::Log4perl->get_logger
     };
-    bless $self, $class;
+    
+    if (exists $args{textual}) {
+        foreach (split(/\s+/o, lc($args{textual}))) {
+            if (exists $TYPE{$_}) {
+                if (exists $self->{type}) {
+                    confess __PACKAGE__, ': type already defined';
+                }
+                $self->{type} = $_;
+            }
+        }
+    }
+    else {
+        unless (defined $args{type}) {
+            confess __PACKAGE__, ': No type specified';
+        }
+        unless (exists $TYPE{$args{type}}) {
+            confess __PACKAGE__, ': Invalid type specified';
+        }
+        
+        $self->{type} = $args{type};
+    }
+    
+    unless (exists $self->{type}) {
+        confess __PACKAGE__, ': no type defined';
+    }
 
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
+    bless $self, $class;
 }
 
 sub DESTROY {
     my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+}
+
+=head2 function1
+
+=cut
+
+sub type {
+    $_[0]->{type};
+}
+
+=head2 function1
+
+=cut
+
+sub xsd_type {
+    $XSD_TYPE{$_[0]->{type}};
 }
 
 =head1 AUTHOR

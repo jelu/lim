@@ -245,52 +245,55 @@ sub process {
 
     Lim::DEBUG and $self->{logger}->debug('Request recieved for ', $uri);
     
-    if ($uri =~ /^\/soap\/([a-zA-Z]+)/o) {
+    if ($request->header('SOAPAction') and $uri =~ /^\/([a-zA-Z]+)/o) {
         my $module = lc($1);
 
-        unless (exists $self->{soap}) {
-            $self->{soap} = SOAP::Transport::HTTP::Server->new;
-            $self->{soap}->serializer->ns('urn:Lim', 'lim1');
-            $self->{soap}->serializer->autotype(0);
-        }
-        
-        {
-            my ($action, $method_uri, $method_name);
-            my $self2 = $self;
-            weaken($self2);
-            $self->{soap}->on_dispatch(sub {
-                my ($request) = @_;
-                
-                $request->{__lim_rpc_cb} = Lim::RPC::Callback::SOAP->new(sub {
-                    my ($data) = @_;
-                    
-                    my $result = $self2->{soap}->serializer
-                        ->prefix('s')
-                        ->uri($method_uri)
-                        ->envelope(response => $method_name . 'Response', $data);
-                    
-                    $self2->{soap}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
-                    $self2->{response} = $self2->{soap}->response;
-                    $self2->{response}->header(
-                        'Cache-Control' => 'no-cache',
-                        'Pragma' => 'no-cache'
-                        );
-
-                    $self2->result;
-                });
-                
-                return;
-            });
-            
-            $self->{soap}->on_action(sub {
-                ($action, $method_uri, $method_name) = @_;
-            });
-        }
-        
         my $server = $self->{server}; # make a copy of server ref to make it strong
         if (defined $server) {
             if (exists $server->{module}->{$module}) {
-                $self->{soap}->dispatch_to($server->{module}->{$module}->{module});
+                Lim::RPC_DEBUG and $self->{logger}->debug('SOAP dispatch to module ', $server->{module}->{$module}->{module}, ' obj ', $server->{module}->{$module}->{obj});
+
+                unless (exists $self->{soap}) {
+                    $self->{soap} = SOAP::Transport::HTTP::Server->new;
+                    $self->{soap}->serializer->ns('urn:'.$server->{module}->{$module}->{module}.'::Server', 'lim1');
+                    $self->{soap}->serializer->autotype(0);
+                }
+                
+                {
+                    my ($action, $method_uri, $method_name);
+                    my $self2 = $self;
+                    weaken($self2);
+                    $self->{soap}->on_dispatch(sub {
+                        my ($request) = @_;
+                        
+                        $request->{__lim_rpc_cb} = Lim::RPC::Callback::SOAP->new(sub {
+                            my ($data) = @_;
+                            
+                            my $result = $self2->{soap}->serializer
+                                ->prefix('s')
+                                ->uri($method_uri)
+                                ->envelope(response => $method_name . 'Response', $data);
+                            
+                            $self2->{soap}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
+                            $self2->{response} = $self2->{soap}->response;
+                            $self2->{response}->header(
+                                'Cache-Control' => 'no-cache',
+                                'Pragma' => 'no-cache'
+                                );
+        
+                            $self2->result;
+                        });
+                        
+                        return;
+                    });
+                    
+                    $self->{soap}->on_action(sub {
+                        ($action, $method_uri, $method_name) = @_;
+                    });
+                }
+
+                
+                $self->{soap}->dispatch_to($server->{module}->{$module}->{obj});
                 
                 eval {
                     $self->{soap}->request($request);
