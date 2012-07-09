@@ -391,6 +391,128 @@ sub process {
                 }
                 
                 #
+                # Handle JSON-RPC v1/v2
+                #
+                
+                elsif ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s)/o) {
+                    my ($jsonreq, $jsonresp);
+                    
+                    eval {
+                        $jsonreq = $JSON->decode($request->content);
+                    };
+                    unless ($@) {
+                        if (ref($jsonreq) eq 'HASH') {
+                            if (exists $jsonreq->{jsonrpc} and exists $jsonreq->{id} and exists $jsonreq->{method}) {
+                                if ($server->{module}->{$module}->{module}->Calls->{$jsonreq->{method}}) {
+                                    my $id = $jsonreq->{id};
+                                    
+                                    weaken($self);
+                                    return $server->{module}->{$module}->{obj}->${$jsonreq->{method}}(Lim::RPC::Callback::JSONRPC->new(sub {
+                                        my ($result) = @_;
+                                        my $response = $self->{response};
+                                        
+                                        if (blessed $result and $result->isa('Lim::Error')) {
+                                            $response->code($result->code);
+                                            eval {
+                                                $response->content($JSON->encode({
+                                                    jsonrpc => '2.0',
+                                                    error => {
+                                                        code => $result->code,
+                                                        message => $result->message
+                                                    },
+                                                    id => $id
+                                                }));
+                                            };
+                                            if ($@) {
+                                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                                $self->{logger}->warn('JSON encode error: ', $@);
+                                            }
+                                            else {
+                                                $response->header(
+                                                    'Content-Type' => 'application/json; charset=utf-8',
+                                                    'Cache-Control' => 'no-cache',
+                                                    'Pragma' => 'no-cache'
+                                                    );
+                                            }
+                                        }
+                                        elsif (ref($result) eq 'HASH') {
+                                            eval {
+                                                $response->content($JSON->encode({
+                                                    jsonrpc => '2.0',
+                                                    result => $result,
+                                                    id => $id
+                                                }));
+                                            };
+                                            if ($@) {
+                                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                                $self->{logger}->warn('JSON encode error: ', $@);
+                                            }
+                                            else {
+                                                $response->header(
+                                                    'Content-Type' => 'application/json; charset=utf-8',
+                                                    'Cache-Control' => 'no-cache',
+                                                    'Pragma' => 'no-cache'
+                                                    );
+                                                $response->code(HTTP_OK);
+                                            }
+                                        }
+                                        else {
+                                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                        }
+                                        
+                                        $self->result;
+                                    }), $jsonreq->{params});
+                                }
+                                else {
+                                    $jsonresp = {
+                                        jsonrpc => '2.0',
+                                        error => {
+                                            code => -32601,
+                                            message => 'Method not found'
+                                        },
+                                        id => $jsonreq->{id}
+                                    };
+                                }
+                            }
+                            else {
+                                $jsonresp = {
+                                    jsonrpc => '2.0',
+                                    error => {
+                                        code => -32600,
+                                        message => 'Invalid Request'
+                                    },
+                                    id => $jsonreq->{id}
+                                };
+                            }
+                        }
+                        else {
+                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                        }
+                    }
+                    if ($@ and !defined $jsonresp) {
+                        $jsonresp = {
+                            jsonrpc => '2.0',
+                            error => {
+                                code => -32700,
+                                message => 'Parse error'
+                            },
+                            id => undef
+                        };
+                    }
+                    if (defined $jsonresp) {
+                        eval {
+                            $response->content($JSON->encode($jsonresp));
+                        };
+                        if ($@) {
+                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                        }
+                    }
+                    elsif (!$response->code) {
+                        $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                    }
+                }
+                
+                #
                 # No RPC found
                 #
                 
