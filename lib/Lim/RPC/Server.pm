@@ -281,9 +281,11 @@ sub serve {
                     *$orig_call = sub {
                         my ($self, $cb, @args) = Lim::RPC::C(@_, $valueof);
                         
-                        Lim::RPC_DEBUG and defined $self2 and $self2->{logger}->debug('Call to ', $self, '->', $call);
+                        Lim::RPC_DEBUG and defined $self2 and $self2->{logger}->debug('Call to ', $self, ' ', $orig_call);
                         
                         $self->$call($cb, @args);
+                        
+                        return;
                     };
                 }
             }

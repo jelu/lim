@@ -6,6 +6,7 @@ use Carp;
 use Scalar::Util qw(blessed);
 
 use SOAP::Lite ();
+use XMLRPC::Lite ();
 
 use Lim ();
 use Lim::DB ();
@@ -37,7 +38,20 @@ sub C {
     my $object = shift;
 
     my $som = $_[scalar @_ - 2];
-    if (blessed($som) and $som->isa('SOAP::SOM')) {
+    if (blessed($som) and $som->isa('XMLRPC::SOM')) {
+        unless (exists $som->{__lim_rpc_cb} and blessed($som->{__lim_rpc_cb}) and $som->{__lim_rpc_cb}->isa('Lim::RPC::Callback::XMLRPC')) {
+            confess __PACKAGE__, ': XMLRPC::SOM does not contain lim rpc callback or invalid';
+        }
+        my $cb = $som->{__lim_rpc_cb};
+        delete $som->{__lim_rpc_cb};
+        my $valueof = pop;
+        my $som = pop;
+        if (defined $valueof) {
+            $som->valueof($valueof);
+        }
+        return ($object, $cb, @_);
+    }
+    elsif (blessed($som) and $som->isa('SOAP::SOM')) {
         unless (exists $som->{__lim_rpc_cb} and blessed($som->{__lim_rpc_cb}) and $som->{__lim_rpc_cb}->isa('Lim::RPC::Callback::SOAP')) {
             confess __PACKAGE__, ': SOAP::SOM does not contain lim rpc callback or invalid';
         }
@@ -69,13 +83,13 @@ sub __soap_result {
             foreach my $v (@{$_[1]->{$k}}) {
                 if (ref($v) eq 'HASH') {
                     push(@a,
-                        SOAP::Data->new->name(lc($k))
+                        SOAP::Data->new->name($k)
                         ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $v))
                         );
                 }
                 else {
                     push(@a,
-                        SOAP::Data->new->name(lc($k))
+                        SOAP::Data->new->name($k)
                         ->value($v)
                         );
                 }
@@ -83,14 +97,52 @@ sub __soap_result {
         }
         elsif (ref($_[1]->{$k}) eq 'HASH') {
             push(@a,
-                SOAP::Data->new->name(lc($k))
+                SOAP::Data->new->name($k)
                 ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $_[1]->{$k}))
                 );
         }
         else {
             push(@a,
-                SOAP::Data->new->name(lc($k))
+                SOAP::Data->new->name($k)
                 ->value($_[1]->{$k})
+                );
+        }
+    }
+
+    if ($_[0] eq 'base') {
+        return @a;
+    }
+    else {
+        return \@a;
+    }
+}
+
+sub __xmlrpc_result {
+    my @a;
+    
+    foreach my $k (keys %{$_[1]}) {
+        if (ref($_[1]->{$k}) eq 'ARRAY') {
+            foreach my $v (@{$_[1]->{$k}}) {
+                if (ref($v) eq 'HASH') {
+                    push(@a,
+                        XMLRPC::Data->new->value({ $k => Lim::RPC::__xmlrpc_result($_[0].'.'.$k, $v) })
+                        );
+                }
+                else {
+                    push(@a,
+                        XMLRPC::Data->new->value({ $k => $v })
+                        );
+                }
+            }
+        }
+        elsif (ref($_[1]->{$k}) eq 'HASH') {
+            push(@a,
+                XMLRPC::Data->new->value({ $k => Lim::RPC::__xmlrpc_result($_[0].'.'.$k, $_[1]->{$k}) })
+                );
+        }
+        else {
+            push(@a,
+                XMLRPC::Data->new->value({ $k => $_[1]->{$k} })
                 );
         }
     }
@@ -135,6 +187,9 @@ sub R {
     
     if ($cb->isa('Lim::RPC::Callback::SOAP')) {
         return $cb->cb->(SOAP::Data->value(Lim::RPC::__soap_result('base', $data)));
+    }
+    elsif ($cb->isa('Lim::RPC::Callback::XMLRPC')) {
+        return $cb->cb->(Lim::RPC::__xmlrpc_result('base', $data));
     }
 
     return $cb->cb->($data);

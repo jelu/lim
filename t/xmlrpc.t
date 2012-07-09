@@ -1,7 +1,10 @@
 #!perl -T
 
 use XMLRPC::Lite;
-print XMLRPC::Lite
-    -> proxy('https://localhost:5353/agent.xmlrpc')
-    -> call('version')
-    -> result;
+use Data::Dumper;
+print Dumper(
+    XMLRPC::Lite
+    -> proxy('https://127.0.0.1:5353/agent')
+    -> call('Lim::Agent::Server.ReadVersion')
+    -> result
+    );
