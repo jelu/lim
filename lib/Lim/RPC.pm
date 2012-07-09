@@ -173,12 +173,7 @@ sub R {
             $data = { $c => \@r };
         }
         elsif ($data->isa('Lim::Error')) {
-            if ($cb->isa('Lim::RPC::Callback::SOAP')) {
-                # TODO generate SOAP Error
-            }
-            else {
-                return $cb->cb->($data);
-            }
+            return $cb->cb->($data);
         }
     }
     elsif (ref($data) ne 'HASH') {

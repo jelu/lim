@@ -276,12 +276,18 @@ sub process {
                             $request->{__lim_rpc_cb} = Lim::RPC::Callback::SOAP->new(sub {
                                 my ($data) = @_;
                                 
-                                my $result = $self2->{soap}->serializer
-                                    ->prefix('s')
-                                    ->uri($method_uri)
-                                    ->envelope(response => $method_name . 'Response', $data);
+                                if (blessed $data and $data->isa('Lim::Error')) {
+                                    $self2->{soap}->make_fault($data->code, $data->message);
+                                }
+                                else {
+                                    my $result = $self2->{soap}->serializer
+                                        ->prefix('s')
+                                        ->uri($method_uri)
+                                        ->envelope(response => $method_name . 'Response', $data);
+                                    
+                                    $self2->{soap}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
+                                }
                                 
-                                $self2->{soap}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
                                 $self2->{response} = $self2->{soap}->response;
                                 $self2->{response}->header(
                                     'Cache-Control' => 'no-cache',
@@ -335,14 +341,18 @@ sub process {
                             $request->{__lim_rpc_cb} = Lim::RPC::Callback::XMLRPC->new(sub {
                                 my (@data) = @_;
                                 
-                                my $result = $self2->{xmlrpc}->serializer
-                                    ->prefix('s')
-                                    ->uri($method_uri)
-                                    ->envelope(response => $method_name . 'Response', @data);
+                                if (blessed $data[0] and $data[0]->isa('Lim::Error')) {
+                                    $self2->{xmlrpc}->make_fault($data[0]->code, $data[0]->message);
+                                }
+                                else {
+                                    my $result = $self2->{xmlrpc}->serializer
+                                        ->prefix('s')
+                                        ->uri($method_uri)
+                                        ->envelope(response => $method_name . 'Response', @data);
+                                    
+                                    $self2->{xmlrpc}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
+                                }
                                 
-                                print Dumper($result);
-                                
-                                $self2->{xmlrpc}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
                                 $self2->{response} = $self2->{xmlrpc}->response;
                                 $self2->{response}->header(
                                     'Cache-Control' => 'no-cache',
