@@ -332,9 +332,12 @@ sub process {
                     }
                     
                     {
-                        my ($action, $method_uri, $method_name);
+                        my ($method_uri, $method_name);
                         my $self2 = $self;
                         weaken($self2);
+                        
+                        $method_uri = 'urn:'.$server->{module}->{$module}->{module}.'::Server';
+                        
                         $self->{xmlrpc}->on_dispatch(sub {
                             my ($request) = @_;
                             
@@ -362,12 +365,12 @@ sub process {
                                 $self2->result;
                             });
                             
-                            my ($method_uri, $method_name) = split(/\./o, $request->method, 2);
-                            return ('urn:'.$method_uri, $method_name);
-                        });
-                        
-                        $self->{xmlrpc}->on_action(sub {
-                            ($action, $method_uri, $method_name) = @_;
+                            unless ($request->method =~ /^\w+$/o) {
+                                $request->{__lim_rpc_cb}->(Lim::Error->new(500, 'Invalid characters in method name'));
+                                return;
+                            }
+                            
+                            return ($method_uri, ($method_name = $request->method));
                         });
                     }
     
