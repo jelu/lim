@@ -912,6 +912,16 @@ sub timeout {
     $self->result;
 }
 
+=head2 function2
+
+=cut
+
+sub reset_timeout {
+    if (defined $_[0]->{handle}) {
+        $_[0]->{handle}->timeout_reset;
+    }
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

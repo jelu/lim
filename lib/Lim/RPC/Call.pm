@@ -183,6 +183,16 @@ sub Error {
     $_[0]->{error};
 }
 
+=head2 function1
+
+=cut
+
+sub ResetTimeout {
+    if (exists $_[0]->{client}) {
+        $_[0]->{client}->reset_timeout;
+    }
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
