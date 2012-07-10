@@ -86,9 +86,23 @@ sub new {
     $self->{request} = HTTP::Request->new($args{method}, $self->{uri});
     $self->{request}->protocol('HTTP/1.1');
     if (defined $args{data}) {
-        my $json = $JSON->encode($args{data});
+        my $json;
+        eval {
+            $json = $JSON->encode($args{data});
+        };
+        if ($@) {
+            $self->{status} = ERROR;
+            $self->{error} = $@;
+            
+            if (exists $self->{cb}) {
+                $self->{cb}->($self);
+                delete $self->{cb};
+            }
+            return;
+        }
         $self->{request}->content($json);
         $self->{request}->header('Content-Length' => length($json));
+        $self->{request}->header('Content-Type' => 'application/json');
     }
     else {
         $self->{request}->header('Content-Length' => 0);
