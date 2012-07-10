@@ -3,6 +3,7 @@ package Lim::Agent::Server;
 use common::sense;
 
 use Lim ();
+use Lim::Plugins ();
 
 use base qw(Lim::Component::Server);
 
@@ -32,6 +33,16 @@ sub ReadVersion {
     my ($self, $cb) = @_;
     
     $self->Successful($cb, { version => $VERSION });
+}
+
+=head2 function1
+
+=cut
+
+sub ReadPlugins {
+    my ($self, $cb) = @_;
+    
+    $self->Successful($cb, { plugin => [ Lim::Plugins->instance->Loaded ] });
 }
 
 =head1 AUTHOR

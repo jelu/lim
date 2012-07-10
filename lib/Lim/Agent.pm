@@ -42,6 +42,13 @@ sub Calls {
             out => {
                 version => 'string'
             }
+        },
+        ReadPlugins => {
+            plugin => {
+                name => 'string',
+                module => 'string',
+                version => 'string'
+            }
         }
     };
 }
@@ -52,7 +59,8 @@ sub Calls {
 
 sub Commands {
     {
-        version => 1
+        version => 1,
+        plugins => 1
     };
 }
 

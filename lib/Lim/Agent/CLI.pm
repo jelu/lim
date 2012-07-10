@@ -50,6 +50,32 @@ sub version {
     });
 }
 
+=head2 function1
+
+=cut
+
+sub plugins {
+    my ($self) = @_;
+    my $agent = Lim::Agent->Client;
+    
+    weaken($self);
+    $agent->ReadPlugins(sub {
+		my ($call, $response) = @_;
+		
+		if ($call->Successful) {
+		    $self->cli->println(join("\t", qw(Name Module Version)));
+		    foreach my $plugin (@{$response->{plugin}}) {
+		        $self->cli->println(join("\t", $plugin->{name}, $plugin->{module}, $plugin->{version}));
+		    }
+			$self->Successful;
+		}
+		else {
+			$self->Error($call->Error);
+		}
+		undef($agent);
+    });
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
