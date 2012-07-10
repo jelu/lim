@@ -164,8 +164,7 @@ sub Commands {
         configs => 1,
         config => {
             view => 1,
-            edit => 1,
-            create => 1
+            edit => 1
         }
     };
 }

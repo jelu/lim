@@ -99,6 +99,56 @@ sub config {
             return;
         }
     }
+    elsif ($args->[0] eq 'edit') {
+        if (defined $args->[1]) {
+            my $softhsm = Lim::Plugin::SoftHSM->Client;
+            weaken($self);
+            $softhsm->ReadConfig({
+                file => {
+                    name => $args->[1]
+                }
+            }, sub {
+                my ($call, $response) = @_;
+                
+                if ($call->Successful) {
+                    my $w; $w = AnyEvent->timer(
+                        after => 0,
+                        cb => sub {
+                            if (defined (my $content = $self->cli->Editor($response->{file}->{content}))) {
+                                my $softhsm = Lim::Plugin::SoftHSM->Client;
+                                $softhsm->UpdateConfig({
+                                    file => {
+                                        name => $args->[1],
+                                        content => $content
+                                    }
+                                }, sub {
+                                    my ($call, $response) = @_;
+                                    
+                                    if ($call->Successful) {
+                                        $self->cli->println('Config updated');
+                                    	$self->Successful;
+                                    }
+                                    else {
+                                    	$self->Error($call->Error);
+                                    }
+                                    undef($softhsm);
+                                });
+                            }
+                            else {
+                                $self->cli->println('Config not update, no change');
+                            	$self->Successful;
+                            }
+                            undef($w);
+                        });
+                }
+                else {
+                	$self->Error($call->Error);
+                }
+                undef($softhsm);
+            });
+            return;
+        }
+    }
     $self->Error;
 }
 
