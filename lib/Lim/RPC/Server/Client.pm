@@ -609,9 +609,8 @@ sub process {
                 $obj = $server->{module}->{$module}->{obj};
             }
             
+            my ($query, @parameters);
             if (blessed($obj)) {
-                my ($query, @parameters);
-
                 Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
                 if (defined $parameters) {
@@ -629,6 +628,16 @@ sub process {
                     $uri->query($query_str);
 
                     $query = $uri->query_form_hash;
+                }
+                elsif ($request->header('Content-Type') =~ /application\/json/o) {
+                    eval {
+                        $query = $JSON->decode($request->content);
+                    };
+                    if ($@) {
+                        $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                        undef($query);
+                        undef($obj);
+                    }
                 }
                 else {
                     $query = $request->uri->query_form_hash;
@@ -667,7 +676,9 @@ sub process {
                         }
                     }
                 }
+            }
                 
+            if (blessed($obj)) {
                 $self->{call_type} = 'json';
                 weaken($self);
                 return $obj->$call(Lim::RPC::Callback::JSON->new(sub {
