@@ -236,7 +236,7 @@ sub Successful {
 sub Error {
     my $self = shift;
     
-    $self->print('Command Error: ', ( scalar @_ > 0 ? @_ : 'unknown' ));
+    $self->print('Command Error: ', ( scalar @_ > 0 ? '' : 'unknown' ));
     foreach (@_) {
         if (blessed $_ and $_->isa('Lim::Error')) {
             $self->print($_->toString);
