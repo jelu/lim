@@ -47,7 +47,7 @@ XML-RPC
 	Explicit endpoint: /<module>.xml-rpc
 	Content-Type: text/xml
 
-JSON-RPC
+JSON-RPC v2
 	
 	Endpoint: /<module>
 	Explicit endpoint: /<module>.json-rpc

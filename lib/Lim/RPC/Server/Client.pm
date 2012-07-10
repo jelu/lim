@@ -26,6 +26,7 @@ use Lim::Error ();
 use Lim::RPC::Callback::JSON ();
 use Lim::RPC::Callback::SOAP ();
 use Lim::RPC::Callback::XMLRPC ();
+use Lim::RPC::Callback::JSONRPC ();
 
 =head1 NAME
 
@@ -391,7 +392,7 @@ sub process {
                 }
                 
                 #
-                # Handle JSON-RPC v1/v2
+                # Handle JSON-RPC v2
                 #
                 
                 elsif ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s)/o) {
@@ -405,9 +406,11 @@ sub process {
                             if (exists $jsonreq->{jsonrpc} and exists $jsonreq->{id} and exists $jsonreq->{method}) {
                                 if ($server->{module}->{$module}->{module}->Calls->{$jsonreq->{method}}) {
                                     my $id = $jsonreq->{id};
+                                    my $obj = $server->{module}->{$module}->{obj};
+                                    my $call = $jsonreq->{method};
                                     
                                     weaken($self);
-                                    return $server->{module}->{$module}->{obj}->${$jsonreq->{method}}(Lim::RPC::Callback::JSONRPC->new(sub {
+                                    return $obj->$call(Lim::RPC::Callback::JSONRPC->new(sub {
                                         my ($result) = @_;
                                         my $response = $self->{response};
                                         
