@@ -6,6 +6,9 @@ use Carp;
 use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
+use File::Temp ();
+use File::Temp qw(:seekable);
+use Digest::SHA ();
 
 use Lim ();
 use Lim::Error ();
@@ -249,6 +252,36 @@ sub Error {
     
     $self->{busy} = 0;
     $self->Prompt;
+}
+
+=head2 function1
+
+=cut
+
+sub Editor {
+    my ($self, $content) = @_;
+    my $tmp = File::Temp->new;
+    my $sha = Digest::SHA::sha1_base64($content);
+    
+    print $tmp $content;
+    $tmp->flush;
+    
+    if (system($ENV{EDITOR}, $tmp->filename)) {
+        return;
+    }
+    
+    $tmp->seek(0, SEEK_END);
+    my $tell = $tmp->tell;
+    $tmp->seek(0, SEEK_SET);
+    unless ($tmp->read($content, $tell) == $tell) {
+        return;
+    }
+    
+    if ($sha == Digest::SHA::sha1_base64($content)) {
+        return;
+    }
+    
+    return $content;
 }
 
 =head1 AUTHOR
