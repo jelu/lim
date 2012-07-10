@@ -74,7 +74,7 @@ sub new {
         };
     }
     
-    foreach my $module (Lim::Plugins->instance->Loaded) {
+    foreach my $module (Lim::Plugins->instance->LoadedModules) {
         my $obj = $module->CLI(cli => $self);
         my $name = lc($module->Module);
         

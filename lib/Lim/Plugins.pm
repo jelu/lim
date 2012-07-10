@@ -115,7 +115,7 @@ sub Load {
 
 =cut
 
-sub Loaded {
+sub LoadedModules {
     my ($self) = @_;
     my @modules;
     
@@ -126,6 +126,31 @@ sub Loaded {
     }
     
     return @modules;
+}
+
+=head2 function1
+
+=cut
+
+sub Loaded {
+    my ($self) = @_;
+    my @modules;
+    
+    foreach my $module (values %{$self->{plugin}}) {
+        if ($module->{loaded}) {
+            push(@modules, $module);
+        }
+    }
+    
+    return @modules;
+}
+
+=head2 function1
+
+=cut
+
+sub All {
+    values %{$_[0]->{plugin}};
 }
 
 =head1 AUTHOR
