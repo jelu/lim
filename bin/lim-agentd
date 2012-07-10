@@ -20,7 +20,6 @@ my $port = 5353;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
-my $wsdl = '/usr/share/lim/wsdl';
 my $dsn;
 my $prefix;
 
@@ -31,7 +30,6 @@ Getopt::Long::GetOptions(
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
     'html:s' => \$html,
-    'wsdl:s' => \$wsdl,
     'dsn=s' => \$dsn,
     'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
@@ -39,10 +37,6 @@ Pod::Usage::pod2usage(1) if $help;
 
 unless (-d $html) {
     print STDERR 'Path to HTML directory invalid or non existing: ', $html, "\n";
-    exit(1);
-}
-unless (-d $wsdl) {
-    print STDERR 'Path to WSDL directory invalid or non existing: ', $wsdl, "\n";
     exit(1);
 }
 
@@ -103,8 +97,7 @@ my $server = Lim::RPC::Server->new(
     host => $host,
     port => $port,
     key => $key,
-    html => $html,
-    wsdl => $wsdl
+    html => $html
 );
 $server->serve(qw(Lim::Agent));
 $server->serve(Lim::Plugins->instance->LoadedModules);
@@ -145,10 +138,6 @@ Specify the SSL/TLS key to use for HTTPS.
 =item B<--html <path>>
 
 Specify the HTML directory (default /usr/share/lim/html).
-
-=item B<--wsdl <path>>
-
-Specify the WSDL directory (default /usr/share/lim/wsdl).
 
 =item B<--dsn <DSN>>
 
