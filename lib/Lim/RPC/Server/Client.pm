@@ -605,7 +605,7 @@ sub process {
             $call = ucfirst($method).ucfirst($function);
             
             my $obj;
-            if ($server->{module}->{$module}->{obj}->can($call)) {
+            if ($server->{module}->{$module}->{module}->Calls->{$call}) {
                 $obj = $server->{module}->{$module}->{obj};
             }
             
