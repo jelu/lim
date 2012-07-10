@@ -2,6 +2,8 @@ package Lim::Plugin::SoftHSM::Server;
 
 use common::sense;
 
+use Fcntl qw(:seek);
+
 use Lim::Plugin::SoftHSM ();
 
 use Lim::Util ();
@@ -116,7 +118,31 @@ sub CreateConfig {
 =cut
 
 sub ReadConfig {
-    my ($self, $cb) = @_;
+    my ($self, $cb, $q) = @_;
+    my $files = $self->_ScanConfig;
+
+    if (exists $files->{$q->{file}->{name}}) {
+        my $file = $files->{$q->{file}->{name}};
+        
+        if ($file->{read} and open(CONFIG, $file->{name})) {
+            my ($tell, $config);
+            seek(CONFIG, 0, SEEK_END);
+            $tell = tell(CONFIG);
+            seek(CONFIG, 0, SEEK_SET);
+            if (read(CONFIG, $config, $tell) == $tell) {
+                close(CONFIG);
+                $self->Successful($cb, {
+                    file => {
+                        name => $file->{name},
+                        content => $config
+                    }
+                });
+                return;
+            }
+            close(CONFIG);
+        }
+    }
+    $self->Error($cb);
 }
 
 =head2 function1

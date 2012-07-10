@@ -2,6 +2,7 @@ package Lim::Plugin::SoftHSM::CLI;
 
 use common::sense;
 
+use Getopt::Long ();
 use Scalar::Util qw(weaken);
 
 use Lim::Plugin::SoftHSM ();
@@ -60,6 +61,45 @@ sub configs {
 		}
 		undef($softhsm);
     });
+}
+
+=head2 function1
+
+=cut
+
+sub config {
+    my ($self, $cmd) = @_;
+    my ($getopt, $args) = Getopt::Long::GetOptionsFromString($cmd);
+    
+    unless ($getopt and scalar @$args) {
+        $self->Error;
+        return;
+    }
+
+    if ($args->[0] eq 'view') {
+        if (defined $args->[1]) {
+            my $softhsm = Lim::Plugin::SoftHSM->Client;
+            weaken($self);
+            $softhsm->ReadConfig({
+                file => {
+                    name => $args->[1]
+                }
+            }, sub {
+                my ($call, $response) = @_;
+                
+                if ($call->Successful) {
+                    $self->cli->println($response->{file}->{content});
+                	$self->Successful;
+                }
+                else {
+                	$self->Error($call->Error);
+                }
+                undef($softhsm);
+            });
+            return;
+        }
+    }
+    $self->Error;
 }
 
 =head1 AUTHOR

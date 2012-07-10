@@ -161,7 +161,12 @@ sub Calls {
 
 sub Commands {
     {
-        configs => 1
+        configs => 1,
+        config => {
+            view => 1,
+            edit => 1,
+            create => 1
+        }
     };
 }
 
