@@ -121,6 +121,10 @@ sub new {
             
             $self->{logger}->warn($handle, ' TIMEOUT');
             
+            if (exists $self->{processing}) {
+                $self->timeout;
+            }
+            
             if (exists $self->{on_eof}) {
                 $self->{on_eof}->($self);
             }
@@ -179,6 +183,8 @@ sub new {
                 
                 Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Request: ', $self->{request}->as_string);
                 
+                $self->{processing} = 1;
+                $self->{handle}->timeout(Lim::Config->{rpc}->{call_timeout});
                 $self->{process_watcher} = AnyEvent->timer(
                     after => 0,
                     cb => sub {
@@ -274,8 +280,16 @@ sub process {
                         $self->{soap}->on_dispatch(sub {
                             my ($request) = @_;
                             
+                            unless (defined $self2) {
+                                return;
+                            }
+                            
                             $request->{__lim_rpc_cb} = Lim::RPC::Callback::SOAP->new(sub {
                                 my ($data) = @_;
+                                
+                                unless (defined $self2) {
+                                    return;
+                                }
                                 
                                 if (blessed $data and $data->isa('Lim::Error')) {
                                     $self2->{soap}->make_fault($data->code, $data->message);
@@ -305,8 +319,8 @@ sub process {
                             ($action, $method_uri, $method_name) = @_;
                         });
                     }
-    
-                    
+
+                    $self->{call_type} = 'soap';
                     $self->{soap}->dispatch_to($server->{module}->{$module}->{obj});
                     
                     eval {
@@ -342,8 +356,16 @@ sub process {
                         $self->{xmlrpc}->on_dispatch(sub {
                             my ($request) = @_;
                             
+                            unless (defined $self2) {
+                                return;
+                            }
+                            
                             $request->{__lim_rpc_cb} = Lim::RPC::Callback::XMLRPC->new(sub {
                                 my (@data) = @_;
+                                
+                                unless (defined $self2) {
+                                    return;
+                                }
                                 
                                 if (blessed $data[0] and $data[0]->isa('Lim::Error')) {
                                     $self2->{xmlrpc}->make_fault($data[0]->code, $data[0]->message);
@@ -375,7 +397,7 @@ sub process {
                         });
                     }
     
-                    
+                    $self->{call_type} = 'xmlrpc';
                     $self->{xmlrpc}->dispatch_to($server->{module}->{$module}->{obj});
                     
                     eval {
@@ -409,9 +431,15 @@ sub process {
                                     my $obj = $server->{module}->{$module}->{obj};
                                     my $call = $jsonreq->{method};
                                     
+                                    $self->{call_type} = 'jsonrpc';
                                     weaken($self);
                                     return $obj->$call(Lim::RPC::Callback::JSONRPC->new(sub {
                                         my ($result) = @_;
+                                        
+                                        unless (defined $self) {
+                                            return;
+                                        }
+                                        
                                         my $response = $self->{response};
                                         
                                         if (blessed $result and $result->isa('Lim::Error')) {
@@ -640,9 +668,15 @@ sub process {
                     }
                 }
                 
+                $self->{call_type} = 'json';
                 weaken($self);
                 return $obj->$call(Lim::RPC::Callback::JSON->new(sub {
                     my ($result) = @_;
+                    
+                    unless (defined $self) {
+                        return;
+                    }
+                    
                     my $response = $self->{response};
                     
                     if (blessed $result and $result->isa('Lim::Error')) {
@@ -765,6 +799,10 @@ sub result {
     my $response = $self->{response};
     my $handle = $self->{handle};
 
+    unless (exists $self->{processing}) {
+        return;
+    }
+    
     unless ($response->code) {
         $response->code(HTTP_NOT_FOUND);
     }
@@ -786,10 +824,92 @@ sub result {
     Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Response: ', $response->as_string);
 
     $handle->push_write($response->as_string("\r\n"));
+    delete $self->{call_type};
+    delete $self->{processing};
+    $self->{handle}->timeout(Lim::Config->{rpc}->{timeout});
 
     delete $self->{request};
     delete $self->{response};
     delete $self->{process_watcher};
+}
+
+=head2 function2
+
+=cut
+
+sub timeout {
+    my ($self) = @_;
+    my $response = $self->{response};
+    
+    if (exists $self->{call_type}) {
+        if ($self->{call_type} eq 'soap' and defined $self->{soap}) {
+            $self->{soap}->make_fault(408, 'Call Timeout');
+            $self->{response} = $self->{soap}->response;
+            $self->{response}->header(
+                'Cache-Control' => 'no-cache',
+                'Pragma' => 'no-cache'
+                );
+        }
+        elsif ($self->{call_type} eq 'xmlrpc') {
+            $self->{xmlrpc}->make_fault(408, 'Call Timeout');
+            $self->{response} = $self->{xmlrpc}->response;
+            $self->{response}->header(
+                'Cache-Control' => 'no-cache',
+                'Pragma' => 'no-cache'
+                );
+        }
+        elsif ($self->{call_type} eq 'jsonrpc') {
+            $response->code(HTTP_REQUEST_TIMEOUT);
+            eval {
+                $response->content($JSON->encode({
+                    jsonrpc => '2.0',
+                    error => {
+                        code => -32000,
+                        message => 'Call Timeout'
+                    },
+                    id => undef
+                }));
+            };
+            if ($@) {
+                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                $self->{logger}->warn('JSON encode error: ', $@);
+            }
+            else {
+                $response->header(
+                    'Content-Type' => 'application/json; charset=utf-8',
+                    'Cache-Control' => 'no-cache',
+                    'Pragma' => 'no-cache'
+                    );
+            }
+            
+        }
+        elsif ($self->{call_type} eq 'json') {
+            $response->code(HTTP_REQUEST_TIMEOUT);
+            eval {
+                $response->content($JSON->encode(Lim::Error->new(
+                    code => 408,
+                    message => 'Call Timeout',
+                    module => $self
+                )));
+            };
+            if ($@) {
+                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                $self->{logger}->warn('JSON encode error: ', $@);
+            }
+            else {
+                $response->header(
+                    'Content-Type' => 'application/json; charset=utf-8',
+                    'Cache-Control' => 'no-cache',
+                    'Pragma' => 'no-cache'
+                    );
+            }
+        }
+        else {
+            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    $self->result;
 }
 
 =head1 AUTHOR

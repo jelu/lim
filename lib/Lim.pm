@@ -39,7 +39,8 @@ sub Config {
     $CONFIG ||= {
         prefix => ['', '/usr', '/usr/local'],
         rpc => {
-            timeout => 30
+            timeout => 30,
+            call_timeout => 300
         }
     };
 }
