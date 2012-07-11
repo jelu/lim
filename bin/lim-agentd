@@ -5,11 +5,10 @@ use Getopt::Long ();
 use Pod::Usage ();
 use Log::Log4perl ();
 
-use EV ();
 use AnyEvent ();
 
 use Lim ();
-use Lim::DB ();
+#use Lim::DB ();
 use Lim::RPC::Server ();
 use Lim::Agent ();
 use Lim::Plugins ();
@@ -20,7 +19,7 @@ my $port = 5353;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
-my $dsn;
+#my $dsn;
 my $prefix;
 
 Getopt::Long::GetOptions(
@@ -30,7 +29,7 @@ Getopt::Long::GetOptions(
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
     'html:s' => \$html,
-    'dsn=s' => \$dsn,
+#    'dsn=s' => \$dsn,
     'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
@@ -40,13 +39,13 @@ unless (-d $html) {
     exit(1);
 }
 
-eval {
-    Lim::DB->schema->connection($dsn);
-};
-if ($@) {
-    print STDERR 'Unable to connect to database ', $dsn, ': ', $@, "\n";
-    exit(1);
-}
+#eval {
+#    Lim::DB->schema->connection($dsn);
+#};
+#if ($@) {
+#    print STDERR 'Unable to connect to database ', $dsn, ': ', $@, "\n";
+#    exit(1);
+#}
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);

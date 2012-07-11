@@ -20,7 +20,7 @@ REQUIRED PERL MODULES
     Getopt::Long
     Pod::Usage
     Log::Log4perl
-    EV
+    (EV)
     AnyEvent
     AnyEvent::Socket
     AnyEvent::Handle
@@ -34,8 +34,21 @@ REQUIRED PERL MODULES
     JSON::XS
     SOAP::Lite
     SOAP::Transport::HTTP
-    DBIx::Class
+    XMLRPC::Lite
+    (DBIx::Class)
     Module::Find
+    
+    ubuntu:
+    libcommon-sense-perl
+    liblog-log4perl-perl
+    libanyevent-perl
+    libjson-xs-perl
+    libnet-ssleay-perl
+    libguard-perl
+    (libev-perl)
+    libevent-perl
+    libsoap-lite-perl
+    libmodule-find-perl
 
 INSTALLATION
 

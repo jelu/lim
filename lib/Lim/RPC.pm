@@ -9,7 +9,7 @@ use SOAP::Lite ();
 use XMLRPC::Lite ();
 
 use Lim ();
-use Lim::DB ();
+#use Lim::DB ();
 use Lim::Error ();
 
 =head1 NAME
@@ -163,16 +163,17 @@ sub R {
     }
     
     if (blessed($data)) {
-        if ($data->isa('DBIx::Class::ResultSet')) {
-            my @r;
-            my $c = lc($data->result_source->source_name);
-            foreach ($data->all) {
-                my %r = $_->get_columns;
-                push(@r, \%r);
-            }
-            $data = { $c => \@r };
-        }
-        elsif ($data->isa('Lim::Error')) {
+#        if ($data->isa('DBIx::Class::ResultSet')) {
+#            my @r;
+#            my $c = lc($data->result_source->source_name);
+#            foreach ($data->all) {
+#                my %r = $_->get_columns;
+#                push(@r, \%r);
+#            }
+#            $data = { $c => \@r };
+#        }
+#        elsif ($data->isa('Lim::Error')) {
+        if ($data->isa('Lim::Error')) {
             return $cb->cb->($data);
         }
     }
