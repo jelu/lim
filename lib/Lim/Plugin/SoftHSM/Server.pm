@@ -3,6 +3,9 @@ package Lim::Plugin::SoftHSM::Server;
 use common::sense;
 
 use Fcntl qw(:seek);
+use File::Temp ();
+use IO::File ();
+use Digest::SHA ();
 
 use Lim::Plugin::SoftHSM ();
 
@@ -122,26 +125,24 @@ sub CreateConfig {
 sub ReadConfig {
     my ($self, $cb, $q) = @_;
     my $files = $self->_ScanConfig;
-
+    
     if (exists $files->{$q->{file}->{name}}) {
         my $file = $files->{$q->{file}->{name}};
         
-        if ($file->{read} and open(CONFIG, $file->{name})) {
-            my ($tell, $config);
-            seek(CONFIG, 0, SEEK_END);
-            $tell = tell(CONFIG);
-            seek(CONFIG, 0, SEEK_SET);
-            if (read(CONFIG, $config, $tell) == $tell) {
-                close(CONFIG);
+        if ($file->{read} and defined (my $fh = IO::File->new($file->{name}))) {
+            my ($tell, $content);
+            $fh->seek(0, SEEK_END);
+            $tell = $fh->tell;
+            $fh->seek(0, SEEK_SET);
+            if ($fh->read($content, $tell) == $tell) {
                 $self->Successful($cb, {
                     file => {
                         name => $file->{name},
-                        content => $config
+                        content => $content
                     }
                 });
                 return;
             }
-            close(CONFIG);
         }
     }
     $self->Error($cb);
@@ -152,9 +153,34 @@ sub ReadConfig {
 =cut
 
 sub UpdateConfig {
-    my ($self, $cb) = @_;
+    my ($self, $cb, $q) = @_;
+    my $files = $self->_ScanConfig;
     
-    $self->Error($cb, 'Not Implemented');
+    if (exists $files->{$q->{file}->{name}}) {
+        my $file = $files->{$q->{file}->{name}};
+        
+        if ($file->{write} and defined (my $tmp = File::Temp->new)) {
+            print $tmp $q->{file}->{content};
+            $tmp->flush;
+            $tmp->close;
+            
+            my $fh = IO::File->new;
+            if ($fh->open($tmp->filename)) {
+                my ($tell, $content);
+                $fh->seek(0, SEEK_END);
+                $tell = $fh->tell;
+                $fh->seek(0, SEEK_SET);
+                if ($fh->read($content, $tell) == $tell
+                    and Digest::SHA::sha1_base64($q->{file}->{content}) eq Digest::SHA::sha1_base64($content)
+                    and rename($tmp->filename, $file->{name}))
+                {
+                    $self->Successful($cb);
+                    return;
+                }
+            }
+        }
+    }
+    $self->Error($cb);
 }
 
 =head2 function1
