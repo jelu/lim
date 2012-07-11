@@ -50,7 +50,8 @@ sub new {
     my $self = {
         logger => Log::Log4perl->get_logger,
         cli => {},
-        busy => 0
+        busy => 0,
+        no_completion => 0
     };
     bless $self, $class;
     my $real_self = $self;
@@ -118,7 +119,6 @@ sub new {
                 }
                 else {
                     $self->{on_quit}($self);
-                    delete $self->{rl};
                     return;
                 }
             }
@@ -147,6 +147,43 @@ sub new {
                 }
             }
         });
+
+    $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
+    $self->{rl}->Attribs->{attempted_completion_function} = sub {
+        my ($text, $line, $start, $end) = @_;
+        
+        my @parts = split(/\s+/o, substr($line, 0, $start));
+        
+        if ($self->{current}) {
+            unshift(@parts, $self->{current}->{name});
+        }
+        
+        if (scalar @parts) {
+            my $part = shift(@parts);
+
+            if (exists $self->{cli}->{$part}) {
+                my $cmd = $self->{cli}->{$part}->{module}->Commands;
+                
+                while (defined ($part = shift(@parts))) {
+                    unless (exists $cmd->{part} and ref($cmd->{part}) eq 'HASH') {
+                        if ($self->{no_completion}++ == 2) {
+                            $self->println('no completion found');
+                        }
+                        $self->{rl}->Attribs->{completion_word} = [];
+                        return ();
+                    }
+                    
+                    $cmd = $cmd->{$part};
+                }
+                $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}];
+            }
+        }
+        else {
+            $self->{rl}->Attribs->{completion_word} = [keys %{$self->{cli}}];
+        }
+        $self->{no_completion} = 0;
+        return ();
+    };
 
     if (defined (my $appender = Log::Log4perl->appender_by_name('LimCLI'))) {
         Log::Log4perl->eradicate_appender('Screen');
