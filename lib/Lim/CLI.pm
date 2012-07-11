@@ -6,8 +6,8 @@ use Carp;
 use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
+use Fcntl qw(:seek);
 use File::Temp ();
-use File::Temp qw(:seekable);
 use IO::File ();
 use Digest::SHA ();
 
@@ -18,6 +18,8 @@ use Lim::Plugins ();
 
 use IO::Handle ();
 use AnyEvent::Handle ();
+
+use AnyEvent::ReadLine::Gnu ();
 
 =head1 NAME
 
@@ -94,75 +96,62 @@ sub new {
         };
     }
     
-    $self->{stdin_watcher} = AnyEvent::Handle->new(
-         fh => \*STDIN,
-         on_error => sub {
-            my ($handle, $fatal, $msg) = @_;
-            $handle->destroy;
-            $self->{on_quit}($self);
-         },
-         on_eof => sub {
-             my ($handle) = @_;
-             $handle->destroy;
-             $self->{on_quit}($self);
-         },
-         on_read => sub {
-             my ($handle) = @_;
+#    print 'Welcome to LIM ', $Lim::VERSION, ' command line interface', "\n";
+
+    $self->{rl} = AnyEvent::ReadLine::Gnu->new(
+        prompt => 'lim> ',
+        on_line => sub {
+            if ($self->{busy}) {
+                return;
+            }
              
-             $handle->push_read(line => sub {
-                 if ($self->{busy}) {
-                     return;
-                 }
-                 
-                 my ($handle, $line) = @_;
-                 my ($cmd, $args) = split(/\s+/o, $line, 2);
-                 $cmd = lc($cmd);
-                 
-                 if ($cmd eq 'quit' or $cmd eq 'exit') {
-                     if (exists $self->{current}) {
-                         delete $self->{current};
-                         $self->Prompt;
-                     }
-                     else {
-                         $handle->destroy;
-                         $self->{on_quit}($self);
-                         return;
-                     }
-                 }
-                 else {
-                     if ($cmd) {
-                         if (exists $self->{current}) {
-                             if ($self->{current}->{module}->Commands->{$cmd} and
-                                 $self->{current}->{obj}->can($cmd))
-                             {
-                                 $self->{busy} = 1;
-                                 $self->{current}->{obj}->$cmd($args);
-                             }
-                             else {
-                                 $self->unknown_command($cmd);
-                                 $self->Prompt;
-                             }
-                         }
-                         elsif (exists $self->{cli}->{$cmd}) {
-                             $self->{current} = $self->{cli}->{$cmd};
-                             $self->Prompt;
-                         }
-                         else {
-                             $self->unknown_command($cmd);
-                             $self->Prompt;
-                         }
-                     }
-                     else {
-                         $self->Prompt;
-                     }
-                 }
+            my ($line) = @_;
+            my ($cmd, $args) = split(/\s+/o, $line, 2);
+            $cmd = lc($cmd);
+             
+            if ($cmd eq 'quit' or $cmd eq 'exit') {
+                if (exists $self->{current}) {
+                    delete $self->{current};
+                    $self->{rl}->hide;
+                    $AnyEvent::ReadLine::Gnu::prompt = 'lim> ';
+                    $self->{rl}->show;
+                }
+                else {
+                    $self->{on_quit}($self);
+                    delete $self->{rl};
+                    return;
+                }
+            }
+            else {
+                if ($cmd) {
+                    if (exists $self->{current}) {
+                        if ($self->{current}->{module}->Commands->{$cmd} and
+                            $self->{current}->{obj}->can($cmd))
+                        {
+                            $self->{busy} = 1;
+                            $self->{current}->{obj}->$cmd($args);
+                        }
+                        else {
+                            $self->unknown_command($cmd);
+                        }
+                    }
+                    elsif (exists $self->{cli}->{$cmd}) {
+                        $self->{current} = $self->{cli}->{$cmd};
+                        $self->{rl}->hide;
+                        $AnyEvent::ReadLine::Gnu::prompt = 'lim'.$self->{current}->{obj}->Prompt.'> ';
+                        $self->{rl}->show;
+                    }
+                    else {
+                        $self->unknown_command($cmd);
+                    }
+                }
+            }
+        });
 
-             });
-         });
-
-    IO::Handle::autoflush STDOUT 1;
-    print 'Welcome to LIM ', $Lim::VERSION, ' command line interface', "\n";
-    print 'lim> ';
+    if (defined (my $appender = Log::Log4perl->appender_by_name('LimCLI'))) {
+        Log::Log4perl->eradicate_appender('Screen');
+        $appender->{cli} = $self;
+    }
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
@@ -172,16 +161,8 @@ sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     delete $self->{current};
-    delete $self->{stdin_watcher};
+    delete $self->{rl};
     delete $self->{cli};
-}
-
-=head2 function1
-
-=cut
-
-sub Prompt {
-    print 'lim',(exists $_[0]->{current} ? $_[0]->{current}->{obj}->Prompt : '' ),'> ';
 }
 
 =head2 function1
@@ -201,17 +182,7 @@ sub unknown_command {
 sub print {
     my $self = shift;
     
-    print @_;
-}
-
-=head2 function1
-
-=cut
-
-sub printf {
-    my $self = shift;
-    
-    printf @_;
+    $self->{rl}->print(@_);
 }
 
 =head2 function1
@@ -221,7 +192,9 @@ sub printf {
 sub println {
     my $self = shift;
     
-    print @_, "\n";
+    $self->{rl}->hide;
+    $self->{rl}->print(@_, "\n");
+    $self->{rl}->show;
 }
 
 =head2 function1
@@ -230,7 +203,6 @@ sub println {
 
 sub Successful {
     $_[0]->{busy} = 0;
-    $_[0]->Prompt;
 }
 
 =head2 function1
@@ -252,7 +224,6 @@ sub Error {
     $self->println;
     
     $self->{busy} = 0;
-    $self->Prompt;
 }
 
 =head2 function1

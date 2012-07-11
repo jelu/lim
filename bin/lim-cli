@@ -4,6 +4,7 @@ use common::sense;
 use Getopt::Long ();
 use Pod::Usage ();
 use Log::Log4perl ();
+use Log::Log4perl::Appender::Lim::CLI ();
 
 use AnyEvent ();
 
@@ -28,11 +29,16 @@ if (defined $log4perl and -f $log4perl) {
 }
 else {
     Log::Log4perl->init( \q(
-    log4perl.logger                = DEBUG, Lim
-    log4perl.appender.Lim          = Log::Log4perl::Appender::Screen
-    log4perl.appender.Lim.stderr   = 1
-    log4perl.appender.Lim.layout   = Log::Log4perl::Layout::PatternLayout
-    log4perl.appender.Lim.layout.ConversionPattern = %d %F [%L] %p: %m%n
+    log4perl.logger                   = DEBUG, Screen, LimCLI
+    log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
+    log4perl.appender.Screen.stderr   = 1
+    log4perl.appender.Screen.layout   = Log::Log4perl::Layout::PatternLayout
+    log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
+    
+    log4perl.appender.LimCLI          = Log::Log4perl::Appender::Lim::CLI
+    log4perl.appender.LimCLI.stderr   = 1
+    log4perl.appender.LimCLI.layout   = Log::Log4perl::Layout::PatternLayout
+    log4perl.appender.LimCLI.layout.ConversionPattern = %d %F [%L] %p: %m%n
     ) );
 }
 
