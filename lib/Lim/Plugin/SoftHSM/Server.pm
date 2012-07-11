@@ -111,6 +111,8 @@ sub ReadConfigs {
 
 sub CreateConfig {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -151,6 +153,8 @@ sub ReadConfig {
 
 sub UpdateConfig {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -159,6 +163,8 @@ sub UpdateConfig {
 
 sub DeleteConfig {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -167,6 +173,8 @@ sub DeleteConfig {
 
 sub ReadShowSlots {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -175,6 +183,8 @@ sub ReadShowSlots {
 
 sub CreateInitToken {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -183,6 +193,8 @@ sub CreateInitToken {
 
 sub CreateImport {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -191,6 +203,8 @@ sub CreateImport {
 
 sub ReadExport {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -199,6 +213,8 @@ sub ReadExport {
 
 sub UpdateOptimize {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head2 function1
@@ -207,6 +223,8 @@ sub UpdateOptimize {
 
 sub UpdateTrusted {
     my ($self, $cb) = @_;
+    
+    $self->Error($cb, 'Not Implemented');
 }
 
 =head1 AUTHOR
