@@ -29,7 +29,7 @@ our %TYPE = (
 our %XSD_TYPE = (
     STRING() => 'xsd:string',
     INTEGER() => 'xsd:integer',
-    BOOL() => 'xsd:bool'
+    BOOL() => 'xsd:boolean'
 );
 
 =head1 SYNOPSIS
