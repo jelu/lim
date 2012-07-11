@@ -298,7 +298,7 @@ sub serve {
                 my ($tns, $soap_name);
                 
                 $tns = $module.'::Server';
-                ($soap_name = $module) =~ s/:://o;
+                ($soap_name = $module) =~ s/:://go;
                 
                 $wsdl =
 '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -407,13 +407,14 @@ sub serve {
                 # Generate service
                 $wsdl .= ' <wsdl:service name="'.$soap_name.'">
   <wsdl:port binding="tns:'.$soap_name.'SOAP" name="'.$soap_name.'SOAP">
-   <soap:address location="https://'.$self->{host}.':'.$self->{port}.'/'.$name.'" />
+   <soap:address location="';
+
+                $wsdl = [ $wsdl, '" />
   </wsdl:port>
  </wsdl:service>
 
-';
-
-                $wsdl .= '</wsdl:definitions>';
+</wsdl:definitions>
+' ];
             }
             
             Lim::DEBUG and $self->{logger}->debug('serving ', $name);
@@ -446,7 +447,7 @@ sub __wsdl_gen_complex_types {
             my $key = $values->[0];
             $values = $values->[1];
             
-            $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice>
+            $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
 ';
         }
         

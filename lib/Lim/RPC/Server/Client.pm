@@ -569,7 +569,9 @@ sub process {
                     $response->code(HTTP_INTERNAL_SERVER_ERROR);
                 }
                 else {
-                    $response->content($server->{module}->{$module}->{wsdl});
+                    $response->content($server->{module}->{$module}->{wsdl}->[0].
+                        $self->{uri}.'/'.$server->{module}->{$module}->{name}.
+                        $server->{module}->{$module}->{wsdl}->[1]);
                     $response->header(
                         'Content-Type' => 'text/xml; charset=utf-8',
                         'Cache-Control' => 'no-cache',
