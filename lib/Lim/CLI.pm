@@ -8,6 +8,7 @@ use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
 use File::Temp ();
 use File::Temp qw(:seekable);
+use IO::File ();
 use Digest::SHA ();
 
 use Lim ();
@@ -263,21 +264,34 @@ sub Editor {
     my $tmp = File::Temp->new;
     my $sha = Digest::SHA::sha1_base64($content);
     
+    Lim::DEBUG and $self->{logger}->debug('Editing ', $tmp->filename, ', hash before ', $sha);
+    
     print $tmp $content;
     $tmp->flush;
+
+    # TODO check EDITOR
     
     if (system($ENV{EDITOR}, $tmp->filename)) {
+        Lim::DEBUG and $self->{logger}->debug('EDITOR returned failure');
+        return;
+    }
+
+    my $fh = IO::File->new;
+    unless ($fh->open($tmp->filename)) {
+        Lim::DEBUG and $self->{logger}->debug('Unable to reopen temp file');
+        return;
+    }
+        
+    $fh->seek(0, SEEK_END);
+    my $tell = $fh->tell;
+    $fh->seek(0, SEEK_SET);
+    unless ($fh->read($content, $tell) == $tell) {
+        Lim::DEBUG and $self->{logger}->debug('Unable to read temp file');
         return;
     }
     
-    $tmp->seek(0, SEEK_END);
-    my $tell = $tmp->tell;
-    $tmp->seek(0, SEEK_SET);
-    unless ($tmp->read($content, $tell) == $tell) {
-        return;
-    }
-    
-    if ($sha == Digest::SHA::sha1_base64($content)) {
+    if ($sha eq Digest::SHA::sha1_base64($content)) {
+        Lim::DEBUG and $self->{logger}->debug('No change detected, checksum is the same');
         return;
     }
     
