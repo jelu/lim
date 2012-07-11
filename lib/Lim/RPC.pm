@@ -177,6 +177,9 @@ sub R {
             return $cb->cb->($data);
         }
     }
+    elsif (!defined $data) {
+        $data = {};
+    }
     elsif (ref($data) ne 'HASH') {
         confess __PACKAGE__, ': data not a hash';
     }
