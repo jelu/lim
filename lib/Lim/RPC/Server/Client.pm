@@ -295,10 +295,21 @@ sub process {
                                     $self2->{soap}->make_fault($data->code, $data->message);
                                 }
                                 else {
-                                    my $result = $self2->{soap}->serializer
-                                        ->prefix('s')
-                                        ->uri($method_uri)
-                                        ->envelope(response => $method_name . 'Response', $data);
+                                    my $result;
+                                    
+                                    if (defined $data) {
+                                        $result = $self2->{soap}->serializer
+                                            ->prefix('s')
+                                            ->uri($method_uri)
+                                            ->envelope(response => $method_name . 'Response', $data);
+                                    }
+                                    else {
+                                        $result = $self2->{soap}->serializer
+                                            ->prefix('s')
+                                            ->uri($method_uri)
+                                            ->envelope(response => $method_name . 'Response');
+                                        $result =~ s/ xsi:nil="true"//go;
+                                    }
                                     
                                     $self2->{soap}->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
                                 }

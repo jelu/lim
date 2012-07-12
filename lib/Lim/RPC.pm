@@ -177,21 +177,18 @@ sub R {
             return $cb->cb->($data);
         }
     }
-    elsif (!defined $data) {
-        $data = {};
-    }
-    elsif (ref($data) ne 'HASH') {
+    elsif (defined $data and ref($data) ne 'HASH') {
         confess __PACKAGE__, ': data not a hash';
     }
     
     if ($cb->isa('Lim::RPC::Callback::SOAP')) {
-        return $cb->cb->(SOAP::Data->value(Lim::RPC::__soap_result('base', $data)));
+        return $cb->cb->(defined $data ? SOAP::Data->value(Lim::RPC::__soap_result('base', $data)) : undef);
     }
     elsif ($cb->isa('Lim::RPC::Callback::XMLRPC')) {
-        return $cb->cb->(Lim::RPC::__xmlrpc_result('base', $data));
+        return $cb->cb->(defined $data ? Lim::RPC::__xmlrpc_result('base', $data) : undef);
     }
 
-    return $cb->cb->($data);
+    return $cb->cb->(defined $data ? $data : {});
 }
 
 =head1 AUTHOR
