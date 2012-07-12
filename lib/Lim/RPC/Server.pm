@@ -189,7 +189,7 @@ sub serve {
                             last;
                         }
                         
-                        $valueof = '//'.shift(@keys).'/';
+                        $valueof = '//'.$call.'/';
                         
                         my @values = ($calls->{$call}->{in});
                         while (defined $calls and (my $value = shift(@values))) {

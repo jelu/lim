@@ -47,7 +47,7 @@ sub C {
         my $valueof = pop;
         my $som = pop;
         if (defined $valueof) {
-            $som->valueof($valueof);
+            return ($object, $cb, $som->valueof($valueof));
         }
         return ($object, $cb, @_);
     }
@@ -60,7 +60,7 @@ sub C {
         my $valueof = pop;
         my $som = pop;
         if (defined $valueof) {
-            $som->valueof($valueof);
+            return ($object, $cb, $som->valueof($valueof));
         }
         return ($object, $cb, @_);
     }
