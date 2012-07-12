@@ -27,19 +27,7 @@ lib/Lim/RPC/Value.pm
 lib/Lim/RPC/Server/Client.pm
 lib/Lim/RPC/Server.pm
 lib/Lim/DB/Schema.pm
-lib/Lim/Plugin/SoftHSM.pm
-lib/Lim/Plugin/OpenDNSSEC/CLI.pm
-lib/Lim/Plugin/OpenDNSSEC/Client.pm
-lib/Lim/Plugin/OpenDNSSEC/Server.pm
-lib/Lim/Plugin/SoftHSM/CLI.pm
-lib/Lim/Plugin/SoftHSM/Client.pm
-lib/Lim/Plugin/SoftHSM/Server.pm
-lib/Lim/Plugin/OpenDNSSEC.pm
 lib/Lim/DB.pm
-
-lib/Log/Log4perl/Appender/Lim/CLI.pm
-
-lib/XMLRPC/Transport/HTTP/Server.pm
 
 Makefile.PL
 MANIFEST			This list of files
