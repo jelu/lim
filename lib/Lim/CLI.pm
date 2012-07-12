@@ -32,6 +32,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our @BUILTINS = (qw(quit help));
 
 =head1 SYNOPSIS
 
@@ -97,65 +98,21 @@ sub new {
         };
     }
     
-#    print 'Welcome to LIM ', $Lim::VERSION, ' command line interface', "\n";
-
     $self->{rl} = AnyEvent::ReadLine::Gnu->new(
         prompt => 'lim> ',
         on_line => sub {
-            if ($self->{busy}) {
-                return;
-            }
-             
-            my ($line) = @_;
-            my ($cmd, $args) = split(/\s+/o, $line, 2);
-            $cmd = lc($cmd);
-             
-            if ($cmd eq 'quit' or $cmd eq 'exit') {
-                if (exists $self->{current}) {
-                    delete $self->{current};
-                    $self->{rl}->hide;
-                    $AnyEvent::ReadLine::Gnu::prompt = 'lim> ';
-                    $self->{rl}->show;
-                }
-                else {
-                    $self->{on_quit}($self);
-                    return;
-                }
-            }
-            else {
-                if ($cmd) {
-                    if (exists $self->{current}) {
-                        if ($self->{current}->{module}->Commands->{$cmd} and
-                            $self->{current}->{obj}->can($cmd))
-                        {
-                            $self->{busy} = 1;
-                            $self->{current}->{obj}->$cmd($args);
-                        }
-                        else {
-                            $self->unknown_command($cmd);
-                        }
-                    }
-                    elsif (exists $self->{cli}->{$cmd}) {
-                        $self->{current} = $self->{cli}->{$cmd};
-                        $self->{rl}->hide;
-                        $AnyEvent::ReadLine::Gnu::prompt = 'lim'.$self->{current}->{obj}->Prompt.'> ';
-                        $self->{rl}->show;
-                    }
-                    else {
-                        $self->unknown_command($cmd);
-                    }
-                }
-            }
+            $self->process(@_);
         });
 
     $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
     $self->{rl}->Attribs->{attempted_completion_function} = sub {
         my ($text, $line, $start, $end) = @_;
-        
         my @parts = split(/\s+/o, substr($line, 0, $start));
+        my $builtins = 0;
         
         if ($self->{current}) {
             unshift(@parts, $self->{current}->{name});
+            $builtins = 1;
         }
         
         if (scalar @parts) {
@@ -165,7 +122,7 @@ sub new {
                 my $cmd = $self->{cli}->{$part}->{module}->Commands;
                 
                 while (defined ($part = shift(@parts))) {
-                    unless (exists $cmd->{part} and ref($cmd->{part}) eq 'HASH') {
+                    unless (exists $cmd->{$part} and ref($cmd->{$part}) eq 'HASH') {
                         if ($self->{no_completion}++ == 2) {
                             $self->println('no completion found');
                         }
@@ -173,13 +130,26 @@ sub new {
                         return ();
                     }
                     
+                    $builtins = 0;
                     $cmd = $cmd->{$part};
                 }
-                $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}];
+                if ($builtins) {
+                    $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}, @BUILTINS];
+                }
+                else {
+                    $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}];
+                }
+            }
+            else {
+                if ($self->{no_completion}++ == 2) {
+                    $self->println('no completion found');
+                }
+                $self->{rl}->Attribs->{completion_word} = [];
+                return;
             }
         }
         else {
-            $self->{rl}->Attribs->{completion_word} = [keys %{$self->{cli}}];
+            $self->{rl}->Attribs->{completion_word} = [keys %{$self->{cli}}, @BUILTINS];
         }
         $self->{no_completion} = 0;
         return ();
@@ -190,6 +160,8 @@ sub new {
         $appender->{cli} = $self;
     }
     
+    $self->println('Welcome to LIM ', $Lim::VERSION, ' command line interface');
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
 }
@@ -200,6 +172,77 @@ sub DESTROY {
     delete $self->{current};
     delete $self->{rl};
     delete $self->{cli};
+}
+
+=head2 function1
+
+=cut
+
+sub process {
+    my ($self, $line) = @_;
+    
+    if ($self->{busy}) {
+        return;
+    }
+
+    my ($cmd, $args) = split(/\s+/o, $line, 2);
+    $cmd = lc($cmd);
+     
+    if ($cmd eq 'quit' or $cmd eq 'exit') {
+        if (exists $self->{current}) {
+            delete $self->{current};
+            $self->{rl}->hide;
+            $AnyEvent::ReadLine::Gnu::prompt = 'lim> ';
+            $self->{rl}->show;
+        }
+        else {
+            $self->{on_quit}($self);
+            return;
+        }
+    }
+    if ($cmd eq 'help') {
+    }
+    else {
+        if ($cmd) {
+            if (exists $self->{current}) {
+                if ($self->{current}->{module}->Commands->{$cmd} and
+                    $self->{current}->{obj}->can($cmd))
+                {
+                    $self->{busy} = 1;
+                    $self->{current}->{obj}->$cmd($args);
+                }
+                else {
+                    $self->unknown_command($cmd);
+                }
+            }
+            elsif (exists $self->{cli}->{$cmd}) {
+                if ($args) {
+                    my $current = $self->{cli}->{$cmd};
+                    ($cmd, $args) = split(/\s+/o, $args, 2);
+                    $cmd = lc($cmd);
+                    
+                    if ($current->{module}->Commands->{$cmd} and
+                        $current->{obj}->can($cmd))
+                    {
+                        $self->{busy} = 1;
+                        $current->{obj}->$cmd($args);
+                    }
+                    else {
+                        $self->unknown_command($cmd);
+                    }
+                }
+                else {
+                    $self->{current} = $self->{cli}->{$cmd};
+                    $self->{rl}->hide;
+                    $AnyEvent::ReadLine::Gnu::prompt = 'lim'.$self->{current}->{obj}->Prompt.'> ';
+                    $self->{rl}->show;
+                }
+            }
+            else {
+                $self->unknown_command($cmd);
+            }
+        }
+    }
 }
 
 =head2 function1
