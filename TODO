@@ -1,3 +1,4 @@
 - RPC::Value required, update wsdl, check in/out
 - Plugins reload, restart, unload
 - Agent reload, restart and unload plugins API/CLI
+- Portable \r\n
