@@ -241,7 +241,7 @@ sub process {
             return;
         }
     }
-    if ($cmd eq 'help') {
+    elsif ($cmd eq 'help') {
         $self->prompt;
     }
     else {
