@@ -157,6 +157,11 @@ sub new {
             $self->{no_completion} = 0;
             return ();
         };
+        
+        $self->{rl}->StifleHistory(Lim::Config->{cli}->{history_length});
+        if (Lim::Config->{cli}->{history_file} and -r Lim::Config->{cli}->{history_file}) {
+            $self->{rl}->ReadHistory(Lim::Config->{cli}->{history_file});
+        }
     }
     else {
         $self->{stdin_watcher} = AnyEvent::Handle->new(
@@ -198,6 +203,13 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+    
+    if (exists $self->{rl}) {
+        if (Lim::Config->{cli}->{history_file}) {
+            $self->{rl}->WriteHistory(Lim::Config->{cli}->{history_file});
+        }
+    }
+    
     delete $self->{current};
     delete $self->{rl};
     delete $self->{stdin_watcher};

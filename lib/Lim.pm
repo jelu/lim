@@ -41,6 +41,10 @@ sub Config {
         rpc => {
             timeout => 30,
             call_timeout => 300
+        },
+        cli => {
+            history_length => 1000,
+            history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim-cli.history' : ''
         }
     };
 }
