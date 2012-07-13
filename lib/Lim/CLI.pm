@@ -19,8 +19,6 @@ use Lim::Plugins ();
 use IO::Handle ();
 use AnyEvent::Handle ();
 
-use AnyEvent::ReadLine::Gnu ();
-
 =head1 NAME
 
 ...
@@ -52,7 +50,8 @@ sub new {
         logger => Log::Log4perl->get_logger,
         cli => {},
         busy => 0,
-        no_completion => 0
+        no_completion => 0,
+        prompt => 'lim> '
     };
     bless $self, $class;
     my $real_self = $self;
@@ -98,62 +97,91 @@ sub new {
         };
     }
     
-    $self->{rl} = AnyEvent::ReadLine::Gnu->new(
-        prompt => 'lim> ',
-        on_line => sub {
-            $self->process(@_);
-        });
-
-    $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
-    $self->{rl}->Attribs->{attempted_completion_function} = sub {
-        my ($text, $line, $start, $end) = @_;
-        my @parts = split(/\s+/o, substr($line, 0, $start));
-        my $builtins = 0;
-        
-        if ($self->{current}) {
-            unshift(@parts, $self->{current}->{name});
-            $builtins = 1;
-        }
-        
-        if (scalar @parts) {
-            my $part = shift(@parts);
-
-            if (exists $self->{cli}->{$part}) {
-                my $cmd = $self->{cli}->{$part}->{module}->Commands;
-                
-                while (defined ($part = shift(@parts))) {
-                    unless (exists $cmd->{$part} and ref($cmd->{$part}) eq 'HASH') {
-                        if ($self->{no_completion}++ == 2) {
-                            $self->println('no completion found');
-                        }
-                        $self->{rl}->Attribs->{completion_word} = [];
-                        return ();
-                    }
+    eval {
+        require AnyEvent::ReadLine::Gnu;
+    };
+    unless ($@) {
+        $self->{rl} = AnyEvent::ReadLine::Gnu->new(
+            prompt => 'lim> ',
+            on_line => sub {
+                $self->process(@_);
+            });
+    
+        $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
+        $self->{rl}->Attribs->{attempted_completion_function} = sub {
+            my ($text, $line, $start, $end) = @_;
+            my @parts = split(/\s+/o, substr($line, 0, $start));
+            my $builtins = 0;
+            
+            if ($self->{current}) {
+                unshift(@parts, $self->{current}->{name});
+                $builtins = 1;
+            }
+            
+            if (scalar @parts) {
+                my $part = shift(@parts);
+    
+                if (exists $self->{cli}->{$part}) {
+                    my $cmd = $self->{cli}->{$part}->{module}->Commands;
                     
-                    $builtins = 0;
-                    $cmd = $cmd->{$part};
-                }
-                if ($builtins) {
-                    $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}, @BUILTINS];
+                    while (defined ($part = shift(@parts))) {
+                        unless (exists $cmd->{$part} and ref($cmd->{$part}) eq 'HASH') {
+                            if ($self->{no_completion}++ == 2) {
+                                $self->println('no completion found');
+                            }
+                            $self->{rl}->Attribs->{completion_word} = [];
+                            return ();
+                        }
+                        
+                        $builtins = 0;
+                        $cmd = $cmd->{$part};
+                    }
+                    if ($builtins) {
+                        $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}, @BUILTINS];
+                    }
+                    else {
+                        $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}];
+                    }
                 }
                 else {
-                    $self->{rl}->Attribs->{completion_word} = [keys %{$cmd}];
+                    if ($self->{no_completion}++ == 2) {
+                        $self->println('no completion found');
+                    }
+                    $self->{rl}->Attribs->{completion_word} = [];
+                    return;
                 }
             }
             else {
-                if ($self->{no_completion}++ == 2) {
-                    $self->println('no completion found');
-                }
-                $self->{rl}->Attribs->{completion_word} = [];
-                return;
+                $self->{rl}->Attribs->{completion_word} = [keys %{$self->{cli}}, @BUILTINS];
             }
-        }
-        else {
-            $self->{rl}->Attribs->{completion_word} = [keys %{$self->{cli}}, @BUILTINS];
-        }
-        $self->{no_completion} = 0;
-        return ();
-    };
+            $self->{no_completion} = 0;
+            return ();
+        };
+    }
+    else {
+        $self->{stdin_watcher} = AnyEvent::Handle->new(
+             fh => \*STDIN,
+             on_error => sub {
+                my ($handle, $fatal, $msg) = @_;
+                $handle->destroy;
+                $self->{on_quit}($self);
+             },
+             on_eof => sub {
+                 my ($handle) = @_;
+                 $handle->destroy;
+                 $self->{on_quit}($self);
+             },
+             on_read => sub {
+                 my ($handle) = @_;
+                 
+                 $handle->push_read(line => sub {
+                     shift;
+                     $self->process(@_);
+                 });
+             });
+    
+        IO::Handle::autoflush STDOUT 1;
+    }
 
     if (defined (my $appender = Log::Log4perl->appender_by_name('LimCLI'))) {
         Log::Log4perl->eradicate_appender('Screen');
@@ -161,6 +189,7 @@ sub new {
     }
     
     $self->println('Welcome to LIM ', $Lim::VERSION, ' command line interface');
+    $self->prompt;
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
@@ -171,6 +200,7 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     delete $self->{current};
     delete $self->{rl};
+    delete $self->{stdin_watcher};
     delete $self->{cli};
 }
 
@@ -191,9 +221,8 @@ sub process {
     if ($cmd eq 'quit' or $cmd eq 'exit') {
         if (exists $self->{current}) {
             delete $self->{current};
-            $self->{rl}->hide;
-            $AnyEvent::ReadLine::Gnu::prompt = 'lim> ';
-            $self->{rl}->show;
+            $self->set_prompt('lim> ');
+            $self->prompt;
         }
         else {
             $self->{on_quit}($self);
@@ -201,6 +230,7 @@ sub process {
         }
     }
     if ($cmd eq 'help') {
+        $self->prompt;
     }
     else {
         if ($cmd) {
@@ -233,16 +263,50 @@ sub process {
                 }
                 else {
                     $self->{current} = $self->{cli}->{$cmd};
-                    $self->{rl}->hide;
-                    $AnyEvent::ReadLine::Gnu::prompt = 'lim'.$self->{current}->{obj}->Prompt.'> ';
-                    $self->{rl}->show;
+                    $self->set_prompt('lim'.$self->{current}->{obj}->Prompt.'> ');
+                    $self->prompt;
                 }
             }
             else {
                 $self->unknown_command($cmd);
             }
         }
+        else {
+            $self->prompt;
+        }
     }
+}
+
+=head2 function1
+
+=cut
+
+sub prompt {
+    my ($self) = @_;
+    
+    if (exists $self->{rl}) {
+        return;
+    }
+    
+    $self->print($self->{prompt});
+}
+
+=head2 function1
+
+=cut
+
+sub set_prompt {
+    my ($self, $prompt) = @_;
+    
+    $self->{prompt} = $prompt;
+
+    if (exists $self->{rl}) {
+        $self->{rl}->hide;
+        $AnyEvent::ReadLine::Gnu::prompt = $prompt;
+        $self->{rl}->show;
+    }
+    
+    $self;
 }
 
 =head2 function1
@@ -253,6 +317,9 @@ sub unknown_command {
     my ($self, $cmd) = @_;
     
     $self->println('unknown command: ', $cmd);
+    $self->prompt;
+    
+    $self;
 }
 
 =head2 function1
@@ -262,7 +329,14 @@ sub unknown_command {
 sub print {
     my $self = shift;
     
-    $self->{rl}->print(@_);
+    if (exists $self->{rl}) {
+        $self->{rl}->print(@_);
+    }
+    else {
+        print @_;
+    }
+    
+    $self;
 }
 
 =head2 function1
@@ -272,9 +346,16 @@ sub print {
 sub println {
     my $self = shift;
     
-    $self->{rl}->hide;
-    $self->{rl}->print(@_, "\n");
-    $self->{rl}->show;
+    if (exists $self->{rl}) {
+        $self->{rl}->hide;
+        $self->{rl}->print(@_, "\n");
+        $self->{rl}->show;
+    }
+    else {
+        print @_, "\n";
+    }
+
+    $self;
 }
 
 =head2 function1
@@ -283,6 +364,7 @@ sub println {
 
 sub Successful {
     $_[0]->{busy} = 0;
+    $_[0]->prompt;
 }
 
 =head2 function1
@@ -304,6 +386,7 @@ sub Error {
     $self->println;
     
     $self->{busy} = 0;
+    $self->prompt;
 }
 
 =head2 function1
