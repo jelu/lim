@@ -66,23 +66,23 @@ sub new {
     $self->{on_quit} = $args{on_quit};
 
     foreach my $module (qw(Lim::Agent)) {
-        my $obj = $module->CLI(cli => $self);
         my $name = lc($module->Module);
         
         if (exists $self->{cli}->{$name}) {
             $self->{logger}->warn('Can not load internal CLI module ', $module, ': name ', $name, ' already in use');
             next;
         }
-        
-        $self->{cli}->{$name} = {
-            name => $name,
-            module => $module,
-            obj => $obj
-        };
+
+        if (defined (my $obj = $module->CLI(cli => $self))) {
+            $self->{cli}->{$name} = {
+                name => $name,
+                module => $module,
+                obj => $obj
+            };
+        }
     }
     
     foreach my $module (Lim::Plugins->instance->LoadedModules) {
-        my $obj = $module->CLI(cli => $self);
         my $name = lc($module->Module);
         
         if (exists $self->{cli}->{$name}) {
@@ -90,11 +90,13 @@ sub new {
             next;
         }
         
-        $self->{cli}->{$name} = {
-            name => $name,
-            module => $module,
-            obj => $obj
-        };
+        if (defined (my $obj = $module->CLI(cli => $self))) {
+            $self->{cli}->{$name} = {
+                name => $name,
+                module => $module,
+                obj => $obj
+            };
+        }
     }
     
     eval {

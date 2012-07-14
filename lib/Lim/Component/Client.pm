@@ -39,7 +39,13 @@ sub new {
     };
     bless $self, $class;
 
-    $self->Init(@_);
+    eval {
+        $self->Init(@_);
+    };
+    if ($@) {
+        $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        return;
+    }
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;

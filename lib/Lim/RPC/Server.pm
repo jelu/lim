@@ -141,9 +141,8 @@ sub serve {
         eval {
             $obj = $module->Server;
         };
-        
-        if ($@) {
-            $self->{logger}->warn('Can not serve ', $module, ': ', $@);
+        if (!defined $obj or $@) {
+            $self->{logger}->warn('Can not serve ', $module, (defined $@ ? ': '.$@ : ''));
             next;
         }
 

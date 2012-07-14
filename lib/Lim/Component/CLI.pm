@@ -45,7 +45,13 @@ sub new {
     $self->{cli} = delete $args{cli};
     weaken($self->{cli});
 
-    $self->Init(%args);
+    eval {
+        $self->Init(%args);
+    };
+    if ($@) {
+        $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        return;
+    }
     
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
