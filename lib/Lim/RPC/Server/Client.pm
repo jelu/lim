@@ -600,7 +600,7 @@ sub process {
         }
         undef($server);
     }
-    elsif ($uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z]+)(?:\/([^\?]*)){0,1}/o) {
+    elsif ($uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z_]+)(?:\/([^\?]*)){0,1}/o) {
         my ($module, $function, $parameters) = ($1, $2, $3);
         
         $module = lc($module);
@@ -615,8 +615,8 @@ sub process {
                 $method = lc($request->method);
             }
             $function = lc($function);
-            $call = ucfirst($method).ucfirst($function);
-            
+            $call = ucfirst($method).Lim::Util::Camelize($function);
+
             my $obj;
             if ($server->{module}->{$module}->{module}->Calls->{$call}) {
                 $obj = $server->{module}->{$module}->{obj};

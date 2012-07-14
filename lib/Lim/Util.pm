@@ -120,6 +120,21 @@ sub URIize {
     return ($method, '/'.$uri);
 }
 
+=head2 function1
+
+=cut
+
+sub Camelize {
+    my ($underscore_text) = @_;
+    my $camelized;
+    
+    foreach (split(/_/o, $underscore_text)) {
+        $camelized .= ucfirst($_);
+    }
+    
+    return $camelized;
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
