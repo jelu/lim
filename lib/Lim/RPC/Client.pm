@@ -9,7 +9,6 @@ use Scalar::Util qw(blessed weaken);
 use AnyEvent ();
 use AnyEvent::Socket ();
 use AnyEvent::Handle ();
-use AnyEvent::TLS ();
 
 use HTTP::Request ();
 use HTTP::Response ();
@@ -21,6 +20,7 @@ use JSON::XS ();
 
 use Lim ();
 use Lim::Error ();
+use Lim::RPC::Client::TLS ();
 
 =head1 NAME
 
@@ -127,6 +127,7 @@ sub new {
         $handle = AnyEvent::Handle->new(
             fh => $fh,
             tls => 'connect',
+            tls_ctx => Lim::RPC::Client::TLS->instance->tls_ctx,
             timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;

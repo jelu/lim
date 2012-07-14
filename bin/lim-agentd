@@ -10,6 +10,7 @@ use AnyEvent ();
 use Lim ();
 #use Lim::DB ();
 use Lim::RPC::Server ();
+use Lim::RPC::Client::TLS ();
 use Lim::Agent ();
 use Lim::Plugins ();
 
@@ -23,9 +24,9 @@ my $html = '/usr/share/lim/html';
 my $prefix;
 
 Getopt::Long::GetOptions(
-	'help|?' => \$help,
-	'host:s' => \$host,
-	'port:i' => \$port,
+    'help|?' => \$help,
+    'host:s' => \$host,
+    'port:i' => \$port,
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
     'html:s' => \$html,
@@ -91,6 +92,10 @@ push(@watchers,
 );
 
 $html =~ s/\/*$//o;
+
+Lim::RPC::Client::TLS->set_instance(Lim::RPC::Client::TLS->new(
+    key => $key
+));
 
 my $server = Lim::RPC::Server->new(
     host => $host,

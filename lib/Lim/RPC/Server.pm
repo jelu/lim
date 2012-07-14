@@ -60,7 +60,14 @@ sub new {
         confess __PACKAGE__, ': No port specified';
     }
     
-    $self->{tls_ctx} = AnyEvent::TLS->new(method => 'any', cert_file => $args{key});
+    $self->{tls_ctx} = AnyEvent::TLS->new(
+        method => 'any',
+        ca_file => $args{key},
+        cert_file => $args{key},
+        key_file => $args{key},
+        verify => 1,
+        verify_require_client_cert => 1
+        );
 
     $self->{host} = $args{host};
     $self->{port} = $args{port};
