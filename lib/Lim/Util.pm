@@ -3,6 +3,8 @@ package Lim::Util;
 use common::sense;
 use Carp;
 
+use File::Temp ();
+
 use Lim ();
 
 =head1 NAME
@@ -84,6 +86,27 @@ sub FileWritable {
             
             if (-f $real_file and -w $real_file) {
                 return $real_file;
+            }
+        }
+    }
+    return;
+}
+
+=head2 function1
+
+=cut
+
+sub TempFileLikeThis {
+    my ($file) = @_;
+    
+    if (defined $file and -f $file) {
+        my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+            $atime,$mtime,$ctime,$blksize,$blocks)
+            = stat($file);
+        
+        if (defined (my $tmp = File::Temp->new)) {
+            if (chmod($mode, $tmp->filename) and chown($uid, $gid, $tmp->filename)) {
+                return $tmp;
             }
         }
     }
