@@ -13,6 +13,7 @@ use Lim::CLI ();
 use Lim::RPC::Client::TLS ();
 
 my $help = 0;
+my $conf;
 my $host = 'localhost';
 my $port = 5353;
 my $key;
@@ -20,12 +21,24 @@ my $log4perl;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
+    'conf:s' => \$conf,
     'host:s' => \$host,
     'port:i' => \$port,
     'key=s' => \$key,
     'log4perl:s' => \$log4perl
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
+
+if (defined $conf) {
+    unless (-r $conf and Lim::LoadConfig($conf)) {
+        print STDERR 'Unable to read configuration file: ', $conf, "\n";
+        exit(1);
+    }
+    Lim::Config->{cli}->{config_file} = $conf;
+}
+else {
+    Lim::LoadConfig(Lim::Config->{cli}->{config_file});
+}
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
@@ -108,6 +121,10 @@ Options:
 
 =over 8
 
+=item B<--conf <file>>
+
+Specify the configure file to use (default ~/.limrc).
+
 =item B<--host <ip>>
 
 Specify the host/IP to connect to (default localhost).
@@ -119,6 +136,10 @@ Specify the port to listen on (default 5353).
 =item B<--key <key>>
 
 Specify the SSL/TLS key to use for HTTPS.
+
+=item B<--log4perl <file>>
+
+Specify a Log::Log4perl configure file (default output to cli or stderr).
 
 =item B<--help>
 

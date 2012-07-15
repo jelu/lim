@@ -147,6 +147,10 @@ Specify the HTML directory (default /usr/share/lim/html).
 
 Specify the DBI DSN for connecting to the database.
 
+=item B<--log4perl <file>>
+
+Specify a Log::Log4perl configure file (default output to stdout).
+
 =item B<--help>
 
 Print a brief help message and exits.

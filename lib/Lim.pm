@@ -3,6 +3,8 @@ package Lim;
 use common::sense;
 use Carp;
 
+use YAML::Any ();
+
 =head1 NAME
 
 Lim - The great new Lim!
@@ -44,9 +46,47 @@ sub Config {
         },
         cli => {
             history_length => 1000,
-            history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim-cli.history' : ''
+            history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
+            config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
+            editor => $ENV{EDITOR}
         }
     };
+}
+
+=head2 function1
+
+=cut
+
+sub MergeConfig {
+    if (ref($_[0]) eq 'HASH') {
+        $CONFIG = {
+            %$CONFIG,
+            %{$_[0]}
+        };
+    }
+}
+
+=head2 function1
+
+=cut
+
+sub LoadConfig {
+    my ($config) = @_;
+    
+    if (defined $config and -r $config) {
+        my $yaml;
+        
+        eval {
+            $yaml = YAML::Any::LoadFile($config);
+        };
+        if ($@) {
+            confess __PACKAGE__, ': Unable to read configuration file ', $config, ': ', $@, "\n";
+            exit(1);
+        }
+        Lim::MergeConfig($yaml);
+        return 1;
+    }
+    return;
 }
 
 =head1 AUTHOR
