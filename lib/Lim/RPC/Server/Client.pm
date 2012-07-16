@@ -164,8 +164,8 @@ sub new {
             unless (exists $self->{content}) {
                 $self->{headers} .= $handle->{rbuf};
                 
-                if ($self->{headers} =~ /\r\n\r\n/o) {
-                    my ($headers, $content) = split(/\r\n\r\n/o, $self->{headers}, 2);
+                if ($self->{headers} =~ /\015?\012\015?\012/o) {
+                    my ($headers, $content) = split(/\015?\012\015?\012/o, $self->{headers}, 2);
                     $self->{headers} = $headers;
                     $self->{content} = $content;
                     $self->{request} = HTTP::Request->parse($self->{headers});
@@ -338,10 +338,8 @@ sub process {
                         $self->{soap}->request($request);
                         $self->{soap}->handle;
                     };
-                    
                     if ($@) {
-                        use Data::Dumper;
-                        print "$@\n", Dumper($request), "\n\n", Dumper($response), "\n";
+                        $self->{logger}->warn('SOAP action failed: ', $@);
                     }
                     return;
                 }
@@ -415,10 +413,8 @@ sub process {
                         $self->{xmlrpc}->request($request);
                         $self->{xmlrpc}->handle;
                     };
-                    
                     if ($@) {
-                        use Data::Dumper;
-                        print "$@\n", Dumper($request), "\n\n", Dumper($response), "\n";
+                        $self->{logger}->warn('XML-RPC action failed: ', $@);
                     }
                     return;
                     
@@ -635,7 +631,7 @@ sub process {
             
                 if ($request->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
                     my $query_str = $request->content;
-                    $query_str =~ s/[\r\n]+$//o;
+                    $query_str =~ s/[\015\012]+$//o;
 
                     my $uri = URI->new;
                     $uri->query($query_str);
@@ -833,7 +829,7 @@ sub result {
     
     if ($response->code != HTTP_OK and !length($response->content)) {
         $response->header('Content-Type' => 'text/plain; charset=utf-8');
-        $response->content($response->code.' '.HTTP::Status::status_message($response->code)."\r\n");
+        $response->content($response->code.' '.HTTP::Status::status_message($response->code)."\015\012");
     }
     
     $response->header('Content-Length' => length($response->content));
@@ -847,7 +843,7 @@ sub result {
     
     Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Response: ', $response->as_string);
 
-    $handle->push_write($response->as_string("\r\n"));
+    $handle->push_write($response->as_string("\015\012"));
     delete $self->{call_type};
     delete $self->{processing};
     $self->{handle}->timeout(Lim::Config->{rpc}->{timeout});

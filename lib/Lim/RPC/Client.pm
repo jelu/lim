@@ -188,8 +188,8 @@ sub new {
                 unless (exists $self->{content}) {
                     $self->{headers} .= $handle->{rbuf};
                     
-                    if ($self->{headers} =~ /\r\n\r\n/o) {
-                        my ($headers, $content) = split(/\r\n\r\n/o, $self->{headers}, 2);
+                    if ($self->{headers} =~ /\015?\012\015?\012/o) {
+                        my ($headers, $content) = split(/\015?\012\015?\012/o, $self->{headers}, 2);
                         $self->{headers} = $headers;
                         $self->{content} = $content;
                         $self->{response} = HTTP::Response->parse($self->{headers});
@@ -261,7 +261,7 @@ sub new {
             });
         
         $self->{handle} = $handle;
-        $handle->push_write($self->{request}->as_string("\r\n"));
+        $handle->push_write($self->{request}->as_string("\015\012"));
         delete $self->{request};
     };
 
