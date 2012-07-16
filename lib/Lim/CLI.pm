@@ -163,6 +163,7 @@ sub new {
         $self->{rl}->StifleHistory(Lim::Config->{cli}->{history_length});
         if (Lim::Config->{cli}->{history_file} and -r Lim::Config->{cli}->{history_file}) {
             $self->{rl}->ReadHistory(Lim::Config->{cli}->{history_file});
+            $self->{rl}->history_set_pos($self->{rl}->Attribs->{history_length});
         }
     }
     else {
