@@ -3,3 +3,4 @@
 - Agent reload, restart and unload plugins API/CLI
 - Portable \r\n
 - lim-agentd /etc/lim/* configs, /etc/lim.d/* per plugin configs
+- Lim::CLI Ask(text, cb)/Confirm(text, cb)
