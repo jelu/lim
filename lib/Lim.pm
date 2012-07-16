@@ -59,11 +59,26 @@ sub Config {
 
 sub MergeConfig {
     if (ref($_[0]) eq 'HASH') {
-        $CONFIG = {
-            %$CONFIG,
-            %{$_[0]}
-        };
+        my @merge = ([$_[0], $CONFIG]);
+
+        while (defined (my $merge = shift(@merge))) {
+            my ($from, $to) = @$merge;
+            foreach my $key (keys %$from) {
+                if (exists $to->{$key}) {
+                    unless (ref($from->{$key}) eq ref($to->{$key})) {
+                        # TODO display what entry is missmatching
+                        confess __PACKAGE__, 'Can not merge config, entries type missmatch';
+                    }
+                    if (ref($from->{$key}) eq 'HASH') {
+                        push(@merge, [$from->{$key}, $to->{$key}]);
+                        next;
+                    }
+                }
+                $to->{$key} = $from->{$key};
+            }
+        }
     }
+    return;
 }
 
 =head2 function1
