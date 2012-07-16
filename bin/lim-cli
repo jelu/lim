@@ -68,16 +68,20 @@ if (defined $port) {
 
 my $cv = AnyEvent->condvar;
 my @watchers;
+my $cli;
 
 push(@watchers,
-# TODO Implement config files
-#    AnyEvent->signal(signal => "HUP", cb => sub {
-#        if (defined($server)) {
-#            $server->reload;
-#        }
-#    }),
+    AnyEvent->signal(signal => "HUP", cb => sub {
+    }),
+    AnyEvent->signal(signal => "PIPE", cb => sub {
+    }),
     AnyEvent->signal(signal => "INT", cb => sub {
-        $cv->send;
+        if (defined $cli) {
+            $cli->clear_line;
+        }
+        else {
+            $cv->send;
+        }
     }),
     AnyEvent->signal(signal => "QUIT", cb => sub {
         $cv->send;
@@ -91,7 +95,7 @@ Lim::RPC::Client::TLS->set_instance(Lim::RPC::Client::TLS->new(
     key => $key
 ));
 
-my $cli = Lim::CLI->new(
+$cli = Lim::CLI->new(
     on_quit => sub {
         $cv->send;
     });

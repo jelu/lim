@@ -224,13 +224,19 @@ sub DESTROY {
 
 sub process {
     my ($self, $line) = @_;
+    my ($cmd, $args);
     
     if ($self->{busy}) {
         return;
     }
 
-    my ($cmd, $args) = split(/\s+/o, $line, 2);
-    $cmd = lc($cmd);
+    if (defined $line) {
+        ($cmd, $args) = split(/\s+/o, $line, 2);
+        $cmd = lc($cmd);
+    }
+    else {
+        $cmd = 'quit';
+    }
      
     if ($cmd eq 'quit' or $cmd eq 'exit') {
         if (exists $self->{current}) {
@@ -320,6 +326,26 @@ sub set_prompt {
         $self->{rl}->hide;
         $AnyEvent::ReadLine::Gnu::prompt = $prompt;
         $self->{rl}->show;
+    }
+    
+    $self;
+}
+
+=head2 function1
+
+=cut
+
+sub clear_line {
+    my ($self) = @_;
+
+    if (exists $self->{rl}) {
+        $self->{rl}->replace_line('', 1);
+        $self->{rl}->hide;
+        $self->{rl}->show;
+    }
+    else {
+        $self->{stdin_watcher}->{rbuf} = '';
+        print "\r";
     }
     
     $self;
