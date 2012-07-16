@@ -159,7 +159,7 @@ sub new {
             $self->{no_completion} = 0;
             return ();
         };
-        
+
         $self->{rl}->StifleHistory(Lim::Config->{cli}->{history_length});
         if (Lim::Config->{cli}->{history_file} and -r Lim::Config->{cli}->{history_file}) {
             $self->{rl}->ReadHistory(Lim::Config->{cli}->{history_file});
@@ -253,6 +253,7 @@ sub process {
                     $self->{current}->{obj}->can($cmd))
                 {
                     $self->{busy} = 1;
+                    $self->set_prompt('');
                     $self->{current}->{obj}->$cmd($args);
                 }
                 else {
@@ -269,6 +270,7 @@ sub process {
                         $current->{obj}->can($cmd))
                     {
                         $self->{busy} = 1;
+                        $self->set_prompt('');
                         $current->{obj}->$cmd($args);
                     }
                     else {
@@ -377,8 +379,17 @@ sub println {
 =cut
 
 sub Successful {
-    $_[0]->{busy} = 0;
-    $_[0]->prompt;
+    my ($self) = @_;
+    
+    $self->{busy} = 0;
+    if (exists $self->{current}) {
+        $self->set_prompt('lim'.$self->{current}->{obj}->Prompt.'> ');
+    }
+    else {
+        $self->set_prompt('lim> ');
+    }
+    $self->prompt;
+    return;
 }
 
 =head2 function1
@@ -400,6 +411,12 @@ sub Error {
     $self->println;
     
     $self->{busy} = 0;
+    if (exists $self->{current}) {
+        $self->set_prompt('lim'.$self->{current}->{obj}->Prompt.'> ');
+    }
+    else {
+        $self->set_prompt('lim> ');
+    }
     $self->prompt;
 }
 
