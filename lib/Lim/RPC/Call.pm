@@ -9,6 +9,7 @@ use Scalar::Util qw(blessed weaken);
 use Lim ();
 use Lim::Error ();
 use Lim::Util ();
+use Lim::RPC ();
 use Lim::RPC::Client ();
 
 =head1 NAME
@@ -49,6 +50,7 @@ sub new {
 
     $self->{module} = shift;
     $self->{call} = shift;
+    $self->{call_def} = shift;
     $self->{component} = shift;
     my ($data, $cb, $args, $method, $uri);
     
@@ -93,6 +95,9 @@ sub new {
     unless (defined $self->{call}) {
         confess __PACKAGE__, ': No call specified';
     }
+    unless (defined $self->{call_def} and ref($self->{call_def}) eq 'HASH') {
+        confess __PACKAGE__, ': No call definition specified or invalid';
+    }
     unless (blessed $self->{component} and $self->{component}->isa('Lim::Component::Client')) {
         confess __PACKAGE__, ': No component specified or not a Lim::Component::Client';
     }
@@ -121,6 +126,16 @@ sub new {
         confess __PACKAGE__, ': No port specified';
     }
     
+    if (defined $data and ref($data) ne 'HASH') {
+        confess __PACKAGE__, ': Data is not a hash';
+    }
+    if (exists $self->{call_def}->{in}) {
+        Lim::RPC::V(defined $data ? $data : {}, $self->{call_def}->{in});
+    }
+    elsif (defined $data and %$data) {
+        confess __PACKAGE__, ': Data given without in parameter definition';
+    }
+    
     ($method, $uri) = Lim::Util::URIize($self->{call});
     
     $uri = '/'.lc($self->{module}).$uri;
@@ -137,6 +152,25 @@ sub new {
 
             if ($self->{client}->status == Lim::RPC::Client::OK) {
                 $self->{status} = OK;
+                if (exists $self->{call_def}->{out}) {
+                    eval {
+                        Lim::RPC::V($data, $self->{call_def}->{out});
+                    };
+                    if ($@) {
+                        $self->{error} = Lim::Error->new(
+                            message => $@,
+                            module => $self
+                        );
+                        $self->{status} = ERROR;
+                    }
+                }
+                elsif (%$data) {
+                    $self->{error} = Lim::Error->new(
+                        message => 'Invalid data return, does not match definition',
+                        module => $self
+                    );
+                    $self->{status} = ERROR;
+                }
             }
             else {
                 $self->{status} = ERROR;

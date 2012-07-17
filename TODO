@@ -1,4 +1,3 @@
-- RPC::Value required, update wsdl, check in/out
 - Plugins reload, restart, unload
 - Agent reload, restart and unload plugins API/CLI
 - lim-agentd /etc/lim/* configs, /etc/lim.d/* per plugin configs

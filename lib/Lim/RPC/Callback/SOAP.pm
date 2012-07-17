@@ -59,6 +59,26 @@ sub cb {
     $_[0]->{cb}
 }
 
+=head2 function1
+
+=cut
+
+sub call_def {
+    $_[0]->{call_def};
+}
+
+=head2 function1
+
+=cut
+
+sub set_call_def {
+    if (ref($_[1]) eq 'HASH') {
+        $_[0]->{call_def} = $_[1];
+    }
+    
+    $_[0];
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

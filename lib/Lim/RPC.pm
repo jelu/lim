@@ -29,7 +29,52 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 V for Verify
+
+=cut
+
+sub V {
+    my ($q, $def) = @_;
+    
+    if (defined $q and defined $def) {
+        unless (ref($q) eq 'HASH' and ref($def) eq 'HASH') {
+            confess __PACKAGE__, ': Can not verify data, invalid parameters given';
+        }
+        
+        my @v = ([$q, $def]);
+        while (defined (my $v = shift(@v))) {
+            ($q, $def) = @$v;
+            
+            # check required
+            foreach my $k (keys %$def) {
+                if (blessed($def->{$k}) and $def->{$k}->required and !exists $q->{$k}) {
+                    confess __PACKAGE__, ': required data missing, does not match definition';
+                }
+            }
+            
+            # check data
+            foreach my $k (keys %$q) {
+                unless (exists $def->{$k}) {
+                    confess __PACKAGE__, ': invalid data, no definition exists';
+                }
+                
+                if (blessed($def->{$k}) and !$def->{$k}->validate($q->{$k})) {
+                    confess __PACKAGE__, ': invalid data, validation failed';
+                }
+                
+                if (ref($q->{$k}) eq 'HASH') {
+                    unless (ref($def->{$k}) eq 'HASH') {
+                        confess __PACKAGE__, ': invalid definition, can not validate data';
+                    }
+                    push(@v, [$q->{$k}, $def->{$k}]);
+                }
+            }
+        }
+    }
+    return;
+}
+
+=head2 C for Call
 
 =cut
 
@@ -70,7 +115,7 @@ sub C {
     return ($object, @_);
 }
 
-=head2 function1
+=head2 R for Result
 
 =cut
 
@@ -166,8 +211,22 @@ sub R {
             return $cb->cb->($data);
         }
     }
-    elsif (defined $data and ref($data) ne 'HASH') {
-        confess __PACKAGE__, ': data not a hash';
+    elsif (defined $data) {
+        unless (ref($data) eq 'HASH') {
+            confess __PACKAGE__, ': data not a hash';
+        }
+        
+        if ($cb->call_def and exists $cb->call_def->{out}) {
+            Lim::RPC::V($data, $cb->call_def->{out});
+        }
+        elsif (%$data) {
+            confess __PACKAGE__, ': data given without definition';
+        }
+    }
+    else {
+        if ($cb->call_def and exists $cb->call_def->{out}) {
+            Lim::RPC::V({}, $cb->call_def->{out});
+        }
     }
     
     if ($cb->isa('Lim::RPC::Callback::SOAP')) {

@@ -81,9 +81,15 @@ sub Destroy {
 =cut
 
 sub Successful {
-    my ($self, $cb, @args) = @_;
+    my ($self, $cb, $data) = @_;
     
-    Lim::RPC::R($cb, @args);
+    eval {
+        Lim::RPC::R($cb, $data);
+    };
+    if ($@) {
+        $self->{logger}->warn('data validation failed: ', $@);
+        Lim::RPC::R($cb, Lim::Error->new());
+    }
 }
 
 =head2 function1

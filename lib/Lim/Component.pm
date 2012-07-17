@@ -4,8 +4,10 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Scalar::Util qw(blessed);
 
 use Lim ();
+use Lim::RPC::Value ();
 use Lim::RPC::Call ();
 
 =head1 NAME
@@ -64,9 +66,78 @@ sub Client {
     foreach my $call (keys %$calls) {
         unless ($self->can($call)) {
             my $sub = $self.'::'.$call;
+            my $call_def = $calls->{$call};
+
+            unless (ref($call_def) eq 'HASH') {
+                confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid definition';
+            }
+            
+            if (exists $call_def->{in}) {
+                unless (ref($call_def->{in}) eq 'HASH') {
+                    confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid in parameter definition';
+                }
+                
+                my @keys = keys %{$call_def->{in}};
+                unless (scalar @keys) {
+                    confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid in parameter definition';
+                }
+                
+                my @values = ($call_def->{in});
+                while (defined (my $value = shift(@values))) {
+                    foreach my $key (keys %$value) {
+                        if (ref($value->{$key}) eq 'HASH') {
+                            push(@values, $value->{$key});
+                            next;
+                        }
+                        elsif (blessed $value->{$key}) {
+                            if ($value->{$key}->isa('Lim::Value')) {
+                                next;
+                            }
+                        }
+                        else {
+                            $value->{$key} = Lim::RPC::Value->new($value->{$key});
+                            next;
+                        }
+
+                        confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid in parameter definition';
+                    }
+                }
+            }
+            
+            if (exists $call_def->{out}) {
+                unless (ref($call_def->{out}) eq 'HASH') {
+                    confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid out parameter definition';
+                }
+                
+                my @keys = keys %{$call_def->{out}};
+                unless (scalar @keys) {
+                    confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid out parameter definition';
+                }
+
+                my @values = ($call_def->{out});
+                while (defined $calls and (my $value = shift(@values))) {
+                    foreach my $key (keys %$value) {
+                        if (ref($value->{$key}) eq 'HASH') {
+                            push(@values, $value->{$key});
+                            next;
+                        }
+                        elsif (blessed $value->{$key}) {
+                            if ($value->{$key}->isa('Lim::Value')) {
+                                next;
+                            }
+                        }
+                        else {
+                            $value->{$key} = Lim::RPC::Value->new($value->{$key});
+                            next;
+                        }
+
+                        confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid out parameter definition';
+                    }
+                }
+            }
             
             *$sub = sub {
-                unless (Lim::RPC::Call->new($module, $call, @_)) {
+                unless (Lim::RPC::Call->new($module, $call, $call_def, @_)) {
                     confess __PACKAGE__, ': Unable to create Lim::RPC::Call for ', $sub;
                 }
             };

@@ -31,6 +31,17 @@ our %XSD_TYPE = (
     INTEGER() => 'xsd:integer',
     BOOL() => 'xsd:boolean'
 );
+our %XMLRPC_TYPE = (
+    STRING() => 'string',
+    INTEGER() => 'int',
+    BOOL() => 'boolean'
+);
+
+sub OPT_REQUIRED (){ 0x00000001 }
+
+our %OPTIONS = (
+    'required' => OPT_REQUIRED
+);
 
 =head1 SYNOPSIS
 
@@ -47,6 +58,7 @@ sub new {
     my $class = ref($this) || $this;
     my %args = scalar @_ > 1 ? ( @_ ) : ( textual => $_[0] );
     my $self = {
+        options => 0
     };
     
     if (exists $args{textual}) {
@@ -56,6 +68,9 @@ sub new {
                     confess __PACKAGE__, ': type already defined';
                 }
                 $self->{type} = $_;
+            }
+            elsif (exists $OPTIONS{$_}) {
+                $self->{options} |= $OPTIONS{$_};
             }
         }
     }
@@ -95,6 +110,31 @@ sub type {
 
 sub xsd_type {
     $XSD_TYPE{$_[0]->{type}};
+}
+
+=head2 function1
+
+=cut
+
+sub xmlrpc_type {
+    $XMLRPC_TYPE{$_[0]->{type}};
+}
+
+=head2 function1
+
+=cut
+
+sub required {
+    $_[0]->{options} & OPT_REQUIRED ? 1 : 0;
+}
+
+=head2 function1
+
+=cut
+
+sub validate {
+    # TODO this
+    return 1;
 }
 
 =head1 AUTHOR

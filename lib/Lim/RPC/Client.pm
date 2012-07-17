@@ -76,6 +76,9 @@ sub new {
     unless (defined $args{uri}) {
         confess __PACKAGE__, ': No uri specified';
     }
+    if (defined $args{data} and ref($args{data}) ne 'HASH') {
+        confess __PACKAGE__, ': Data is not a hash';
+    }
     
     $self->{host} = $args{host};
     $self->{port} = $args{port};
@@ -227,7 +230,14 @@ sub new {
                                 undef($data);
                             }
                             else {
-                                if ($self->{status} == ERROR) {
+                                if (ref($data) ne 'HASH') {
+                                    $data = Lim::Error->new(
+                                        code => 500,
+                                        message => 'Invalid data returned, not a hash',
+                                        module => $self);
+                                    $self->{status} = ERROR;
+                                }
+                                elsif ($self->{status} == ERROR) {
                                     $data = Lim::Error->new->set($data);
                                 }
                             }
@@ -243,8 +253,7 @@ sub new {
                             $data = Lim::Error->new(
                                 code => $response->code,
                                 message => $self->{error},
-                                module => $self
-                                );
+                                module => $self);
                         }
                         unless (blessed $data and $data->isa('Lim::Error')) {
                             confess __PACKAGE__, ': status is ERROR but data is not a Lim::Error object';

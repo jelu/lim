@@ -180,15 +180,22 @@ sub serve {
                 }
                 unless ($obj->can('__lim_rpc_'.$call)) {
                     my ($orig_call, $rpc_call, $valueof);
+                    my $call_def = $calls->{$call};
                     
-                    if (exists $calls->{$call}->{in}) {
-                        unless (ref($calls->{$call}->{in}) eq 'HASH') {
+                    unless (ref($call_def) eq 'HASH') {
+                        $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid definition');
+                        undef($calls);
+                        last;
+                    }
+                    
+                    if (exists $call_def->{in}) {
+                        unless (ref($call_def->{in}) eq 'HASH') {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
                         
-                        my @keys = keys %{$calls->{$call}->{in}};
+                        my @keys = keys %{$call_def->{in}};
                         unless (scalar @keys) {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
@@ -197,7 +204,7 @@ sub serve {
                         
                         $valueof = '//'.$call.'/';
                         
-                        my @values = ($calls->{$call}->{in});
+                        my @values = ($call_def->{in});
                         while (defined $calls and (my $value = shift(@values))) {
                             foreach my $key (keys %$value) {
                                 if (ref($value->{$key}) eq 'HASH') {
@@ -229,21 +236,21 @@ sub serve {
                         }
                     }
                     
-                    if (exists $calls->{$call}->{out}) {
-                        unless (ref($calls->{$call}->{out}) eq 'HASH') {
+                    if (exists $call_def->{out}) {
+                        unless (ref($call_def->{out}) eq 'HASH') {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
                             undef($calls);
                             last;
                         }
                         
-                        my @keys = keys %{$calls->{$call}->{out}};
+                        my @keys = keys %{$call_def->{out}};
                         unless (scalar @keys) {
                             $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
                             undef($calls);
                             last;
                         }
 
-                        my @values = ($calls->{$call}->{out});
+                        my @values = ($call_def->{out});
                         while (defined $calls and (my $value = shift(@values))) {
                             foreach my $key (keys %$value) {
                                 if (ref($value->{$key}) eq 'HASH') {
@@ -285,12 +292,33 @@ sub serve {
                     no strict 'refs';
                     *$rpc_call = \&$orig_call;
                     *$orig_call = sub {
-                        my ($self, $cb, @args) = Lim::RPC::C(@_, $valueof);
+                        my ($self, $cb, $q, @args) = Lim::RPC::C(@_, $valueof);
                         
                         Lim::RPC_DEBUG and defined $self2 and $self2->{logger}->debug('Call to ', $self, ' ', $orig_call);
                         
-                        $self->$call($cb, @args);
+                        unless (ref($q) eq 'HASH') {
+                            defined $self2 and $self2->{logger}->warn($self, '->', $orig_call, '() called without data as hash');
+                            $self->Error($cb);
+                            return;
+                        }
                         
+                        if (exists $call_def->{in}) {
+                            eval {
+                                Lim::RPC::V($q, $call_def->{in});
+                            };
+                            if ($@) {
+                                defined $self2 and $self2->{logger}->warn($self, '->', $orig_call, '() data validation failed: ', $@);
+                                $self->Error($cb);
+                                return;
+                            }
+                        }
+                        elsif (%$q) {
+                            $self->Error($cb);
+                            return;
+                        }
+                        $cb->set_call_def($call_def);
+                        
+                        $self->$call($cb, $q, @args);
                         return;
                     };
                 }
@@ -469,7 +497,7 @@ sub __wsdl_gen_complex_types {
                     push(@values, [$key, $values->{$key}]);
                 }
                 else {
-                    $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'" type="'.$values->{$key}->xsd_type.'" />
+                    $wsdl .= '<xsd:element minOccurs="'.($values->{$key}->required ? '1' : '0').'" maxOccurs="unbounded" name="'.$key.'" type="'.$values->{$key}->xsd_type.'" />
     ';
                 }
             }
