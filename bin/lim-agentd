@@ -8,7 +8,6 @@ use Log::Log4perl ();
 use AnyEvent ();
 
 use Lim ();
-#use Lim::DB ();
 use Lim::RPC::Server ();
 use Lim::RPC::Client::TLS ();
 use Lim::Agent ();
@@ -20,7 +19,6 @@ my $port = 5353;
 my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
-#my $dsn;
 my $prefix;
 
 Getopt::Long::GetOptions(
@@ -30,7 +28,6 @@ Getopt::Long::GetOptions(
     'key=s' => \$key,
     'log4perl:s' => \$log4perl,
     'html:s' => \$html,
-#    'dsn=s' => \$dsn,
     'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
@@ -39,14 +36,6 @@ unless (-d $html) {
     print STDERR 'Path to HTML directory invalid or non existing: ', $html, "\n";
     exit(1);
 }
-
-#eval {
-#    Lim::DB->schema->connection($dsn);
-#};
-#if ($@) {
-#    print STDERR 'Unable to connect to database ', $dsn, ': ', $@, "\n";
-#    exit(1);
-#}
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
@@ -142,10 +131,6 @@ Specify the SSL/TLS key to use for HTTPS.
 =item B<--html <path>>
 
 Specify the HTML directory (default /usr/share/lim/html).
-
-=item B<--dsn <DSN>>
-
-Specify the DBI DSN for connecting to the database.
 
 =item B<--log4perl <file>>
 

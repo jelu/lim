@@ -35,7 +35,6 @@ REQUIRED PERL MODULES
     SOAP::Lite
     SOAP::Transport::HTTP
     XMLRPC::Lite
-    (DBIx::Class)
     Module::Find
     
     ubuntu:
