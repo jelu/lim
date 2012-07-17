@@ -40,14 +40,16 @@ sub Calls {
     {
         ReadVersion => {
             out => {
-                version => 'string'
+                version => 'string required'
             }
         },
         ReadPlugins => {
-            plugin => {
-                name => 'string',
-                module => 'string',
-                version => 'string'
+            out => {
+                plugin => {
+                    name => 'string required',
+                    module => 'string required',
+                    version => 'string required'
+                }
             }
         }
     };
