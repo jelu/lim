@@ -333,7 +333,10 @@ sub serve {
                         
                         Lim::RPC_DEBUG and defined $self2 and $self2->{logger}->debug('Call to ', $self, ' ', $orig_call);
                         
-                        unless (ref($q) eq 'HASH') {
+                        if (!defined $q) {
+                            $q = {};
+                        }
+                        if (ref($q) ne 'HASH') {
                             defined $self2 and $self2->{logger}->warn($self, '->', $orig_call, '() called without data as hash');
                             $self->Error($cb);
                             return;
