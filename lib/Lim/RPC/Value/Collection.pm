@@ -108,6 +108,14 @@ sub required {
     $_[0]->{options} & OPT_REQUIRED ? 1 : 0;
 }
 
+=head2 function1
+
+=cut
+
+sub validate {
+    return 1;
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

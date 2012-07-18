@@ -58,7 +58,7 @@ sub V {
                     confess __PACKAGE__, ': invalid data, no definition exists';
                 }
                 
-                if (blessed($def->{$k}) and $def->{$k}->isa('Lim::RPC::Value') and !$def->{$k}->validate($q->{$k})) {
+                if (blessed($def->{$k}) and !$def->{$k}->validate($q->{$k})) {
                     confess __PACKAGE__, ': invalid data, validation failed';
                 }
                 
