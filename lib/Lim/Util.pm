@@ -5,6 +5,9 @@ use Carp;
 
 use File::Temp ();
 
+use AnyEvent ();
+use AnyEvent::Util ();
+
 use Lim ();
 
 =head1 NAME
@@ -156,6 +159,77 @@ sub Camelize {
     }
     
     return $camelized;
+}
+
+=head2 function1
+
+=cut
+
+sub run_cmd {
+    my $cmd = shift;
+    my %args = (
+        kill_try => 3,
+        kill_kill => 1,
+        kill_sig => 15,
+        interval => 1,
+        @_
+    );
+    my ($pid, $timeout) = (0, undef);
+
+    my %pass_args = %args;
+    foreach (qw(kill_try kill_kill timeout interval cb)) {
+        delete $pass_args{$_};
+    }
+    
+    unless (exists $args{cb} and ref($args{cb}) eq 'CODE') {
+        confess __PACKAGE__, ': cb not specified or invalid';
+    }
+
+    if (exists $args{timeout}) {
+        unless ($args{timeout} > 0) {
+            confess __PACKAGE__, ': timeout invalid';
+        }
+
+        unless ($args{interval} > 0) {
+            confess __PACKAGE__, ': interval invalid';
+        }
+        
+        unless ($args{kill_try} >= 0) {
+            confess __PACKAGE__, ': kill_try invalid';
+        }
+        
+        $timeout = AnyEvent->timer(
+            after => $args{timeout},
+            interval => $args{interval},
+            cb => sub {
+                unless ($pid) {
+                    undef($timeout);
+                    return;
+                }
+                
+                if ($args{kill_try}--) {
+                    kill($args{kill_sig}, $pid);
+                }
+                else {
+                    if ($args{kill_kill}) {
+                        kill(9, $pid);
+                    }
+                    undef($timeout);
+                }
+            });
+    }
+    
+    $pass_args{'$$'} = \$pid;
+    $pass_args{close_all} = 1;
+    
+    my $cv = AnyEvent::Util::run_cmd
+        $cmd,
+        %pass_args;
+    $cv->cb(sub {
+        undef($timeout);
+        $args{cb}->(@_);
+    });
+    return;
 }
 
 =head1 AUTHOR
