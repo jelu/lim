@@ -13,6 +13,7 @@ use AnyEvent::TLS ();
 use Lim ();
 use Lim::RPC ();
 use Lim::RPC::Value ();
+use Lim::RPC::Value::Collection ();
 use Lim::RPC::Server::Client ();
 
 =head1 NAME
@@ -208,11 +209,29 @@ sub serve {
                         while (defined $calls and (my $value = shift(@values))) {
                             foreach my $key (keys %$value) {
                                 if (ref($value->{$key}) eq 'HASH') {
-                                    push(@values, $value->{$key});
-                                    next;
+                                    if (exists $value->{$key}->{''}) {
+                                        eval {
+                                            my $collection = Lim::RPC::Value::Collection->new($value->{$key}->{''});
+                                            delete $value->{$key}->{''};
+                                            $value->{$key} = $collection->set_children($value->{$key});
+                                        };
+                                        unless ($@) {
+                                            push(@values, $value->{$key}->children);
+                                            next;
+                                        }
+                                        $self->{logger}->warn('Unable to create Lim::RPC::Value::Collection: ', $@);
+                                    }
+                                    else {
+                                        push(@values, $value->{$key});
+                                        next;
+                                    }
                                 }
                                 elsif (blessed $value->{$key}) {
-                                    if ($value->{$key}->isa('Lim::Value')) {
+                                    if ($value->{$key}->isa('Lim::RPC::Value')) {
+                                        next;
+                                    }
+                                    if ($value->{$key}->isa('Lim::RPC::Value::Collection')) {
+                                        push(@values, $value->{$key}->children);
                                         next;
                                     }
                                 }
@@ -254,11 +273,29 @@ sub serve {
                         while (defined $calls and (my $value = shift(@values))) {
                             foreach my $key (keys %$value) {
                                 if (ref($value->{$key}) eq 'HASH') {
-                                    push(@values, $value->{$key});
-                                    next;
+                                    if (exists $value->{$key}->{''}) {
+                                        eval {
+                                            my $collection = Lim::RPC::Value::Collection->new($value->{$key}->{''});
+                                            delete $value->{$key}->{''};
+                                            $value->{$key} = $collection->set_children($value->{$key});
+                                        };
+                                        unless ($@) {
+                                            push(@values, $value->{$key}->children);
+                                            next;
+                                        }
+                                        $self->{logger}->warn('Unable to create Lim::RPC::Value::Collection: ', $@);
+                                    }
+                                    else {
+                                        push(@values, $value->{$key});
+                                        next;
+                                    }
                                 }
                                 elsif (blessed $value->{$key}) {
-                                    if ($value->{$key}->isa('Lim::Value')) {
+                                    if ($value->{$key}->isa('Lim::RPC::Value')) {
+                                        next;
+                                    }
+                                    if ($value->{$key}->isa('Lim::RPC::Value::Collection')) {
+                                        push(@values, $value->{$key}->children);
                                         next;
                                     }
                                 }
@@ -481,15 +518,30 @@ sub __wsdl_gen_complex_types {
             my $key = $values->[0];
             $values = $values->[1];
             
-            $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
+            if (blessed $values) {
+                $wsdl .= '<xsd:element minOccurs="'.($values->required ? '1' : '0').'" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
 ';
+            }
+            else {
+                $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
+';
+            }
         }
         
         if (ref($values) eq 'HASH') {
             my $nested = 0;
             
             foreach my $key (keys %$values) {
-                if (ref($values->{$key}) eq 'HASH') {
+                if (blessed $values->{$key}) {
+                    if ($values->{$key}->isa('Lim::RPC::Value::Collection')) {
+                        unless ($nested) {
+                            $nested = 1;
+                            push(@values, 1);
+                        }
+                        push(@values, [$key, $values->{$key}]);
+                    }
+                }
+                elsif (ref($values->{$key}) eq 'HASH') {
                     unless ($nested) {
                         $nested = 1;
                         push(@values, 1);

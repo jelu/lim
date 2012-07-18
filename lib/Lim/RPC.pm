@@ -58,15 +58,20 @@ sub V {
                     confess __PACKAGE__, ': invalid data, no definition exists';
                 }
                 
-                if (blessed($def->{$k}) and !$def->{$k}->validate($q->{$k})) {
+                if (blessed($def->{$k}) and $def->{$k}->isa('Lim::RPC::Value') and !$def->{$k}->validate($q->{$k})) {
                     confess __PACKAGE__, ': invalid data, validation failed';
                 }
                 
                 if (ref($q->{$k}) eq 'HASH') {
-                    unless (ref($def->{$k}) eq 'HASH') {
+                    if (ref($def->{$k}) eq 'HASH') {
+                        push(@v, [$q->{$k}, $def->{$k}]);
+                    }
+                    elsif (blessed $def->{$k} and $def->{$k}->isa('Lim::RPC::Value::Collection')) {
+                        push(@v, [$q->{$k}, $def->{$k}->children]);
+                    }
+                    else {
                         confess __PACKAGE__, ': invalid definition, can not validate data';
                     }
-                    push(@v, [$q->{$k}, $def->{$k}]);
                 }
             }
         }

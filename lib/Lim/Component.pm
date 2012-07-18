@@ -8,6 +8,7 @@ use Scalar::Util qw(blessed);
 
 use Lim ();
 use Lim::RPC::Value ();
+use Lim::RPC::Value::Collection ();
 use Lim::RPC::Call ();
 
 =head1 NAME
@@ -86,11 +87,23 @@ sub Client {
                 while (defined (my $value = shift(@values))) {
                     foreach my $key (keys %$value) {
                         if (ref($value->{$key}) eq 'HASH') {
-                            push(@values, $value->{$key});
+                            if (exists $value->{$key}->{''}) {
+                                my $collection = Lim::RPC::Value::Collection->new($value->{$key}->{''});
+                                delete $value->{$key}->{''};
+                                $value->{$key} = $collection->set_children($value->{$key});
+                                push(@values, $value->{$key}->children);
+                            }
+                            else {
+                                push(@values, $value->{$key});
+                            }
                             next;
                         }
                         elsif (blessed $value->{$key}) {
-                            if ($value->{$key}->isa('Lim::Value')) {
+                            if ($value->{$key}->isa('Lim::RPC::Value')) {
+                                next;
+                            }
+                            if ($value->{$key}->isa('Lim::RPC::Value::Collection')) {
+                                push(@values, $value->{$key}->children);
                                 next;
                             }
                         }
@@ -118,11 +131,23 @@ sub Client {
                 while (defined $calls and (my $value = shift(@values))) {
                     foreach my $key (keys %$value) {
                         if (ref($value->{$key}) eq 'HASH') {
-                            push(@values, $value->{$key});
+                            if (exists $value->{$key}->{''}) {
+                                my $collection = Lim::RPC::Value::Collection->new($value->{$key}->{''});
+                                delete $value->{$key}->{''};
+                                $value->{$key} = $collection->set_children($value->{$key});
+                                push(@values, $value->{$key}->children);
+                            }
+                            else {
+                                push(@values, $value->{$key});
+                            }
                             next;
                         }
                         elsif (blessed $value->{$key}) {
-                            if ($value->{$key}->isa('Lim::Value')) {
+                            if ($value->{$key}->isa('Lim::RPC::Value')) {
+                                next;
+                            }
+                            if ($value->{$key}->isa('Lim::RPC::Value::Collection')) {
+                                push(@values, $value->{$key}->children);
                                 next;
                             }
                         }

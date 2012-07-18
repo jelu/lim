@@ -1,4 +1,4 @@
-package Lim::RPC::Value;
+package Lim::RPC::Value::Collection;
 
 use common::sense;
 use Carp;
@@ -16,26 +16,6 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-
-sub STRING (){ 'string' }
-sub INTEGER (){ 'integer' }
-sub BOOL (){ 'bool' }
-
-our %TYPE = (
-    STRING() => STRING,
-    INTEGER() => INTEGER,
-    BOOL() => BOOL
-);
-our %XSD_TYPE = (
-    STRING() => 'xsd:string',
-    INTEGER() => 'xsd:integer',
-    BOOL() => 'xsd:boolean'
-);
-our %XMLRPC_TYPE = (
-    STRING() => 'string',
-    INTEGER() => 'int',
-    BOOL() => 'boolean'
-);
 
 sub OPT_REQUIRED (){ 0x00000001 }
 
@@ -63,30 +43,20 @@ sub new {
     
     if (exists $args{textual}) {
         foreach (split(/\s+/o, lc($args{textual}))) {
-            if (exists $TYPE{$_}) {
-                if (exists $self->{type}) {
-                    confess __PACKAGE__, ': type already defined';
-                }
-                $self->{type} = $_;
-            }
-            elsif (exists $OPTIONS{$_}) {
+            if (exists $OPTIONS{$_}) {
                 $self->{options} |= $OPTIONS{$_};
             }
             else {
-                confess __PACKAGE__, ': unknown RPC value setting "'.$_.'"';
+                confess __PACKAGE__, ': unknown RPC value collection setting "'.$_.'"';
             }
         }
     }
     else {
-        unless (defined $args{type}) {
-            confess __PACKAGE__, ': No type specified';
+        unless (defined $args{children} and ref($args{children}) eq 'HASH') {
+            confess __PACKAGE__, ': No children specified or invalid';
         }
-        unless (exists $TYPE{$args{type}}) {
-            confess __PACKAGE__, ': Invalid type specified';
-        }
-        
-        $self->{type} = $args{type};
-
+        $self->{children} = $args{children};
+    
         if (defined $args{options}) {
             unless (ref($args{options}) eq 'ARRAY') {
                 confess __PACKAGE__, ': Invalid options specified';
@@ -97,16 +67,12 @@ sub new {
                     $self->{options} |= $OPTIONS{$_};
                 }
                 else {
-                    confess __PACKAGE__, ': Unknown RPC value option "'.$_.'"';
+                    confess __PACKAGE__, ': Unknown RPC value collection option "'.$_.'"';
                 }
             }
         }
     }
     
-    unless (exists $self->{type}) {
-        confess __PACKAGE__, ': no type defined';
-    }
-
     bless $self, $class;
 }
 
@@ -118,24 +84,20 @@ sub DESTROY {
 
 =cut
 
-sub type {
-    $_[0]->{type};
+sub children {
+    $_[0]->{children};
 }
 
 =head2 function1
 
 =cut
 
-sub xsd_type {
-    $XSD_TYPE{$_[0]->{type}};
-}
-
-=head2 function1
-
-=cut
-
-sub xmlrpc_type {
-    $XMLRPC_TYPE{$_[0]->{type}};
+sub set_children {
+    if (defined $_[1] and ref($_[1]) eq 'HASH') {
+        $_[0]->{children} = $_[1];
+    }
+    
+    $_[0];
 }
 
 =head2 function1
@@ -144,15 +106,6 @@ sub xmlrpc_type {
 
 sub required {
     $_[0]->{options} & OPT_REQUIRED ? 1 : 0;
-}
-
-=head2 function1
-
-=cut
-
-sub validate {
-    # TODO this
-    return 1;
 }
 
 =head1 AUTHOR
@@ -214,4 +167,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Value
+1; # End of Lim::RPC::Value::Collection
