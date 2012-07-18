@@ -521,6 +521,9 @@ sub __wsdl_gen_complex_types {
             if (blessed $values) {
                 $wsdl .= '<xsd:element minOccurs="'.($values->required ? '1' : '0').'" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
 ';
+                if ($values->isa('Lim::RPC::Value::Collection')) {
+                    $values = $values->children;
+                }
             }
             else {
                 $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -538,7 +541,11 @@ sub __wsdl_gen_complex_types {
                             $nested = 1;
                             push(@values, 1);
                         }
-                        push(@values, [$key, $values->{$key}]);
+                        push(@values, [$key, $values->{$key}->children]);
+                    }
+                    else {
+                        $wsdl .= '<xsd:element minOccurs="'.($values->{$key}->required ? '1' : '0').'" maxOccurs="1" name="'.$key.'" type="'.$values->{$key}->xsd_type.'" />
+    ';
                     }
                 }
                 elsif (ref($values->{$key}) eq 'HASH') {
@@ -547,10 +554,6 @@ sub __wsdl_gen_complex_types {
                         push(@values, 1);
                     }
                     push(@values, [$key, $values->{$key}]);
-                }
-                else {
-                    $wsdl .= '<xsd:element minOccurs="'.($values->{$key}->required ? '1' : '0').'" maxOccurs="unbounded" name="'.$key.'" type="'.$values->{$key}->xsd_type.'" />
-    ';
                 }
             }
             
