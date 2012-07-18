@@ -38,9 +38,16 @@ our %XMLRPC_TYPE = (
 );
 
 sub OPT_REQUIRED (){ 0x00000001 }
+sub OPT_NOTEMPTY (){ 0x00000002 }
 
 our %OPTIONS = (
-    'required' => OPT_REQUIRED
+    'required' => OPT_REQUIRED,
+    'notEmpty' => OPT_NOTEMPTY
+);
+
+our %NEGATIVE_OPTIONS = (
+    'optional' => OPT_REQUIRED,
+    'empty' => OPT_NOTEMPTY
 );
 
 =head1 SYNOPSIS
@@ -58,7 +65,7 @@ sub new {
     my $class = ref($this) || $this;
     my %args = scalar @_ > 1 ? ( @_ ) : ( textual => $_[0] );
     my $self = {
-        options => 0
+        options => OPT_REQUIRED | OPT_NOTEMPTY
     };
     
     if (exists $args{textual}) {
@@ -71,6 +78,9 @@ sub new {
             }
             elsif (exists $OPTIONS{$_}) {
                 $self->{options} |= $OPTIONS{$_};
+            }
+            elsif (exists $NEGATIVE_OPTIONS{$_}) {
+                $self->{options} &= ~$NEGATIVE_OPTIONS{$_};
             }
             else {
                 confess __PACKAGE__, ': unknown RPC value setting "'.$_.'"';
@@ -95,6 +105,9 @@ sub new {
             foreach (@{$args{options}}) {
                 if (exists $OPTIONS{$_}) {
                     $self->{options} |= $OPTIONS{$_};
+                }
+                elsif (exists $NEGATIVE_OPTIONS{$_}) {
+                    $self->{options} &= ~$NEGATIVE_OPTIONS{$_};
                 }
                 else {
                     confess __PACKAGE__, ': Unknown RPC value option "'.$_.'"';
@@ -151,7 +164,16 @@ sub required {
 =cut
 
 sub validate {
-    # TODO this
+    my ($self, $value) = @_;
+    
+    # TODO validate type
+    
+    if (($self->{options} & OPT_NOTEMPTY)) {
+        if (!defined $value or $value eq '') {
+            return 0;
+        }
+    }
+    
     return 1;
 }
 
