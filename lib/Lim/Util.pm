@@ -180,12 +180,18 @@ sub run_cmd {
     foreach (qw(kill_try kill_kill timeout interval cb)) {
         delete $pass_args{$_};
     }
+    $pass_args{'$$'} = \$pid;
+    $pass_args{close_all} = 1;
     
-    unless (exists $args{cb} and ref($args{cb}) eq 'CODE') {
-        confess __PACKAGE__, ': cb not specified or invalid';
+    if (exists $args{cb} and ref($args{cb}) ne 'CODE') {
+        confess __PACKAGE__, ': cb invalid';
     }
 
     if (exists $args{timeout}) {
+        unless (exists $args{cb}) {
+            confess __PACKAGE__, ': must have cb with timeout';
+        }
+        
         unless ($args{timeout} > 0) {
             confess __PACKAGE__, ': timeout invalid';
         }
@@ -217,19 +223,20 @@ sub run_cmd {
                     undef($timeout);
                 }
             });
+
+        my $cv = AnyEvent::Util::run_cmd
+            $cmd,
+            %pass_args;
+        $cv->cb(sub {
+            undef($timeout);
+            $args{cb}->(@_);
+        });
+        return;
     }
-    
-    $pass_args{'$$'} = \$pid;
-    $pass_args{close_all} = 1;
-    
-    my $cv = AnyEvent::Util::run_cmd
+
+    return AnyEvent::Util::run_cmd
         $cmd,
         %pass_args;
-    $cv->cb(sub {
-        undef($timeout);
-        $args{cb}->(@_);
-    });
-    return;
 }
 
 =head1 AUTHOR
