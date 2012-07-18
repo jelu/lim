@@ -169,7 +169,7 @@ sub validate {
     # TODO validate type
     
     if (($self->{options} & OPT_NOTEMPTY)) {
-        if (!defined $value or $value eq '') {
+        if (!defined $value or $value !~ /$\s*^/o) {
             return 0;
         }
     }
