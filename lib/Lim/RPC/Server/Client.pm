@@ -65,7 +65,8 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        headers => ''
+        headers => '',
+        close => 0
     };
     bless $self, $class;
     my $real_self = $self;
@@ -139,6 +140,11 @@ sub new {
                 $self->{on_eof}->($self);
             }
             $handle->destroy;
+        },
+        on_drain => sub {
+            if ($self->{close}) {
+                shutdown $_[0]{fh}, 2;
+            }
         },
         on_read => sub {
             my ($handle) = @_;
@@ -843,11 +849,18 @@ sub result {
     
     Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Response: ', $response->as_string);
 
+    if ($self->{request}->header('Connection') eq 'close') {
+        Lim::RPC_DEBUG and $self->{logger}->debug('Connection requested to be closed');
+        $self->{handle}->timeout(0);
+        $self->{close} = 1;
+    }
+    else {
+        $self->{handle}->timeout(Lim::Config->{rpc}->{timeout});
+    }
     $handle->push_write($response->as_string("\015\012"));
+
     delete $self->{call_type};
     delete $self->{processing};
-    $self->{handle}->timeout(Lim::Config->{rpc}->{timeout});
-
     delete $self->{request};
     delete $self->{response};
     delete $self->{process_watcher};
