@@ -112,7 +112,10 @@ sub required {
 
 =cut
 
-sub validate {
+sub comform {
+    unless (defined $_[1] and (ref($_[1]) eq 'HASH' or ref($_[1]) eq 'ARRAY')) {
+        return 0;
+    }
     return 1;
 }
 

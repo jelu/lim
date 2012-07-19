@@ -44,33 +44,47 @@ sub V {
         my @v = ([$q, $def]);
         while (defined (my $v = shift(@v))) {
             ($q, $def) = @$v;
-            
-            # check required
-            foreach my $k (keys %$def) {
-                if (blessed($def->{$k}) and $def->{$k}->required and !exists $q->{$k}) {
-                    confess __PACKAGE__, ': required data missing, does not match definition';
-                }
+            my $a;
+
+            if (ref($q) eq 'ARRAY') {
+                $a = $q;
+            }
+            else {
+                $a = [$q];
             }
             
-            # check data
-            foreach my $k (keys %$q) {
-                unless (exists $def->{$k}) {
-                    confess __PACKAGE__, ': invalid data, no definition exists';
+            foreach $q (@{$a}) {
+                unless (ref($q) eq 'HASH') {
+                    confess __PACKAGE__, ': Can not verify data, invalid data given';
                 }
                 
-                if (blessed($def->{$k}) and !$def->{$k}->validate($q->{$k})) {
-                    confess __PACKAGE__, ': invalid data, validation failed';
+                # check required
+                foreach my $k (keys %$def) {
+                    if (blessed($def->{$k}) and $def->{$k}->required and !exists $q->{$k}) {
+                        confess __PACKAGE__, ': required data missing, does not match definition';
+                    }
                 }
                 
-                if (ref($q->{$k}) eq 'HASH') {
-                    if (ref($def->{$k}) eq 'HASH') {
-                        push(@v, [$q->{$k}, $def->{$k}]);
+                # check data
+                foreach my $k (keys %$q) {
+                    unless (exists $def->{$k}) {
+                        confess __PACKAGE__, ': invalid data, no definition exists';
                     }
-                    elsif (blessed $def->{$k} and $def->{$k}->isa('Lim::RPC::Value::Collection')) {
-                        push(@v, [$q->{$k}, $def->{$k}->children]);
+                    
+                    if (blessed($def->{$k}) and !$def->{$k}->comform($q->{$k})) {
+                        confess __PACKAGE__, ': invalid data, validation failed';
                     }
-                    else {
-                        confess __PACKAGE__, ': invalid definition, can not validate data';
+                    
+                    if (ref($q->{$k}) eq 'HASH' or ref($q->{$k}) eq 'ARRAY') {
+                        if (ref($def->{$k}) eq 'HASH') {
+                            push(@v, [$q->{$k}, $def->{$k}]);
+                        }
+                        elsif (blessed $def->{$k} and $def->{$k}->isa('Lim::RPC::Value::Collection')) {
+                            push(@v, [$q->{$k}, $def->{$k}->children]);
+                        }
+                        else {
+                            confess __PACKAGE__, ': invalid definition, can not validate data';
+                        }
                     }
                 }
             }

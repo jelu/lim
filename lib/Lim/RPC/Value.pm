@@ -163,7 +163,7 @@ sub required {
 
 =cut
 
-sub validate {
+sub comform {
     my ($self, $value) = @_;
     
     # TODO validate type
