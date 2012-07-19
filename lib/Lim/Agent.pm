@@ -48,7 +48,8 @@ sub Calls {
                 plugin => {
                     name => 'string',
                     module => 'string',
-                    version => 'string'
+                    version => 'string',
+                    loaded => 'bool'
                 }
             }
         }
