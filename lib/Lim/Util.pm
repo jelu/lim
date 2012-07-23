@@ -3,6 +3,7 @@ package Lim::Util;
 use common::sense;
 use Carp;
 
+use Log::Log4perl ();
 use File::Temp ();
 
 use AnyEvent ();
@@ -224,6 +225,8 @@ sub run_cmd {
                 }
             });
 
+        Lim::DEBUG and Log::Log4perl->get_logger->debug('run_cmd [timeout ', $args{timeout},'] ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
+
         my $cv = AnyEvent::Util::run_cmd
             $cmd,
             %pass_args;
@@ -233,6 +236,8 @@ sub run_cmd {
         });
         return;
     }
+    
+    Lim::DEBUG and Log::Log4perl->get_logger->debug('run_cmd ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
 
     return AnyEvent::Util::run_cmd
         $cmd,
