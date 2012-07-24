@@ -97,12 +97,15 @@ sub Successful {
 =cut
 
 sub Error {
-    my ($self, $cb, $error) = @_;
+    my ($self, $cb, $error, @rest) = @_;
     
     if (blessed($error) and $error->isa('Lim::Error')) {
         Lim::RPC::R($cb, $error);
     }
     elsif (defined $error) {
+        if (scalar @rest) {
+            $error .= join('', @rest);
+        }
         Lim::RPC::R($cb, Lim::Error->new(module => $self, message => $error));
     }
     else {
