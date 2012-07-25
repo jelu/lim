@@ -47,7 +47,7 @@ our %REST_CRUD = (
     DELETE => 'DELETE'
 );
 
-sub MAX_REQUEST_LEN (){ 256 * 1024 }
+sub MAX_REQUEST_LEN (){ 8 * 1024 * 1024 }
 
 =head1 SYNOPSIS
 

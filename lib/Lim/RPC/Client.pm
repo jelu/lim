@@ -38,7 +38,7 @@ our $JSON = JSON::XS->new->ascii;
 sub OK (){ 1 }
 sub ERROR (){ -1 }
 
-sub MAX_RESPONSE_LEN (){ 256 * 1024 }
+sub MAX_RESPONSE_LEN (){ 8 * 1024 * 1024 }
 
 =head1 SYNOPSIS
 
