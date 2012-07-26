@@ -1,0 +1,27 @@
+Source: liblim-perl
+Section: perl
+Priority: optional
+Build-Depends: debhelper (>= 7)
+Build-Depends-Indep: libanyevent-perl (>= 5), libcommon-sense-perl (>= 3),
+ libjson-xs-perl (>= 2), liblog-log4perl-perl (>= 1), libmodule-find-perl,
+ libsoap-lite-perl (>= 0.71), liburi-perl (>= 1), libwww-perl (>= 5),
+ libyaml-perl (>= 0.71), perl (>= 5.10.1),
+ libxmlrpc-transport-http-server-perl (>= 0.1),
+ liblog-log4perl-appender-lim-cli-perl (>= 0.1)
+Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
+Standards-Version: 3.9.1
+Homepage: http://search.cpan.org/dist/Lim/
+
+Package: liblim-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, libanyevent-perl (>= 5),
+ libcommon-sense-perl (>= 3), libjson-xs-perl (>= 2),
+ liblog-log4perl-perl (>= 1), libmodule-find-perl, libsoap-lite-perl (>= 0.71),
+ liburi-perl (>= 1), libwww-perl (>= 5), libyaml-perl (>= 0.71),
+ perl (>= 5.10.1),
+ libxmlrpc-transport-http-server-perl (>= 0.1),
+ liblog-log4perl-appender-lim-cli-perl (>= 0.1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
