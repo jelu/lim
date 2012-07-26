@@ -1,0 +1,14 @@
+usr/share/man/man3/Lim::Component::Server.3pm
+usr/share/man/man3/Lim::RPC::Callback::XMLRPC.3pm
+usr/share/man/man3/Lim::RPC::Callback::SOAP.3pm
+usr/share/man/man3/Lim::RPC::Callback::JSON.3pm
+usr/share/man/man3/Lim::RPC::Server::Client.3pm
+usr/share/man/man3/Lim::RPC::Callback::JSONRPC.3pm
+usr/share/man/man3/Lim::RPC::Server.3pm
+usr/share/perl5/Lim/Component/Server.pm
+usr/share/perl5/Lim/RPC/Server/Client.pm
+usr/share/perl5/Lim/RPC/Callback/XMLRPC.pm
+usr/share/perl5/Lim/RPC/Callback/SOAP.pm
+usr/share/perl5/Lim/RPC/Callback/JSONRPC.pm
+usr/share/perl5/Lim/RPC/Callback/JSON.pm
+usr/share/perl5/Lim/RPC/Server.pm

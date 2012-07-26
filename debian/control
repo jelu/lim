@@ -1,4 +1,4 @@
-Source: liblim-perl
+Source: lim
 Section: perl
 Priority: optional
 Build-Depends: debhelper (>= 7)
@@ -12,7 +12,7 @@ Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Standards-Version: 3.9.1
 Homepage: http://search.cpan.org/dist/Lim/
 
-Package: liblim-perl
+Package: liblim-common-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, libanyevent-perl (>= 5),
  libcommon-sense-perl (>= 3), libjson-xs-perl (>= 2),
@@ -21,6 +21,72 @@ Depends: ${misc:Depends}, ${perl:Depends}, libanyevent-perl (>= 5),
  perl (>= 5.10.1),
  libxmlrpc-transport-http-server-perl (>= 0.1),
  liblog-log4perl-appender-lim-cli-perl (>= 0.1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: liblim-server-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: liblim-cli-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: liblim-agent-common-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: liblim-agent-server-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-common-perl (= 0.1-1),
+ liblim-server-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: liblim-agent-client-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-common-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: liblim-agent-cli-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-cli-perl (= 0.1-1),
+ liblim-agent-client-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: lim-agentd
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-server-perl (= 0.1-1)
+Description: The great new Lim!
+ (no description was found)
+ .
+ This description was automagically extracted from the module by dh-make-perl.
+
+Package: lim-cli
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-cli-perl (= 0.1-1)
 Description: The great new Lim!
  (no description was found)
  .
