@@ -12,3 +12,4 @@ usr/share/perl5/Lim/RPC/Callback/SOAP.pm
 usr/share/perl5/Lim/RPC/Callback/JSONRPC.pm
 usr/share/perl5/Lim/RPC/Callback/JSON.pm
 usr/share/perl5/Lim/RPC/Server.pm
+html use/share/lim/html
