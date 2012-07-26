@@ -25,6 +25,8 @@ lib/Lim/RPC/Callback/SOAP.pm
 lib/Lim/RPC/Callback/JSON.pm
 lib/Lim/RPC/Value.pm
 lib/Lim/RPC/Server/Client.pm
+lib/Lim/RPC/Value/Collection.pm
+lib/Lim/RPC/Client/TLS.pm
 lib/Lim/RPC/Server.pm
 
 Makefile.PL
