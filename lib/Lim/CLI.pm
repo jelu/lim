@@ -21,7 +21,7 @@ use AnyEvent::Handle ();
 
 =head1 NAME
 
-...
+Lim::CLI - The command line interface to Lim
 
 =head1 VERSION
 
@@ -34,11 +34,49 @@ our @BUILTINS = (qw(quit help));
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+use Lim::CLI;
 
-=head2 function1
+$cli = Lim::CLI->new(...);
+
+=back
+
+=head1 DESCRIPTION
+
+This is the CLI that takes the input from the user and sends it to the plugin in
+question. It uses L<AnyEvent::ReadLine::Gnu> if it is available and that enables
+command line completion and history functions. It will load all modules present
+on the system and use their CLI part if it exists.
+
+Failing to have a supported readline module it will use a basic
+L<AnyEvent::Handle> to read each line of input and process it.
+
+Built in commands that can not be used by any plugins are:
+
+=over 4
+
+quit - Will quit the CLI
+help - Will show help for the relative section where the user is
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item $cli = Lim::CLI->new(key => value...)
+
+Create a new Lim::CLI object.
+
+=over 4
+
+=item on_quit => $callback->($cli_object)
+
+Callback to call when the CLI quits, either with the user doing CTRL-D, CTRL-C
+or the command 'quit'.
+
+=back
 
 =cut
 
@@ -219,7 +257,10 @@ sub DESTROY {
     delete $self->{cli};
 }
 
-=head2 function1
+=item $cli->process($line)
+
+Process a line of input, called from the input watcher
+(L<AnyEvent::ReadLine::Gnu> or L<AnyEvent::Handle>).
 
 =cut
 
@@ -300,7 +341,9 @@ sub process {
     }
 }
 
-=head2 function1
+=item $cli->prompt
+
+Print the prompt, called from C<process>.
 
 =cut
 
@@ -314,7 +357,9 @@ sub prompt {
     $self->print($self->{prompt});
 }
 
-=head2 function1
+=item $cli->set_prompt
+
+Set the prompt, called from C<process>.
 
 =cut
 
@@ -332,7 +377,9 @@ sub set_prompt {
     $self;
 }
 
-=head2 function1
+=item $cli->clear_line
+
+Reset the input.
 
 =cut
 
@@ -352,7 +399,9 @@ sub clear_line {
     $self;
 }
 
-=head2 function1
+=item $cli->unknown_command
+
+Prints the "unknown command" error if the command can not be found.
 
 =cut
 
@@ -365,7 +414,9 @@ sub unknown_command {
     $self;
 }
 
-=head2 function1
+=item $cli->print
+
+Print some output, called from L<Lim::Component::CLI> and here.
 
 =cut
 
@@ -382,7 +433,10 @@ sub print {
     $self;
 }
 
-=head2 function1
+=item $cli->println
+
+Print some output and add a newline, called from L<Lim::Component::CLI> and
+here.
 
 =cut
 
@@ -401,7 +455,9 @@ sub println {
     $self;
 }
 
-=head2 function1
+=item $cli->Successful
+
+Called from L<Lim::Component::CLI> when a command was successful.
 
 =cut
 
@@ -419,7 +475,11 @@ sub Successful {
     return;
 }
 
-=head2 function1
+=item $cli->Error($LimError || @error_text)
+
+Called from L<Lim::Component::CLI> when a command issued an error. The error can
+be a L<Lim::Error> object or list of strings that will be joined to produce an
+error string.
 
 =cut
 
@@ -447,7 +507,13 @@ sub Error {
     $self->prompt;
 }
 
-=head2 function1
+=item $cli->Editor($content)
+
+Call up an editor for the C<$content> provided. Will return the new content if
+it has changed or undef on error or if nothing was changed.
+
+Will use L<Lim::Config>->{cli}->{editor} which will be the environment variable
+EDITOR or what ever your configure it to be.
 
 =cut
 
@@ -461,9 +527,9 @@ sub Editor {
     print $tmp $content;
     $tmp->flush;
 
-    # TODO check EDITOR
+    # TODO check if editor exists
     
-    if (system($ENV{EDITOR}, $tmp->filename)) {
+    if (system(Lim::Config->{cli}->{editor}, $tmp->filename)) {
         Lim::DEBUG and $self->{logger}->debug('EDITOR returned failure');
         return;
     }
@@ -490,51 +556,33 @@ sub Editor {
     return $content;
 }
 
+=back
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<bug-lim at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Lim>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
+Please report any bugs or feature requests to L<https://github.com/jelu/lim/issues>.
 
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
 
-perldoc Lim
-
+    perldoc Lim::CLI
 
 You can also look for information at:
 
 =over 4
 
-=item * RT: CPAN's request tracker (report bugs here)
+=item * Lim issue tracker (report bugs here)
 
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Lim>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Lim>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/Lim>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/Lim/>
+L<https://github.com/jelu/lim/issues>
 
 =back
 
-
 =head1 ACKNOWLEDGEMENTS
-
 
 =head1 LICENSE AND COPYRIGHT
 
