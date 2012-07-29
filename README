@@ -2,52 +2,44 @@ LIM - Gluing your DNS/DNSSEC stuff together since 2012
 
 ABOUT
 
-Lim is a management application you can put on top of DNS and DNSSEC software
-so you can manage it via a web GUI or via your OSS/BSS system with SOAP.
+Lim is actually just a framework to generalize RPC calls from RESTful JSON/XML,
+XML-RPC, JSON-RPC and SOAP to plugins. It was developed for managing OpenDNSSEC
+and SoftHSM which is used for DNSSEC.
+
+For more information about OpenDNSSEC and the OpenDNSSEC Lim plugin please see:
+    OpenDNSSEC - http://www.opendnssec.org
+    Lim plugin - http://github.com/jelu/lim-plugin-opendnssec
+
+For more information about SoftHSM and the SoftHSM Lim plugin please see:
+    SoftHSM - http://www.opendnssec.org/softhsm
+    Lim plugin - http://github.com/jelu/lim-plugin-softhsm
 
 ARCHITECTURE
 
-    Changing...
-
-AUTHENTICATION
-
-    Changing...
-
-REQUIRED PERL MODULES
-
-    common::sense
-    Carp
-    Getopt::Long
-    Pod::Usage
-    Log::Log4perl
-    (EV)
-    AnyEvent
-    AnyEvent::Socket
-    AnyEvent::Handle
-    Socket
-    Scalar::Util
-    HTTP::Status
-    HTTP::Request
-    HTTP::Response
-    URI
-    URI::QueryParam
-    JSON::XS
-    SOAP::Lite
-    SOAP::Transport::HTTP
-    XMLRPC::Lite
-    Module::Find
+    There are three parts (so far) in Lim; Server, Client and CLI. You can
+    install them separately to be able to manage software remotely by CLI or
+    by writing your own software with the Client libraries or calling the
+    different RPC protocols.
     
-    ubuntu:
-    libcommon-sense-perl
-    liblog-log4perl-perl
-    libanyevent-perl
-    libjson-xs-perl
-    libnet-ssleay-perl
-    libguard-perl
-    (libev-perl)
-    libevent-perl
-    libsoap-lite-perl
-    libmodule-find-perl
+    The Server software that is run on the machines that you want to manage is
+    called an Agent daemon (lim-agentd). It will load all available plugins on
+    the system and serve them through the RPC protocols.
+    
+    +-------------------+                         +-------------------+
+    |                   |                         |                   |
+    |        CLI        |                         |      Client       |
+    |                   |                         |                   |
+    +---------+---------+                         +---------+---------+
+              |                                             |
+              |    +----------------------------------------+
+              |    |                     |                  |
+              +-------------------+--------------------+    |
+              |    |              |      |             |    |
+    +---------+----+----+  +------+------+-----+  +----+----+---------+
+    |                   |  |                   |  |                   |
+    |    lim-agentd     |  |    lim-agentd     |  |    lim-agentd     |
+    |                   |  |                   |  |                   |
+    +-------------------+  +-------------------+  +-------------------+
 
 INSTALLATION
 
@@ -60,24 +52,19 @@ To install this module, run the following commands:
 
 SUPPORT AND DOCUMENTATION
 
-After installing, you can find documentation for this module with the
+After installing, you can find documentation for the modules with the
 perldoc command.
 
     perldoc Lim
+    perldoc Lim::*
 
 You can also look for information at:
 
-    RT, CPAN's request tracker (report bugs here)
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Lim
+    Issue tracker (report bugs here)
+        http://github.com/jelu/lim/issues
 
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Lim
-
-    CPAN Ratings
-        http://cpanratings.perl.org/d/Lim
-
-    Search CPAN
-        http://search.cpan.org/dist/Lim/
+    GIT repository
+        http://github.com/jelu/lim
 
 
 LICENSE AND COPYRIGHT
