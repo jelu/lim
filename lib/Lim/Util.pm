@@ -13,7 +13,7 @@ use Lim ();
 
 =head1 NAME
 
-...
+Lim::Util - Utilities for plugins
 
 =head1 VERSION
 
@@ -31,11 +31,20 @@ our %CALL_METHOD = (
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+use Lim::Util;
 
-=head2 function1
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item $full_path = Lim::Util::FileExists($file)
+
+Check if C<$file> exists by prefixing L<Lim::Config>->{prefix} and returns the
+full path to the file or undef if it does not exist.
 
 =cut
 
@@ -55,7 +64,10 @@ sub FileExists {
     return;
 }
 
-=head2 function1
+=item $full_path = Lim::Util::FileReadable($file)
+
+Check if C<$file> exists by prefixing L<Lim::Config>->{prefix} and if it is
+readable. Returns the full path to the file or undef if it does not exist.
 
 =cut
 
@@ -75,8 +87,10 @@ sub FileReadable {
     return;
 }
 
+=item $full_path = Lim::Util::FileWritable($file)
 
-=head2 function1
+Check if C<$file> exists by prefixing L<Lim::Config>->{prefix} and if it is
+writable. Returns the full path to the file or undef if it does not exist.
 
 =cut
 
@@ -96,7 +110,11 @@ sub FileWritable {
     return;
 }
 
-=head2 function1
+=item $temp_file = Lim::Util::TempFileLikeThis($file)
+
+Creates a temporary file that will have the same owner and mode as the specified
+C<$file>. Returns a L<File::Temp> object or undef if the specified file did not
+exist or if there where problems creating the temporary file.
 
 =cut
 
@@ -117,7 +135,31 @@ sub TempFileLikeThis {
     return;
 }
 
-=head2 function1
+=item ($method, $uri) = Lim::Util::URIize($call)
+
+Returns an URI based on the C<$call> given and the corresponding HTTP method to
+be used.
+
+Example:
+
+=over 4
+
+use Lim::Util;
+($method, $uri) = Lim::Util::URIize('ReadVersion');
+print "$method $ur\n";
+($method, $uri) = Lim::Util::URIize('CreateOtherCall');
+print "$method $ur\n";
+
+=back
+
+Produces:
+
+=over 4
+
+GET /version
+PUT /other_call
+
+=back
 
 =cut
 
@@ -147,22 +189,81 @@ sub URIize {
     return ($method, '/'.$uri);
 }
 
-=head2 function1
+=item $camelized = Lim::Util::Camelize($underscore)
+
+Convert underscored text to camelized, used for translating URI to calls.
+
+Example:
+
+=over 4
+
+use Lim::Util;
+print Lim::Util::Camelize('long_u_r_i_call_name'), "\n";
+
+=back
+
+Produces:
+
+=over 4
+
+LongURICallName
+
+=back
 
 =cut
 
 sub Camelize {
-    my ($underscore_text) = @_;
+    my ($underscore) = @_;
     my $camelized;
     
-    foreach (split(/_/o, $underscore_text)) {
+    foreach (split(/_/o, $underscore)) {
         $camelized .= ucfirst($_);
     }
     
     return $camelized;
 }
 
-=head2 function1
+=head2 [$cv =] Lim::Util::run_cmd $cmd, key => value...
+
+This function extends L<AnyEvent::Util::run_cmd> with a timeout and will also
+set C<close_all> option.
+
+=over 4
+
+=item timeout => $seconds
+
+Creates a timeout for the running command and will try and kill it after the
+specified C<$seconds>, see below how you can change the kill functionallity.
+
+Using C<timeout> will set C<$$> option to L<AnyEvent::Util::run_cmd> so you
+won't be able to use that option.
+
+=item cb => $callback->($cv)
+
+This is required if you'r using C<timeout>.
+
+Call the given C<$callback> when the command finish or have timed out with the
+condition variable returned by L<AnyEvent::Util::run_cmd>. If the command timed
+out the condition variable will be set as if the command failed.
+
+=item kill_sig => 15
+
+Signal to use when trying to kill the command.
+
+=item kill_try => 3
+
+Number of times to try and kill the command with C<kill_sig>.
+
+=item interval => 1
+
+Number of seconds to wait between each attempt to kill the command.
+
+=item kill_kill => 1
+
+If true (default) kill the command with signal KILL after trying to kill it with
+C<kill_sig> for the specified number of C<kill_try> attempts.
+
+=back
 
 =cut
 
@@ -181,16 +282,13 @@ sub run_cmd {
     foreach (qw(kill_try kill_kill timeout interval cb)) {
         delete $pass_args{$_};
     }
-    $pass_args{'$$'} = \$pid;
     $pass_args{close_all} = 1;
     
-    if (exists $args{cb} and ref($args{cb}) ne 'CODE') {
-        confess __PACKAGE__, ': cb invalid';
-    }
-
     if (exists $args{timeout}) {
-        unless (exists $args{cb}) {
-            confess __PACKAGE__, ': must have cb with timeout';
+        $pass_args{'$$'} = \$pid;
+
+        unless (exists $args{cb} and ref($args{cb}) eq 'CODE') {
+            confess __PACKAGE__, ': must have cb with timeout or invalid';
         }
         
         unless ($args{timeout} > 0) {
@@ -243,6 +341,8 @@ sub run_cmd {
         $cmd,
         %pass_args;
 }
+
+=back
 
 =head1 AUTHOR
 
