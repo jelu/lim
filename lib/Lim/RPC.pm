@@ -13,7 +13,7 @@ use Lim::Error ();
 
 =head1 NAME
 
-...
+Lim::RPC - Utilities for Lim's RPC
 
 =head1 VERSION
 
@@ -25,11 +25,25 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+use Lim::RPC;
 
-=head2 V for Verify
+=back
+
+=head1 NOTE
+
+These functions are mainly used internaly, you should not have any reason to
+call them.
+
+=head1 METHODS
+
+=over 4
+
+=item Lim::RPC::V($q, $def)
+
+V is for Verify, it will verify the content of the hash ref C<$q> against the
+RPC definition in C<$def>. On an error it will L<confess>.
 
 =cut
 
@@ -93,7 +107,10 @@ sub V {
     return;
 }
 
-=head2 C for Call
+=item (...) = Lim::RPC::C(...)
+
+C is for Call, used to convert the incoming call arguments from protocol
+specific list to a general one.
 
 =cut
 
@@ -134,7 +151,10 @@ sub C {
     return ($object, @_);
 }
 
-=head2 R for Result
+=item Lim::RPC::R($cb, $data)
+
+R is for Result, called when a RPC call finish and convert the given C<$data> to 
+the corresponding protocol.
 
 =cut
 
@@ -257,6 +277,8 @@ sub R {
 
     return $cb->cb->(defined $data ? $data : {});
 }
+
+=back
 
 =head1 AUTHOR
 

@@ -7,7 +7,7 @@ use Scalar::Util qw(blessed);
 
 =head1 NAME
 
-...
+Lim::Error - Encapsulate an error within Lim
 
 =head1 VERSION
 
@@ -19,11 +19,38 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+use Lim::Error;
 
-=head2 function1
+$error = Lim::Error->new('This is a simple error');
+
+=back
+
+=head1 METHODS
+
+=over 4
+
+=item $error = Lim::Error->new(key => value...)
+
+Create a new Lim::Error object.
+
+=over 4
+
+=item code => 500
+
+Specify the error code, used in HTTP responses as well as RPC protocols.
+
+=item message => $message
+
+Specify the error message.
+
+=item module => $module
+
+Specify the module that created this error, if its a blessed object the L<ref>()
+of that object will be used.
+
+=back
 
 =cut
 
@@ -60,7 +87,9 @@ sub new {
 sub DESTROY {
 }
 
-=head2 function1
+=item $error->set($hash_ref)
+
+Populate an error object from a hash reference.
 
 =cut
 
@@ -78,7 +107,9 @@ sub set {
     $_[0];
 }
 
-=head2 function1
+=item $error->code
+
+Return the code of the error.
 
 =cut
 
@@ -86,7 +117,9 @@ sub code {
     $_[0]->{code};
 }
 
-=head2 function1
+=item $error->set_code($code)
+
+Set the error code to C<$code>.
 
 =cut
 
@@ -96,7 +129,9 @@ sub set_code {
     $_[0];
 }
 
-=head2 function1
+=item $error->message
+
+Return the message of the error.
 
 =cut
 
@@ -104,7 +139,9 @@ sub message {
     $_[0]->{message};
 }
 
-=head2 function1
+=item $error->set_message($message)
+
+Set the error message to C<$message>
 
 =cut
 
@@ -114,7 +151,9 @@ sub set_message {
     $_[0];
 }
 
-=head2 function1
+=item $error->module
+
+Return the module name of the error.
 
 =cut
 
@@ -122,7 +161,9 @@ sub module {
     $_[0]->{module};
 }
 
-=head2 function1
+=item $error->set_module($module_name)
+
+Set the module name of the error, this can not take blessed objects.
 
 =cut
 
@@ -132,7 +173,10 @@ sub set_module {
     $_[0];
 }
 
-=head2 function1
+=item $hash_ref = $error->TO_JSON
+
+Returns a hash reference describing the error, this is to support passing
+objects to L<JSON::XS>.
 
 =cut
 
@@ -146,13 +190,17 @@ sub TO_JSON {
     };
 }
 
-=head2 function1
+=item $string = $error->toString
+
+Returns a string that describes the error.
 
 =cut
 
 sub toString {
     'Module: ', $_[0]->{module}, ' Code: ', $_[0]->{code}, ' Message: ', $_[0]->{message};
 }
+
+=back
 
 =head1 AUTHOR
 

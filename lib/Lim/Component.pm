@@ -13,7 +13,7 @@ use Lim::RPC::Call ();
 
 =head1 NAME
 
-...
+Lim::Component - Base class for plugins
 
 =head1 VERSION
 
@@ -25,11 +25,89 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+package Lim::Plugin::MyPlugin;
 
-=head2 function1
+use base qw(Lim::Component);
+
+sub Module {
+    'MyPlugin';
+}
+
+sub Calls {
+    {
+        ReadVersion => {
+            out => {
+                version => 'string'
+            }
+        }
+    };
+}
+
+sub Commands {
+    {
+        version => 1
+    };
+}
+
+=back
+
+=head1 DESCRIPTION
+
+This is the base class of all plugins in Lim. It defines the name, RPC calls and
+CLI commands. It must be present for any plugin to work but the different plugin
+parts does not have to exist everywhere. For example the CLI part does not have
+to have the Server and Client but it will most likly have the Client part if you
+want to communicate with the Server.
+
+=head1 METHODS
+
+=over 4
+
+=item $module_name = Lim::Plugin::MyPlugin->Module
+
+Returns module name.
+
+This function must be overloaded or it will L<confess>.
+
+=cut
+
+sub Module {
+    confess 'Module not overloaded';
+}
+
+=item $call_hash_ref = Lim::Plugin::MyPlugin->Calls
+
+Returns a hash reference to the calls that can be made to this plugin, used both
+in Server and Client to verify input and output arguments.
+
+Read more about this in L<Lim::Component::Server>.
+
+This function must be overloaded or it will L<confess>.
+
+=cut
+
+sub Calls {
+    confess 'Calls not overloaded';
+}
+
+=item $command_hash_ref = Lim::Plugin::MyPlugin->Commands
+
+Returns a hash reference to the CLI commands that can be made by this plugin.
+
+This function must be overloaded or it will L<confess>.
+
+=cut
+
+sub Commands {
+    confess 'Commands not overloaded';
+}
+
+=item $cli = Lim::Plugin::MyPlugin->CLI
+
+Create a CLI object of the plugin, read more about this in
+L<Lim::Component::CLI>.
 
 =cut
 
@@ -46,7 +124,10 @@ sub CLI {
     $self->new(@_);
 }
 
-=head2 function1
+=item $client = Lim::Plugin::MyPlugin->Client
+
+Create a Client object of the plugin, read more about this in
+L<Lim::Component::Client>.
 
 =cut
 
@@ -172,7 +253,10 @@ sub Client {
     $self->new(@_);
 }
 
-=head2 function1
+=item $client = Lim::Plugin::MyPlugin->Server
+
+Create a Server object of the plugin, read more about this in
+L<Lim::Component::Server>.
 
 =cut
 
@@ -189,29 +273,7 @@ sub Server {
     $self->new(@_);
 }
 
-=head2 function1
-
-=cut
-
-sub Module {
-    confess 'Module not overloaded';
-}
-
-=head2 function1
-
-=cut
-
-sub Calls {
-    confess 'Calls not overloaded';
-}
-
-=head2 function1
-
-=cut
-
-sub Commands {
-    confess 'Commands not overloaded';
-}
+=back
 
 =head1 AUTHOR
 
