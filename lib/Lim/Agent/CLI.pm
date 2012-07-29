@@ -15,7 +15,7 @@ use base qw(Lim::Component::CLI);
 
 =head1 VERSION
 
-Version 0.1
+See L<Lim> for version.
 
 =cut
 
