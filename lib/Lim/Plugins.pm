@@ -11,7 +11,7 @@ use Lim ();
 
 =head1 NAME
 
-...
+Lim::Plugins - Lim's plugin loader and container
 
 =head1 VERSION
 
@@ -24,11 +24,17 @@ our $INSTANCE;
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+use Lim::Plugins;
 
-=head2 function1
+Lim::Plugins->instance->Load;
+
+=back
+
+=head1 METHODS
+
+=over 4
 
 =cut
 
@@ -59,7 +65,9 @@ END {
     undef($INSTANCE);
 }
 
-=head2 function1
+=item $instance = Lim::Plugins->instance
+
+Returns the singelton instance of this class.
 
 =cut
 
@@ -67,7 +75,10 @@ sub instance {
     $INSTANCE ||= Lim::Plugins->_new;
 }
 
-=head2 function1
+=item $instance->Load
+
+Loads all plugins that exists on the system under Lim::Plugin::. Returns the
+reference to itself even on error.
 
 =cut
 
@@ -75,10 +86,6 @@ sub Load {
     my ($self) = @_;
     
     foreach my $module (findsubmod Lim::Plugin) {
-        if ($module eq 'Lim::Plugin::Base') {
-            next;
-        }
-
         if (exists $self->{plugin}->{$module}) {
             $self->{logger}->warn('Plugin ', $module, ' already loaded');
             next;
@@ -109,9 +116,13 @@ sub Load {
             loaded => 1
         };
     }
+
+    $self;
 }
 
-=head2 function1
+=item @modules = $instance->LoadedModules
+
+Returns a list of loaded modules module name (eg Lim::Plugin::Example).
 
 =cut
 
@@ -128,7 +139,20 @@ sub LoadedModules {
     return @modules;
 }
 
-=head2 function1
+=item @modules = $instance->Loaded
+
+Returns a list of hash references of loaded modules.
+
+=over 4
+
+{
+    name => Module short name (eg Example),
+    module => Module name (Lim::Plugin::Example),
+    version => Module version (Lim::Plugin::Example->VERSION),
+    loaded => True or false if module is loaded (True)
+}
+
+=back
 
 =cut
 
@@ -145,13 +169,18 @@ sub Loaded {
     return @modules;
 }
 
-=head2 function1
+=item @modules = $instance->All
+
+Returns a list of hash references of all known plugins, check C<Loaded> for how
+the hash reference looks.
 
 =cut
 
 sub All {
     values %{$_[0]->{plugin}};
 }
+
+=back
 
 =head1 AUTHOR
 
