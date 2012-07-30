@@ -1,15 +1,12 @@
 package Lim::RPC::Callback::XMLRPC;
 
 use common::sense;
-use Carp;
 
-use Log::Log4perl ();
-
-use Lim ();
+use base qw(Lim::RPC::Callback);
 
 =head1 NAME
 
-...
+Lim::RPC::Callback::XMLRPC - Callback for XMLRPC RPC request.
 
 =head1 VERSION
 
@@ -19,65 +16,18 @@ See L<Lim> for version.
 
 =head1 SYNOPSIS
 
-...
+=over 4
 
-=head1 SUBROUTINES/METHODS
+use Lim::RPC::Callback::XMLRPC;
 
-=head2 function1
+$json_callback = Lim::RPC::Callback::XMLRPC(key => value...)
 
-=cut
+=back
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my ($cb) = @_;
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
-    bless $self, $class;
+=head1 METHODS
 
-    unless (defined $cb and ref($cb) eq 'CODE') {
-        confess __PACKAGE__, ': Callback not given or invalid';
-    }
-    
-    $self->{cb} = $cb;
-
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $self;
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-=head2 function1
-
-=cut
-
-sub cb {
-    $_[0]->{cb}
-}
-
-=head2 function1
-
-=cut
-
-sub call_def {
-    $_[0]->{call_def};
-}
-
-=head2 function1
-
-=cut
-
-sub set_call_def {
-    if (ref($_[1]) eq 'HASH') {
-        $_[0]->{call_def} = $_[1];
-    }
-    
-    $_[0];
-}
+This module uses L<Lim::RPC::Callback> as base, see that modules documentation
+for methods.
 
 =head1 AUTHOR
 
@@ -91,7 +41,7 @@ Please report any bugs or feature requests to L<https://github.com/jelu/lim/issu
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Lim
+    perldoc Lim::RPC::Callback::XMLRPC
 
 You can also look for information at:
 

@@ -290,7 +290,9 @@ sub process {
                                 return;
                             }
                             
-                            $request->{__lim_rpc_cb} = Lim::RPC::Callback::SOAP->new(sub {
+                            $request->{__lim_rpc_cb} = Lim::RPC::Callback::SOAP->new(
+                                client => $self2,
+                                cb => sub {
                                 my ($data) = @_;
                                 
                                 unless (defined $self2) {
@@ -375,7 +377,9 @@ sub process {
                                 return;
                             }
                             
-                            $request->{__lim_rpc_cb} = Lim::RPC::Callback::XMLRPC->new(sub {
+                            $request->{__lim_rpc_cb} = Lim::RPC::Callback::XMLRPC->new(
+                                client => $self2,
+                                cb => sub {
                                 my (@data) = @_;
                                 
                                 unless (defined $self2) {
@@ -446,7 +450,12 @@ sub process {
                                     
                                     $self->{call_type} = 'jsonrpc';
                                     weaken($self);
-                                    return $obj->$call(Lim::RPC::Callback::JSONRPC->new(sub {
+                                    unless (defined $self) {
+                                        return;
+                                    }
+                                    return $obj->$call(Lim::RPC::Callback::JSONRPC->new(
+                                        client => $self,
+                                        cb => sub {
                                         my ($result) = @_;
                                         
                                         unless (defined $self) {
@@ -696,7 +705,12 @@ sub process {
             if (blessed($obj)) {
                 $self->{call_type} = 'json';
                 weaken($self);
-                return $obj->$call(Lim::RPC::Callback::JSON->new(sub {
+                unless (defined $self) {
+                    return;
+                }
+                return $obj->$call(Lim::RPC::Callback::JSON->new(
+                    client => $self,
+                    cb => sub {
                     my ($result) = @_;
                     
                     unless (defined $self) {
