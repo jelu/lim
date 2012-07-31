@@ -5,6 +5,10 @@ use Carp;
 
 use Log::Log4perl ();
 use File::Temp ();
+use Fcntl qw(:seek);
+use IO::File ();
+use Digest::SHA ();
+use Scalar::Util qw(blessed);
 
 use AnyEvent ();
 use AnyEvent::Util ();
@@ -110,6 +114,120 @@ sub FileWritable {
     return;
 }
 
+=item $content = Lim::Util::FileReadContent($file)
+
+Read the file and return the content or undef if there was an error.
+
+=cut
+
+sub FileReadContent {
+    my ($file) = @_;
+    
+    if (-r $file and defined (my $fh = IO::File->new($file))) {
+        my ($tell, $content);
+        $fh->seek(0, SEEK_END);
+        $tell = $fh->tell;
+        $fh->seek(0, SEEK_SET);
+        if ($fh->read($content, $tell) == $tell) {
+            return $content;
+        }
+    }
+    return;
+}
+
+=item [$temp_file] = Lim::Util::FileWriteContent([$file | $object,] $content)
+
+Write the content to a file or a new temporary file, content in file will be
+reread and checked with a SHA checksum.
+
+If the C<$file> is specified, write the content to the filename and return 1 or
+undef on error. Will overwrite the file if it exists.
+
+If the C<$object> is a L<Temp::File> object, write the content to that file and
+return 1 or undef on error.
+
+If no C<$file> or C<$object> is specified, write the content to a new temporary
+file and return the L<File::Temp> object or undef on error.
+
+=cut
+
+sub FileWriteContent {
+    my ($file, $content) = @_;
+    my $filename;
+    
+    if (defined $file and !defined $content) {
+        $content = $file;
+        undef($file);
+    }
+    if (blessed $file) {
+        unless ($file->isa('File::Temp')) {
+            return;
+        }
+        $filename = $file->filename;
+    }
+    elsif (defined $file) {
+        my $fh = IO::File->new;
+        unless ($fh->open($file, '>')) {
+            return;
+        }
+        $filename = $file;
+        $file = $fh;
+    }
+    unless (defined $content) {
+        return;
+    }
+    unless (defined $file) {
+        eval {
+            $file = File::Temp->new;
+        };
+        if ($@) {
+            # TODO log error
+            return;
+        }
+        $filename = $file->filename;
+    }
+
+    print $file $content;
+    $file->flush;
+    $file->close;
+            
+    my $fh = IO::File->new;
+    if ($fh->open($filename)) {
+        my ($tell, $read);
+        $fh->seek(0, SEEK_END);
+        $tell = $fh->tell;
+        $fh->seek(0, SEEK_SET);
+        unless ($fh->read($read, $tell) == $tell) {
+            return;
+        }
+        unless (Digest::SHA::sha1_base64($content) eq Digest::SHA::sha1_base64($read)) {
+            return;
+        }
+    }
+    return $file->isa('File::Temp') ? $file : 1;
+}
+
+=item $temp_file = Lim::Util::TempFile
+
+Creates a temporary file. Returns a L<File::Temp> object or undef if there where
+problems creating the temporary file.
+
+=cut
+
+sub TempFile {
+    my $tmp;
+    
+    eval {
+        $tmp = File::Temp->new;
+    };
+    
+    unless ($@) {
+        # TODO log error
+        return $tmp;
+    }
+    return;
+}
+
 =item $temp_file = Lim::Util::TempFileLikeThis($file)
 
 Creates a temporary file that will have the same owner and mode as the specified
@@ -125,8 +243,15 @@ sub TempFileLikeThis {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
             $atime,$mtime,$ctime,$blksize,$blocks)
             = stat($file);
+        my $tmp;
         
-        if (defined (my $tmp = File::Temp->new)) {
+        eval {
+            $tmp = File::Temp->new;
+        };
+        
+        # TODO log error
+        
+        unless ($@) {
             if (chmod($mode, $tmp->filename) and chown($uid, $gid, $tmp->filename)) {
                 return $tmp;
             }
