@@ -11,7 +11,7 @@ Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.101
+Version 0.102
 
 =cut
 
