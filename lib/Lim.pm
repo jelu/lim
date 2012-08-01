@@ -112,7 +112,7 @@ sub MergeConfig {
     return;
 }
 
-=head2 Lim::LoadConfig($filename)
+=item Lim::LoadConfig($filename)
 
 Load the given configuration C<$filename> in YAML format and merge it into Lim's
 configuration.

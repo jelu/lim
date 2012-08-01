@@ -348,7 +348,7 @@ sub Camelize {
     return $camelized;
 }
 
-=head2 [$cv =] Lim::Util::run_cmd $cmd, key => value...
+=item [$cv =] Lim::Util::run_cmd $cmd, key => value...
 
 This function extends L<AnyEvent::Util::run_cmd> with a timeout and will also
 set C<close_all> option.
