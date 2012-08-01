@@ -15,7 +15,7 @@ Version 0.101
 
 =cut
 
-our $VERSION = '0.101';
+our $VERSION = '0.102';
 our $CONFIG;
 
 sub OBJ_DEBUG (){ 1 }
