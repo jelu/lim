@@ -10,7 +10,7 @@ Build-Depends-Indep: libanyevent-perl (>= 5), libcommon-sense-perl (>= 3),
  liblog-log4perl-appender-lim-cli-perl (>= 0.1)
 Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Standards-Version: 3.9.1
-Homepage: http://search.cpan.org/dist/Lim/
+Homepage: http://github.com/jelu/lim/wiki
 
 Package: liblim-common-perl
 Architecture: all
@@ -21,73 +21,56 @@ Depends: ${misc:Depends}, ${perl:Depends}, libanyevent-perl (>= 5),
  perl (>= 5.10.1),
  libxmlrpc-transport-http-server-perl (>= 0.1),
  liblog-log4perl-appender-lim-cli-perl (>= 0.1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Description: Common perl libraries for Lim
+ Common Lim perl libraries depended by all Lim packages.
 
 Package: liblim-server-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.101-1)
+Description: Lim server perl libraries
+ Lim server perl libraries for communicating with Lim via many different
+ protocols.
 
 Package: liblim-cli-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.101-1)
+Description: Lim CLI perl libraries
+ Lim CLI perl libraries for controlling a local or remote Lim server.
 
 Package: liblim-agent-common-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.101-1)
+Description: Common perl libraries for lim-agentd
+ Common lim-agentd perl libraries.
 
 Package: liblim-agent-server-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-common-perl (= 0.1-1),
- liblim-server-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-common-perl (= 0.101-1),
+ liblim-server-perl (= 0.101-1)
+Description: Server perl libraries for lim-agentd
+ Server perl libraries for lim-agentd.
 
 Package: liblim-agent-client-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-common-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-common-perl (= 0.101-1)
+Description: Client perl libraries for lim-agentd
+ Client perl libraries for communicating with lim-agentd.
 
 Package: liblim-agent-cli-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-cli-perl (= 0.1-1),
- liblim-agent-client-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-cli-perl (= 0.101-1),
+ liblim-agent-client-perl (= 0.101-1)
+Description: CLI perl libraries for lim-agentd
+ CLI perl libraries for controlling lim-agentd via lim-cli.
 
 Package: lim-agentd
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-server-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-server-perl (= 0.101-1)
+Description: Lim agent daemon
+ The Lim agent daemon that serves all plugins.
 
 Package: lim-cli
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-cli-perl (= 0.1-1)
-Description: The great new Lim!
- (no description was found)
- .
- This description was automagically extracted from the module by dh-make-perl.
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-cli-perl (= 0.101-1)
+Description: Lim command line interface
+ The Lim CLI used to control a local or remote Lim agent.

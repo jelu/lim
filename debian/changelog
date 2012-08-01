@@ -1,3 +1,11 @@
+lim (0.101-1) unstable; urgency=low
+
+  * New upstream release v0.101.
+  * Fix homepage url for lim.
+  * Update description for all packages.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Wed, 01 Aug 2012 10:13:24 -0700
+
 lim (0.1-1) unstable; urgency=low
 
   * Initial Release.
