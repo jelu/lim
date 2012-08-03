@@ -1,3 +1,9 @@
+lim (0.12-1~unstable+1) unstable; urgency=low
+
+  * New release using git flow.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Fri, 03 Aug 2012 10:43:06 -0700
+
 lim (0.101-1) unstable; urgency=low
 
   * New upstream release v0.101.
