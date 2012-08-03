@@ -1,9 +1,3 @@
-lim (0.102-1) unstable; urgency=low
-
-  * Update version for next release.
-
- -- Jerry Lundström <lundstrom.jerry@gmail.com>  Wed, 01 Aug 2012 10:59:46 -0700
-
 lim (0.101-1) unstable; urgency=low
 
   * New upstream release v0.101.
