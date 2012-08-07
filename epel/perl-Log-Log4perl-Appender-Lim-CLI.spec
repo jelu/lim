@@ -114,7 +114,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/Component.pm
 %{perl_vendorlib}/Lim/RPC.pm
 
-%files perl-Lim-Server
+%files -n perl-Lim-Server
 %{_mandir}/man3/Lim::Component::Server.3*
 %{_mandir}/man3/Lim::RPC::Callback::XMLRPC.3*
 %{_mandir}/man3/Lim::RPC::Callback::SOAP.3*
@@ -131,33 +131,33 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/RPC/Server.pm
 %{_datadir}/lim/html
 
-%files perl-Lim-CLI
+%files -n perl-Lim-CLI
 %{_mandir}/man3/Lim::Component::CLI.3*
 %{_mandir}/man3/Lim::CLI.3*
 %{perl_vendorlib}/Lim/Component/CLI.pm
 %{perl_vendorlib}/Lim/CLI.pm
 
-%files perl-Lim-Agent-Common
+%files -n perl-Lim-Agent-Common
 %{_mandir}/man3/Lim::Agent.3*
 %{perl_vendorlib}/Lim/Agent.pm
 
-%files perl-Lim-Agent-Server
+%files -n perl-Lim-Agent-Server
 %{_mandir}/man3/Lim::Agent::Server.3*
 %{perl_vendorlib}/Lim/Agent/Server.pm
 
-%files perl-Lim-Agent-Client
+%files -n perl-Lim-Agent-Client
 %{_mandir}/man3/Lim::Agent::Client.3*
 %{perl_vendorlib}/Lim/Agent/Client.pm
 
-%files perl-Lim-Agent-CLI
+%files -n perl-Lim-Agent-CLI
 %{_mandir}/man3/Lim::Agent::CLI.3*
 %{perl_vendorlib}/Lim/Agent/CLI.pm
 
-%files lim-agentd
+%files -n lim-agentd
 %{_mandir}/man1/lim-agentd.1*
 %{_bindir}/lim-agentd
 
-%files lim-cli
+%files -n lim-cli
 %{_mandir}/man1/lim-cli.1*
 %{_bindir}/lim-cli
 
