@@ -20,46 +20,64 @@ Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Lim provides a framework for calling plugins over multiple protocols.
 It uses AnyEvent for async operations and SOAP::Lite, XMLRPC::Lite and JSON::XS
 for processing protocol messages.
+Common Lim perl libraries depended by all Lim packages.
 
 %package -n perl-Lim-Server
 Summary: Lim server perl libraries
 Group: Development/Libraries
 Version: 0.12
+%description -n perl-Lim-Server
+Lim server perl libraries for communicating with Lim via many different
+protocols.
 
 %package -n perl-Lim-CLI
 Summary: Lim CLI perl libraries
 Group: Development/Libraries
 Version: 0.12
+%description -n perl-Lim-CLI
+Lim CLI perl libraries for controlling a local or remote Lim server.
 
 %package -n perl-Lim-Agent-Common
 Summary: Common perl libraries for lim-agentd
 Group: Development/Libraries
 Version: 0.12
+%description -n perl-Lim-Agent-Common
+Common lim-agentd perl libraries.
 
 %package -n perl-Lim-Agent-Server
 Summary: Server perl libraries for lim-agentd
 Group: Development/Libraries
 Version: 0.12
+%description -n perl-Lim-Agent-Server
+Server perl libraries for lim-agentd.
 
 %package -n perl-Lim-Agent-Client
 Summary: Client perl libraries for lim-agentd
 Group: Development/Libraries
 Version: 0.12
+%description -n perl-Lim-Agent-Client
+Client perl libraries for communicating with lim-agentd.
 
 %package -n perl-Lim-Agent-CLI
 Summary: CLI perl libraries for lim-agentd
 Group: Development/Libraries
 Version: 0.12
+%description -n perl-Lim-Agent-CLI
+CLI perl libraries for controlling lim-agentd via lim-cli.
 
 %package -n lim-agentd
 Summary: Lim agent daemon
 Group: Development/Libraries
 Version: 0.12
+%description -n lim-agentd
+The Lim agent daemon that serves all plugins.
 
 %package -n lim-cli
 Summary: Lim command line interface
 Group: Development/Libraries
 Version: 0.12
+%description -n lim-cli
+The Lim CLI used to control a local or remote Lim agent.
 
 
 %prep
@@ -73,7 +91,7 @@ make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir ${RPM_BUILD_ROOT}%{_datadir}/lim/html
+mkdir -p ${RPM_BUILD_ROOT}%{_datadir}/lim/html
 make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 
@@ -116,6 +134,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -n perl-Lim-Server
 %{_mandir}/man3/Lim::Component::Server.3*
+%{_mandir}/man3/Lim::RPC::Callback.3*
 %{_mandir}/man3/Lim::RPC::Callback::XMLRPC.3*
 %{_mandir}/man3/Lim::RPC::Callback::SOAP.3*
 %{_mandir}/man3/Lim::RPC::Callback::JSON.3*
@@ -124,6 +143,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Server.3*
 %{perl_vendorlib}/Lim/Component/Server.pm
 %{perl_vendorlib}/Lim/RPC/Server/Client.pm
+%{perl_vendorlib}/Lim/RPC/Callback.pm
 %{perl_vendorlib}/Lim/RPC/Callback/XMLRPC.pm
 %{perl_vendorlib}/Lim/RPC/Callback/SOAP.pm
 %{perl_vendorlib}/Lim/RPC/Callback/JSONRPC.pm
