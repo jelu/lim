@@ -1,7 +1,7 @@
-Name:           perl-Lim-Common
+Name:           perl-Lim
 Version:        0.12
 Release:        1%{?dist}
-Summary:        Common perl libraries for Lim
+Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 Group:          Development/Libraries
 License:        GPL+ or Artistic
@@ -20,6 +20,12 @@ Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Lim provides a framework for calling plugins over multiple protocols.
 It uses AnyEvent for async operations and SOAP::Lite, XMLRPC::Lite and JSON::XS
 for processing protocol messages.
+
+%package -n perl-Lim-Common
+Summary: Common perl libraries for Lim
+Group: Development/Libraries
+Version: 0.12
+%description -n perl-Lim-Common
 Common Lim perl libraries depended by all Lim packages.
 
 %package -n perl-Lim-Server
@@ -104,7 +110,7 @@ make test
 rm -rf $RPM_BUILD_ROOT
 
 
-%files
+%files -n perl-Lim-Common
 %defattr(-,root,root,-)
 %doc Changes README
 %{_mandir}/man3/Lim::Component.3*
@@ -133,6 +139,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/RPC.pm
 
 %files -n perl-Lim-Server
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Component::Server.3*
 %{_mandir}/man3/Lim::RPC::Callback.3*
 %{_mandir}/man3/Lim::RPC::Callback::XMLRPC.3*
@@ -152,32 +159,39 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/lim/html
 
 %files -n perl-Lim-CLI
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Component::CLI.3*
 %{_mandir}/man3/Lim::CLI.3*
 %{perl_vendorlib}/Lim/Component/CLI.pm
 %{perl_vendorlib}/Lim/CLI.pm
 
 %files -n perl-Lim-Agent-Common
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Agent.3*
 %{perl_vendorlib}/Lim/Agent.pm
 
 %files -n perl-Lim-Agent-Server
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Agent::Server.3*
 %{perl_vendorlib}/Lim/Agent/Server.pm
 
 %files -n perl-Lim-Agent-Client
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Agent::Client.3*
 %{perl_vendorlib}/Lim/Agent/Client.pm
 
 %files -n perl-Lim-Agent-CLI
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Agent::CLI.3*
 %{perl_vendorlib}/Lim/Agent/CLI.pm
 
 %files -n lim-agentd
+%defattr(-,root,root,-)
 %{_mandir}/man1/lim-agentd.1*
 %{_bindir}/lim-agentd
 
 %files -n lim-cli
+%defattr(-,root,root,-)
 %{_mandir}/man1/lim-cli.1*
 %{_bindir}/lim-cli
 
