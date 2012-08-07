@@ -33,7 +33,7 @@ WriteMakefile(
         'XMLRPC::Lite' => 0.71,
         'XMLRPC::Transport::HTTP::Server' => 0.12,
         'URI' => 1,
-        'YAML::Any' => 0.71
+        'YAML::Any' => 0.70
     },
     META_MERGE => {
         recommends => {
