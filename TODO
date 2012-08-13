@@ -9,3 +9,6 @@
   - create new objects
   - merge existing objects
 - Schema cache settings
+- Schema rewrite
+  rewrite => { '/:object=>id/subcall' => 'ReadThisSubcall' }
+  - extend map with rewriting to other calls
