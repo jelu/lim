@@ -198,9 +198,17 @@ sub FileWriteContent {
         $tell = $fh->tell;
         $fh->seek(0, SEEK_SET);
         unless ($fh->read($read, $tell) == $tell) {
+            $fh->close;
+            unless ($file->isa('File::Temp')) {
+                unlink($filename);
+            }
             return;
         }
         unless (Digest::SHA::sha1_base64($content) eq Digest::SHA::sha1_base64($read)) {
+            $fh->close;
+            unless ($file->isa('File::Temp')) {
+                unlink($filename);
+            }
             return;
         }
     }
