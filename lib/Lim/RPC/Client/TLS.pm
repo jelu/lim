@@ -9,6 +9,8 @@ use AnyEvent::TLS ();
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...

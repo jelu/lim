@@ -9,6 +9,8 @@ use Module::Find qw(findsubmod);
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::Plugins - Lim's plugin loader and container

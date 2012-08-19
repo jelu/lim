@@ -11,6 +11,8 @@ use XMLRPC::Lite ();
 use Lim ();
 use Lim::Error ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::RPC - Utilities for Lim's RPC

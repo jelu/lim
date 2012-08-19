@@ -5,6 +5,8 @@ use Carp;
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...

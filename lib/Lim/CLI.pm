@@ -19,6 +19,8 @@ use Lim::Plugins ();
 use IO::Handle ();
 use AnyEvent::Handle ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::CLI - The command line interface to Lim

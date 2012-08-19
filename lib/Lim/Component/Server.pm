@@ -13,6 +13,8 @@ use Lim::Error ();
 
 use base qw(SOAP::Server::Parameters);
 
+=encoding utf8
+
 =head1 NAME
 
 ...

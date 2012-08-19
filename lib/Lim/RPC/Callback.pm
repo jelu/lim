@@ -7,6 +7,8 @@ use Log::Log4perl ();
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::RPC::Callback - Base class of all RPC callbacks

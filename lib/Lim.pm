@@ -5,6 +5,8 @@ use Carp;
 
 use YAML::Any ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP

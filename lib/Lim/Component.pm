@@ -11,6 +11,8 @@ use Lim::RPC::Value ();
 use Lim::RPC::Value::Collection ();
 use Lim::RPC::Call ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::Component - Base class for plugins

@@ -28,6 +28,8 @@ use Lim::RPC::Callback::SOAP ();
 use Lim::RPC::Callback::XMLRPC ();
 use Lim::RPC::Callback::JSONRPC ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...

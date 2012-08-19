@@ -12,6 +12,8 @@ use Lim::Util ();
 use Lim::RPC ();
 use Lim::RPC::Client ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...

@@ -9,6 +9,8 @@ use Lim::Agent ();
 
 use base qw(Lim::Component::CLI);
 
+=encoding utf8
+
 =head1 NAME
 
 ...

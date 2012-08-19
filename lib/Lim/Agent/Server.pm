@@ -7,6 +7,8 @@ use Lim::Plugins ();
 
 use base qw(Lim::Component::Server);
 
+=encoding utf8
+
 =head1 NAME
 
 ...

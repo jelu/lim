@@ -8,6 +8,8 @@ use Scalar::Util qw(weaken);
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...

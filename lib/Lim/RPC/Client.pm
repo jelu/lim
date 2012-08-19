@@ -22,6 +22,8 @@ use Lim ();
 use Lim::Error ();
 use Lim::RPC::Client::TLS ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...

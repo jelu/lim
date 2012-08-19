@@ -15,6 +15,8 @@ use AnyEvent::Util ();
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::Util - Utilities for plugins

@@ -5,6 +5,8 @@ use Carp;
 
 use Scalar::Util qw(blessed);
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::Error - Encapsulate an error within Lim

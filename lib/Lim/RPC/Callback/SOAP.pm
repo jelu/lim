@@ -4,6 +4,8 @@ use common::sense;
 
 use base qw(Lim::RPC::Callback);
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::RPC::Callback::SOAP - Callback for SOAP RPC request.
