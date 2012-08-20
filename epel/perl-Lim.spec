@@ -13,8 +13,32 @@ BuildArch:      noarch
 BuildRequires:  perl(ExtUtils::MakeMaker)
 # Needed for test
 BuildRequires:  perl(Test::Simple)
+BuildRequires:  perl(AnyEvent) >= 5
+BuildRequires:  perl(common::sense) >= 3
+BuildRequires:  perl(JSON::XS) >= 2
+BuildRequires:  perl(Log::Log4perl) >= 1
+BuildRequires:  perl(Module::Find)
+BuildRequires:  perl(SOAP::Lite) >= 0.71
+BuildRequires:  perl(URI) >= 1
+BuildRequires:  perl(LWP::UserAgent) >= 5
+BuildRequires:  perl(YAML) >= 0.70
+BuildRequires:  perl(Net::SSLeay) >= 1.35
+BuildRequires:  perl(XMLRPC::Transport::HTTP::Server) >= 0.12
+BuildRequires:  perl(Log::Log4perl::Appender::Lim::CLI) >= 0.12
 
 Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
+Requires:  perl(AnyEvent) >= 5
+Requires:  perl(common::sense) >= 3
+Requires:  perl(JSON::XS) >= 2
+Requires:  perl(Log::Log4perl) >= 1
+Requires:  perl(Module::Find)
+Requires:  perl(SOAP::Lite) >= 0.71
+Requires:  perl(URI) >= 1
+Requires:  perl(LWP::UserAgent) >= 5
+Requires:  perl(YAML) >= 0.70
+Requires:  perl(Net::SSLeay) >= 1.35
+Requires:  perl(XMLRPC::Transport::HTTP::Server) >= 0.12
+Requires:  perl(Log::Log4perl::Appender::Lim::CLI) >= 0.12
 
 %description
 Lim provides a framework for calling plugins over multiple protocols.
