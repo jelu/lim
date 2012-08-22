@@ -12,3 +12,4 @@
 - Schema rewrite
   rewrite => { '/:object=>id/subcall' => 'ReadThisSubcall' }
   - extend map with rewriting to other calls
+- Simple logging for plugins
