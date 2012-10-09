@@ -32,7 +32,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our @BUILTINS = (qw(quit help));
+our @BUILTINS = (qw(quit exit help));
 
 =head1 SYNOPSIS
 
@@ -59,6 +59,7 @@ Built in commands that can not be used by any plugins are:
 =over 4
 
 quit - Will quit the CLI
+exit - Will exit the relative section or quit the CLI
 help - Will show help for the relative section where the user is
 
 =back
@@ -169,7 +170,20 @@ sub new {
                     while (defined ($part = shift(@parts))) {
                         unless (exists $cmd->{$part} and ref($cmd->{$part}) eq 'HASH') {
                             if ($self->{no_completion}++ == 2) {
-                                $self->println('no completion found');
+                                if (ref($cmd->{$part}) eq 'ARRAY') {
+                                    if (@{$cmd->{$part}} == 1) {
+                                        $self->println('completion finished: ', $part, '<RET> - ', $cmd->{$part}->[0]);
+                                    }
+                                    elsif (@{$cmd->{$part}} == 2) {
+                                        $self->println('completion finished: ', $part, ' ', $cmd->{$part}->[0], ' <RET> - ', $cmd->{$part}->[1]);
+                                    }
+                                    else {
+                                        $self->println('no completion found');
+                                    }
+                                }
+                                else {
+                                    $self->println('no completion found');
+                                }
                             }
                             $self->{rl}->Attribs->{completion_word} = [];
                             return ();
@@ -282,7 +296,11 @@ sub process {
         $cmd = 'quit';
     }
      
-    if ($cmd eq 'quit' or $cmd eq 'exit') {
+    if ($cmd eq 'quit') {
+        $self->{on_quit}($self);
+        return;
+    }
+    elsif ($cmd eq 'exit') {
         if (exists $self->{current}) {
             delete $self->{current};
             $self->set_prompt('lim> ');
@@ -294,6 +312,14 @@ sub process {
         }
     }
     elsif ($cmd eq 'help') {
+        if (exists $self->{current}) {
+            $self->print_command_help($self->{current}->{module}->Commands);
+        }
+        else {
+            my @cmds = keys %{$self->{cli}};
+            push(@cmds, @BUILTINS);
+            $self->println('Available commands: ', join(' ', sort @cmds));
+        }
         $self->prompt;
     }
     else {
@@ -454,6 +480,42 @@ sub println {
         print @_, "\n";
     }
 
+    $self;
+}
+
+=item $cli->print_command_help($module->Commands)
+
+Print the help for all commands from a module.
+
+=cut
+
+sub print_command_help {
+    my ($self, $commands, $level) = @_;
+    my $space = ' ' x ($level * 4);
+    
+    if (ref($commands) eq 'HASH') {
+        foreach my $key (sort (keys %$commands)) {
+            if (ref($commands->{$key}) eq 'HASH') {
+                $self->println($space, $key);
+                $self->print_command_help($commands->{$key}, $level+1);
+            }
+            elsif (ref($commands->{$key}) eq 'ARRAY') {
+                if (@{$commands->{$key}} == 1) {
+                    $self->println($space, $key, ' - ', $commands->{$key}->[0]);
+                }
+                elsif (@{$commands->{$key}} == 2) {
+                    $self->println($space, $key, ' ', $commands->{$key}->[0], ' - ', $commands->{$key}->[1]);
+                }
+                else {
+                    $self->println($space, $key, ' - unknown/invalid help');
+                }
+            }
+            else {
+                $self->println($space, $key, ' - no help');
+            }
+        }
+    }
+    
     $self;
 }
 
