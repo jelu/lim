@@ -144,8 +144,7 @@ Print a brief help message and exits.
 
 =head1 DESCRIPTION
 
-B<This program> will read the given input file(s) and do something
-useful with the contents thereof.
+...
 
 =cut
 

@@ -115,11 +115,7 @@ lim-cli - Lim CLI Interface
 
 =head1 SYNOPSIS
 
-sample [options] [file ...]
-
-Options:
- --help           brief help message
- --man            full documentation
+lim-cli [options]
 
 =head1 OPTIONS
 
@@ -157,8 +153,7 @@ Prints the manual page and exits.
 
 =head1 DESCRIPTION
 
-B<This program> will read the given input file(s) and do something
-useful with the contents thereof.
+...
 
 =cut
 
