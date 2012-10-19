@@ -72,26 +72,77 @@ my %crud = (
     Update => 3,
     Delete => 4
 );
+
+my %sort_calls;
+my %sort_cmds;
+my $inc = $module;
+$inc =~ s/::/\//go;
+$inc .= '.pm';
+if (-f $INC{$inc}) {
+    if (open(PM, $INC{$inc})) {
+        while (<PM>) {
+            if (/^\s*sub Calls/o) {
+                my $sort = 0;
+                while (<PM>) {
+                    s/[\r\n]+//go;
+                    if (/((?:Create|Read|Update|Delete)\S+)\s+=>/o) {
+                        $sort_calls{$1} = $sort++;
+                    }
+                    elsif (/};/o) {
+                        last;
+                    }
+                }
+            }
+            elsif (/^\s*sub Commands/o) {
+                my $sort = 0;
+                my @sort;
+                while (<PM>) {
+                    s/[\r\n]+//go;
+                    if (/^\s*(\S+)\s+=>/o) {
+                        my $this = $1;
+                        $sort_cmds{join(' ', @sort, $this)} = $sort++;
+                        if (/{/o) {
+                            push(@sort, $this);
+                        }
+                    }
+                    elsif (/};/o) {
+                        last;
+                    }
+                    elsif (/}/o) {
+                        pop(@sort);
+                    }
+                }
+            }
+        }
+        close(PM);
+    }
+}
+
 my $calls = $module->Calls;
 foreach my $call (sort {
-    if ($a =~ /^(Create|Read|Update|Delete)(.+)/o) {
-        my ($ac,$an) = ($1,$2);
-        if ($b =~ /^(Create|Read|Update|Delete)(.+)/o) {
-            my ($bc,$bn) = ($1,$2);
-            
-            if ($an eq $bn) {
-                $crud{$ac} <=> $crud{$bc};
+    if (exists $sort_calls{$a} and exists $sort_calls{$b}) {
+        $sort_calls{$a} <=> $sort_calls{$b};
+    }
+    else {
+        if ($a =~ /^(Create|Read|Update|Delete)(.+)/o) {
+            my ($ac,$an) = ($1,$2);
+            if ($b =~ /^(Create|Read|Update|Delete)(.+)/o) {
+                my ($bc,$bn) = ($1,$2);
+                
+                if ($an eq $bn) {
+                    $crud{$ac} <=> $crud{$bc};
+                }
+                else {
+                    $an cmp $bn;
+                }
             }
             else {
-                $an cmp $bn;
+                die;
             }
         }
         else {
             die;
         }
-    }
-    else {
-        die;
     }
 } keys %$calls) {
     my ($in, $out) = (undef, undef);
@@ -127,7 +178,17 @@ print_command($cmds, \@pre);
 sub print_command {
     my ($cmds, $pre) = @_;
     
-    foreach (sort (keys %$cmds)) {
+    foreach (sort {
+        my $as = join(' ', @$pre, $a);
+        my $bs = join(' ', @$pre, $b);
+        
+        if (exists $sort_cmds{$as} and exists $sort_cmds{$bs}) {
+            $sort_cmds{$as} <=> $sort_cmds{$bs};
+        }
+        else {
+            $a cmp $b;
+        }
+    } (keys %$cmds)) {
         if (ref($cmds->{$_}) eq 'HASH') {
             push(@$pre, $_);
             print_command($cmds->{$_}, $pre);
