@@ -13,3 +13,7 @@
   rewrite => { '/:object=>id/subcall' => 'ReadThisSubcall' }
   - extend map with rewriting to other calls
 - Simple logging for plugins
+- Refactor RPC
+  - Remove Lim::RPC::Callback::*, generalize to Lim::RPC::Callback
+  - Protocols in Lim::RPC::Protocol::*->handle
+  - Transpots in Lim::RPC::Transport::*
