@@ -37,6 +37,7 @@ sub new {
     my $self = {
         logger => Log::Log4perl->get_logger
     };
+    bless $self, $class;
 
     $self->Init(@_);
 
@@ -71,6 +72,14 @@ sub Destroy {
 
 sub name {
     confess 'function name not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub serve {
+    confess 'function serve not overloaded';
 }
 
 =head2 function1

@@ -1,10 +1,11 @@
-package Lim::RPC::Protocol::JSONRPC;
+package Lim::RPC::Transport::HTTPS;
 
 use common::sense;
 
 use Lim ();
+use Lim::RPC::Transport::HTTP ();
 
-use base qw(Lim::RPC::Protocol);
+use base qw(Lim::RPC::Transport::HTTP);
 
 =encoding utf8
 
@@ -18,7 +19,7 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::VERSION;
+our $VERSION = $Lim::RPC::Transport::HTTP::VERSION;
 
 =head1 SYNOPSIS
 
@@ -30,43 +31,8 @@ our $VERSION = $Lim::VERSION;
 
 =cut
 
-sub Init {
-}
-
-=head2 function1
-
-=cut
-
-sub Destroy {
-}
-
-=head2 function1
-
-=cut
-
 sub name {
-    'jsonrpc';
-}
-
-=head2 function1
-
-=cut
-
-sub serve {
-}
-
-=head2 function1
-
-=cut
-
-sub handle {
-}
-
-=head2 function1
-
-=cut
-
-sub result {
+    'https';
 }
 
 =head1 AUTHOR
@@ -108,4 +74,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocol::JSONRPC
+1; # End of Lim::RPC::Transport::HTTPS

@@ -1,4 +1,4 @@
-package Lim::RPC::Client::TLS;
+package Lim::RPC::TLS;
 
 use common::sense;
 use Carp;
@@ -74,7 +74,7 @@ END {
 =cut
 
 sub instance {
-    $INSTANCE ||= Lim::RPC::Client::TLS->new;
+    $INSTANCE ||= Lim::RPC::TLS->new;
 }
 
 =head2 function1
@@ -133,4 +133,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Client::TLS
+1; # End of Lim::RPC::TLS

@@ -3,6 +3,7 @@ package Lim::RPC::Transport;
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed);
 use Log::Log4perl ();
 
 use Lim ();
@@ -35,8 +36,10 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        protocols => []
     };
+    bless $self, $class;
     
     $self->Init(@_);
 
@@ -49,6 +52,7 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     
     $self->Destroy;
+    delete $self->{protocols};
 }
 
 =head2 function1
@@ -79,6 +83,23 @@ sub name {
 
 sub result {
     confess 'function result not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub add_protocol {
+    my $self = shift;
+    
+    foreach (@_) {
+        unless (blessed($_) and $_->isa('Lim::RPC::Protocol')) {
+            confess 'Argument is not a Lim::RPC::Protocol';
+        }
+    }
+    push(@{$self->{protocols}}, @_);
+    
+    $self;
 }
 
 =head1 AUTHOR

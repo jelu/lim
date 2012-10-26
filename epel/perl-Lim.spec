@@ -117,7 +117,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc Changes README
 %{_mandir}/man3/Lim::Component.3*
 %{_mandir}/man3/Lim::RPC::Value::Collection.3*
-%{_mandir}/man3/Lim::RPC::Client::TLS.3*
+%{_mandir}/man3/Lim::RPC::TLS.3*
 %{_mandir}/man3/Lim::RPC::Call.3*
 %{_mandir}/man3/Lim::RPC::Value.3*
 %{_mandir}/man3/Lim::Plugins.3*

@@ -20,7 +20,7 @@ use JSON::XS ();
 
 use Lim ();
 use Lim::Error ();
-use Lim::RPC::Client::TLS ();
+use Lim::RPC::TLS ();
 
 =encoding utf8
 
@@ -132,7 +132,7 @@ sub new {
         $handle = AnyEvent::Handle->new(
             fh => $fh,
             tls => 'connect',
-            tls_ctx => Lim::RPC::Client::TLS->instance->tls_ctx,
+            tls_ctx => Lim::RPC::TLS->instance->tls_ctx,
             timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;

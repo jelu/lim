@@ -1,6 +1,6 @@
 usr/share/man/man3/Lim::Component.3pm
 usr/share/man/man3/Lim::RPC::Value::Collection.3pm
-usr/share/man/man3/Lim::RPC::Client::TLS.3pm
+usr/share/man/man3/Lim::RPC::TLS.3pm
 usr/share/man/man3/Lim::RPC::Call.3pm
 usr/share/man/man3/Lim::RPC::Value.3pm
 usr/share/man/man3/Lim::Plugins.3pm

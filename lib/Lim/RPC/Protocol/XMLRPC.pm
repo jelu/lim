@@ -52,6 +52,13 @@ sub name {
 
 =cut
 
+sub serve {
+}
+
+=head2 function1
+
+=cut
+
 sub handle {
 }
 
