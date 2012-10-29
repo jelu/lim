@@ -1,10 +1,10 @@
-package Lim::RPC::Transport::HTTPS;
+package Lim::RPC::Transport::HTTP::Client;
 
 use common::sense;
 
-use Lim::RPC::Transport::HTTP ();
+use Lim::RPC::Transport::HTTP::Client ();
 
-use base qw(Lim::RPC::Transport::HTTP);
+use base qw(Lim::RPC::Transport::HTTP::Client);
 
 =encoding utf8
 
@@ -18,13 +18,11 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::RPC::Transport::HTTP::VERSION;
+our $VERSION = $Lim::RPC::Transport::HTTP::Client::VERSION;
 
 =head1 SYNOPSIS
 
 ...
-
-=head1 SUBROUTINES/METHODS
 
 =head2 function1
 
@@ -73,4 +71,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::HTTPS
+1; # End of Lim::RPC::Server::Client

@@ -18,7 +18,6 @@ use Lim ();
 use Lim::RPC ();
 use Lim::RPC::Value ();
 use Lim::RPC::Value::Collection ();
-use Lim::RPC::Server::Client ();
 use Lim::RPC::Protocols ();
 use Lim::RPC::Transports ();
 
@@ -350,130 +349,6 @@ sub serve {
             unless ($calls) {
                 next;
             }
-            
-#            my $wsdl;
-#            {
-#                my ($tns, $soap_name);
-#                
-#                $tns = $module.'::Server';
-#                ($soap_name = $module) =~ s/:://go;
-#                
-#                $wsdl =
-#'<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-#<wsdl:definitions
-# xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
-# xmlns:tns="urn:'.$tns.'"
-# xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-# xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-# name="'.$soap_name.'"
-# targetNamespace="urn:'.$tns.'">
-#
-#';
-#
-#                # Generate types
-#                $wsdl .= ' <wsdl:types>
-#  <xsd:schema targetNamespace="urn:'.$tns.'">
-#';
-#                foreach my $call (keys %$calls) {
-#                    my $h = $calls->{$call};
-#                    
-#                    if (exists $h->{in}) {
-#                        $wsdl .= '   <xsd:element name="'.$call.'">
-#<xsd:complexType>
-#<xsd:choice minOccurs="0" maxOccurs="unbounded">
-#';
-#                        $wsdl .= Lim::RPC::Server::__wsdl_gen_complex_types($h->{in});
-#                        $wsdl .= '</xsd:choice>
-#</xsd:complexType>
-#   </xsd:element>
-#';
-#                    }
-#                    else {
-#                        $wsdl .= '   <xsd:element name="'.$call.'" />
-#';
-#                    }
-#                    
-#                    if (exists $h->{out}) {
-#                        $wsdl .= '   <xsd:element name="'.$call.'Response">
-#<xsd:complexType>
-#<xsd:choice minOccurs="0" maxOccurs="unbounded">
-#';
-#                        $wsdl .= Lim::RPC::Server::__wsdl_gen_complex_types($h->{out});
-#                        $wsdl .= '</xsd:choice>
-#</xsd:complexType>
-#   </xsd:element>
-#';
-#                    }
-#                    else {
-#                        $wsdl .= '   <xsd:element name="'.$call.'Response" />
-#';
-#                    }
-#                }
-#                $wsdl .= '  </xsd:schema>
-# </wsdl:types>
-#
-#';
-#                
-#                # Generate message
-#                foreach my $call (keys %$calls) {
-#                    $wsdl .= ' <wsdl:message name="'.$call.'">
-#  <wsdl:part element="tns:'.$call.'" name="parameters" />
-# </wsdl:message>
-#';
-#                    $wsdl .= ' <wsdl:message name="'.$call.'Response">
-#  <wsdl:part element="tns:'.$call.'Response" name="parameters" />
-# </wsdl:message>
-#';
-#                }
-#                $wsdl .= '
-#';
-#                
-#                # Generate portType
-#                $wsdl .= ' <wsdl:portType name="'.$soap_name.'">
-#';
-#                foreach my $call (keys %$calls) {
-#                    $wsdl .= '  <wsdl:operation name="'.$call.'">
-#   <wsdl:input message="tns:'.$call.'" />
-#   <wsdl:output message="tns:'.$call.'Response" />
-#  </wsdl:operation>
-#';
-#                }
-#                $wsdl .= ' </wsdl:portType>
-#
-#';
-#                
-#                # Generate binding
-#                $wsdl .= ' <wsdl:binding name="'.$soap_name.'SOAP" type="tns:'.$soap_name.'">
-#  <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
-#';
-#                foreach my $call (keys %$calls) {
-#                    $wsdl .= '  <wsdl:operation name="'.$call.'">
-#   <soap:operation soapAction="urn:'.$tns.'#'.$call.'" />
-#   <wsdl:input>
-#    <soap:body use="literal" />
-#   </wsdl:input>
-#   <wsdl:output>
-#    <soap:body use="literal" />
-#   </wsdl:output>
-#  </wsdl:operation>
-#';
-#                }
-#                $wsdl .= ' </wsdl:binding>
-#
-#';
-#
-#                # Generate service
-#                $wsdl .= ' <wsdl:service name="'.$soap_name.'">
-#  <wsdl:port binding="tns:'.$soap_name.'SOAP" name="'.$soap_name.'SOAP">
-#   <soap:address location="';
-#
-#                $wsdl = [ $wsdl, '" />
-#  </wsdl:port>
-# </wsdl:service>
-#
-#</wsdl:definitions>
-#' ];
-#            }
 
             foreach my $protocol (values %{$self->{protocol}}) {
                 $protocol->serve($module);
@@ -485,7 +360,6 @@ sub serve {
                 name => $name,
                 module => $module,
                 obj => $obj,
-#                wsdl => $wsdl,
                 calls => $calls
             };
         }
@@ -494,106 +368,38 @@ sub serve {
     $self;
 }
 
-=head2 function2
-
-=cut
-
-sub __wsdl_gen_complex_types {
-    my @values = @_;
-    my $wsdl = '';
-
-    while (scalar @values) {
-        my $values = pop(@values);
-        
-        if (ref($values) eq 'ARRAY' and scalar @$values == 2) {
-            my $key = $values->[0];
-            $values = $values->[1];
-            
-            if (blessed $values) {
-                $wsdl .= '<xsd:element minOccurs="'.($values->required ? '1' : '0').'" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
-';
-                if ($values->isa('Lim::RPC::Value::Collection')) {
-                    $values = $values->children;
-                }
-            }
-            else {
-                $wsdl .= '<xsd:element minOccurs="0" maxOccurs="unbounded" name="'.$key.'"><xsd:complexType><xsd:choice minOccurs="0" maxOccurs="unbounded">
-';
-            }
-        }
-        
-        if (ref($values) eq 'HASH') {
-            my $nested = 0;
-            
-            foreach my $key (keys %$values) {
-                if (blessed $values->{$key}) {
-                    if ($values->{$key}->isa('Lim::RPC::Value::Collection')) {
-                        unless ($nested) {
-                            $nested = 1;
-                            push(@values, 1);
-                        }
-                        push(@values, [$key, $values->{$key}->children]);
-                    }
-                    else {
-                        $wsdl .= '<xsd:element minOccurs="'.($values->{$key}->required ? '1' : '0').'" maxOccurs="1" name="'.$key.'" type="'.$values->{$key}->xsd_type.'" />
-    ';
-                    }
-                }
-                elsif (ref($values->{$key}) eq 'HASH') {
-                    unless ($nested) {
-                        $nested = 1;
-                        push(@values, 1);
-                    }
-                    push(@values, [$key, $values->{$key}]);
-                }
-            }
-            
-            if ($nested) {
-                next;
-            }
-        }
-        
-        unless (scalar @values) {
-            last;
-        }
-        
-        $wsdl .= '</xsd:choice></xsd:complexType></xsd:element>
-';
+sub have_module {
+    my ($self, $module) = @_;
+    
+    unless (exists $self->{module}->{$module}) {
+        return;
     }
     
-    $wsdl;
+    return 1;
 }
 
-=head2 function2
+sub have_module_call {
+    my ($self, $module, $call) = @_;
 
-=cut
+    unless (exists $self->{module}->{$module}) {
+        return;
+    }
 
-sub key {
-    $_[0]->{key};
+    unless (exists $self->{module}->{$module}->{calls}->{$call}) {
+        return;
+    }
+    
+    return 1;
 }
 
-=head2 function2
+sub module_obj {
+    my ($self, $module) = @_;
 
-=cut
+    unless (exists $self->{module}->{$module}) {
+        return;
+    }
 
-sub port {
-    $_[0]->{port};
-}
-
-=head2 function2
-
-=cut
-
-sub host {
-    $_[0]->{host};
-}
-
-=head2 function2
-
-=cut
-
-sub html {
-    $_[0]->{html};
+    return $self->{module}->{$module}->{obj};
 }
 
 =head1 AUTHOR

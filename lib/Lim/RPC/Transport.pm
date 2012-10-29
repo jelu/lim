@@ -102,6 +102,14 @@ sub add_protocol {
     $self;
 }
 
+=head2 function1
+
+=cut
+
+sub protocols {
+    @{$_[0]->{protocols}};
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

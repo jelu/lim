@@ -10,6 +10,7 @@ use AnyEvent::Socket ();
 
 use Lim ();
 use Lim::RPC::Transport::HTTP::Client ();
+use Lim::RPC::TLS ();
 
 use base qw(Lim::RPC::Transport);
 
@@ -62,9 +63,9 @@ sub Init {
         
         my $handle;
         $handle = Lim::RPC::Transport::HTTP::Client->new(
-            server => $self,
+            transport => $self,
             fh => $fh,
-            #tls_ctx => Lim::RPC::TLS->tls_ctx,
+            ($self->isa('Lim::RPC::Transport::HTTPS') ? (tls_ctx => Lim::RPC::TLS->tls_ctx) : ()),
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
                 
