@@ -4,6 +4,7 @@ use common::sense;
 
 use HTTP::Status qw(:constants);
 use JSON::XS ();
+use Scalar::Util qw(blessed weaken);
 
 use Lim ();
 use Lim::Util ();
@@ -71,44 +72,39 @@ sub serve {
 =cut
 
 sub handle {
-    my ($self, $request) = @_;
+    my ($self, $cb, $request) = @_;
     
-    unless (blessed($request) and $request->isa('Lim::RPC::Request')) {
+    unless (blessed($request) and $request->isa('HTTP::Request')) {
         return;
     }
 
-    unless (blessed($request->request) and $request->request->isa('HTTP::Request')) {
-        return;
-    }
-    my $httpreq = $request->request;
-    my $response = HTTP::Response->new;
-    $response->request($httpreq);
-    $response->protocol($httpreq->protocol);
-
-    if ($httpreq->uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z_]+)(?:\/([^\?]*)){0,1}/o) {
+    if ($request->uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z_]+)(?:\/([^\?]*)){0,1}/o) {
         my ($module, $function, $parameters) = ($1, $2, $3);
+        my $response = HTTP::Response->new;
+        $response->request($request);
+        $response->protocol($request->protocol);
         
         $module = lc($module);
-        my $server = $request->server;
+        my $server = $self->server;
         if (defined $server and $server->have_module($module)) {
             my ($method, $call);
             
-            if (exists $REST_CRUD{$httpreq->method}) {
-                $method = lc($REST_CRUD{$httpreq->method});
+            if (exists $REST_CRUD{$request->method}) {
+                $method = lc($REST_CRUD{$request->method});
             }
             else {
-                $method = lc($httpreq->method);
+                $method = lc($request->method);
             }
             $function = lc($function);
             $call = ucfirst($method).Lim::Util::Camelize($function);
 
             my $obj;
             if ($server->have_module_call($module, $call)) {
-                $obj = $server->module_obj($module);
+                $obj = $server->module_obj_by_protocol($module, $self->name);
             }
             
             my ($query, @parameters);
-            if (blessed($obj)) {
+            if (defined $obj) {
                 Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
                 if (defined $parameters) {
@@ -118,8 +114,8 @@ sub handle {
                     }
                 }
             
-                if ($httpreq->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
-                    my $query_str = $httpreq->content;
+                if ($request->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
+                    my $query_str = $request->content;
                     $query_str =~ s/[\015\012]+$//o;
 
                     my $uri = URI->new;
@@ -127,9 +123,9 @@ sub handle {
 
                     $query = $uri->query_form_hash;
                 }
-                elsif ($httpreq->header('Content-Type') =~ /application\/json/o) {
+                elsif ($request->header('Content-Type') =~ /application\/json/o) {
                     eval {
-                        $query = $JSON->decode($httpreq->content);
+                        $query = $JSON->decode($request->content);
                     };
                     if ($@) {
                         $response->code(HTTP_INTERNAL_SERVER_ERROR);
@@ -138,7 +134,7 @@ sub handle {
                     }
                 }
                 else {
-                    $query = $httpreq->uri->query_form_hash;
+                    $query = $request->uri->query_form_hash;
                 }
                 
                 if (ref($query) eq 'ARRAY' or ref($query) eq 'HASH') {
@@ -176,79 +172,71 @@ sub handle {
                 }
             }
                 
-            if (blessed($obj)) {
-#                my $real_self = $self;
-#                weaken($self);
-#                return $obj->$call(Lim::RPC::Callback::JSON->new(
-#                    client => $self,
-#                    cb => sub {
-#                }), $query, @parameters);
+            if (defined $obj) {
+                my $real_self = $self;
+                weaken($self);
+                $obj->$call(Lim::RPC::Callback->new(
+                    cb => sub {
+                        my ($result) = @_;
+                        
+                        unless (defined $self) {
+                            return;
+                        }
+                        
+                        if (blessed $result and $result->isa('Lim::Error')) {
+                            $response->code($result->code);
+                            eval {
+                                $response->content($JSON->encode($result));
+                            };
+                            if ($@) {
+                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                $self->{logger}->warn('JSON encode error: ', $@);
+                            }
+                            else {
+                                $response->header(
+                                    'Content-Type' => 'application/json; charset=utf-8',
+                                    'Cache-Control' => 'no-cache',
+                                    'Pragma' => 'no-cache'
+                                    );
+                            }
+                        }
+                        elsif (ref($result) eq 'HASH') {
+                            eval {
+                                $response->content($JSON->encode($result));
+                            };
+                            if ($@) {
+                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                $self->{logger}->warn('JSON encode error: ', $@);
+                            }
+                            else {
+                                $response->header(
+                                    'Content-Type' => 'application/json; charset=utf-8',
+                                    'Cache-Control' => 'no-cache',
+                                    'Pragma' => 'no-cache'
+                                    );
+                                $response->code(HTTP_OK);
+                            }
+                        }
+                        else {
+                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                        }
+                        
+                        $cb->cb->($response);
+                    },
+                    reset_timeout => sub {
+                        $cb->reset_timeout;
+                    }), $query, @parameters);
                 return 1;
             }
             else {
                 $response->code(HTTP_NOT_FOUND);
             }
         }
-        
-        $request->set_response($response);
-        $request->transport->result($request);
+
+        $cb->cb->($response);
         return 1;
     }
     return;
-}
-
-=head2 function1
-
-=cut
-
-sub result {
-                    my ($result) = @_;
-                    
-                    unless (defined $self) {
-                        return;
-                    }
-                    
-                    my $response = $self->{response};
-                    
-                    if (blessed $result and $result->isa('Lim::Error')) {
-                        $response->code($result->code);
-                        eval {
-                            $response->content($JSON->encode($result));
-                        };
-                        if ($@) {
-                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                            $self->{logger}->warn('JSON encode error: ', $@);
-                        }
-                        else {
-                            $response->header(
-                                'Content-Type' => 'application/json; charset=utf-8',
-                                'Cache-Control' => 'no-cache',
-                                'Pragma' => 'no-cache'
-                                );
-                        }
-                    }
-                    elsif (ref($result) eq 'HASH') {
-                        eval {
-                            $response->content($JSON->encode($result));
-                        };
-                        if ($@) {
-                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                            $self->{logger}->warn('JSON encode error: ', $@);
-                        }
-                        else {
-                            $response->header(
-                                'Content-Type' => 'application/json; charset=utf-8',
-                                'Cache-Control' => 'no-cache',
-                                'Pragma' => 'no-cache'
-                                );
-                            $response->code(HTTP_OK);
-                        }
-                    }
-                    else {
-                        $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                    }
-                    
-                    $self->result;
 }
 
 =head1 AUTHOR

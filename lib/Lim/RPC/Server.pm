@@ -75,7 +75,7 @@ sub new {
                 unless (exists $self->{protocol}->{$protocol_name}) {
                     my $protocol;
 
-                    unless (defined ($protocol = Lim::RPC::Protocols->instance->protocol($protocol_name))) {
+                    unless (defined ($protocol = Lim::RPC::Protocols->instance->protocol($protocol_name, server => $self))) {
                         confess __PACKAGE__, ': Protocol ', $protocol_name, ' does not exists';
                     }
                     
@@ -87,7 +87,7 @@ sub new {
                 }
             }
             
-            unless (defined ($transport = Lim::RPC::Transports->instance->transport($transport_name, uri => $uri))) {
+            unless (defined ($transport = Lim::RPC::Transports->instance->transport($transport_name, server => $self, uri => $uri))) {
                 confess __PACKAGE__, ': Transport ', $transport_name, ' does not exists';
             }
             
@@ -162,8 +162,11 @@ sub serve {
                     undef($calls);
                     last;
                 }
-                unless ($obj->can('__lim_rpc_'.$call)) {
-                    my ($orig_call, $rpc_call, $valueof);
+                
+                $self->{logger}->debug($call);
+                
+                #unless ($obj->can('__lim_rpc_'.$call)) {
+                    my ($orig_call, $rpc_call);
                     my $call_def = $calls->{$call};
                     
                     unless (ref($call_def) eq 'HASH') {
@@ -185,9 +188,7 @@ sub serve {
                             undef($calls);
                             last;
                         }
-                        
-                        $valueof = '//'.$call.'/';
-                        
+                                                
                         my @values = ($call_def->{in});
                         while (defined $calls and (my $value = shift(@values))) {
                             foreach my $key (keys %$value) {
@@ -302,49 +303,69 @@ sub serve {
                         }
                     }
                     
-                    $orig_call = ref($obj).'::'.$call;
-                    $call = '__lim_rpc_'.$call;;
-                    $rpc_call = ref($obj).'::'.$call;
+                    my $logger = $self->{logger};
+
+                    foreach my $protocol_name (keys %{$self->{protocol}}) {
+                        my $base = ref($obj).'::Protocol::'.$protocol_name;
+                        my $protocol_call = $base.'::'.$call;
+
+                        if ($base->isa('UNIVERSAL') and $base->can($call)) {
+                            next;
+                        }
+                        
+                        $self->{logger}->debug($protocol_call);
+
+                        no strict 'refs';
+                        *$protocol_call = sub {
+                            $logger->debug($_[0]);
+                        };
+                    }
                     
-                    my $self2 = $self;
-                    weaken($self2);
+# TODO: create static functions in protocols to handle Lim::RPC::C/R
+#       in $protocol_call, handle input with ::C, call $obj->$call
                     
-                    no strict 'refs';
-                    *$rpc_call = \&$orig_call;
-                    *$orig_call = sub {
-                        my ($self, $cb, $q, @args) = Lim::RPC::C(@_, $valueof);
-                        
-                        Lim::RPC_DEBUG and defined $self2 and $self2->{logger}->debug('Call to ', $self, ' ', $orig_call);
-                        
-                        if (!defined $q) {
-                            $q = {};
-                        }
-                        if (ref($q) ne 'HASH') {
-                            defined $self2 and $self2->{logger}->warn($self, '->', $orig_call, '() called without data as hash');
-                            $self->Error($cb);
-                            return;
-                        }
-                        
-                        if (exists $call_def->{in}) {
-                            eval {
-                                Lim::RPC::V($q, $call_def->{in});
-                            };
-                            if ($@) {
-                                defined $self2 and $self2->{logger}->warn($self, '->', $orig_call, '() data validation failed: ', $@);
-                                $self->Error($cb);
-                                return;
-                            }
-                        }
-                        elsif (%$q) {
-                            $self->Error($cb);
-                            return;
-                        }
-                        $cb->set_call_def($call_def);
-                        
-                        $self->$call($cb, $q, @args);
-                        return;
-                    };
-                }
+#                    $orig_call = ref($obj).'::'.$call;
+#                    $call = '__lim_rpc_'.$call;;
+#                    $rpc_call = ref($obj).'::'.$call;
+                    
+#                    my $logger = $self->{logger};
+#                    
+#                    no strict 'refs';
+#                    *$rpc_call = \&$orig_call;
+#                    *$orig_call = sub {
+#                        my ($self, $cb, $q, @args) = Lim::RPC::C(@_, undef);
+#                        
+#                        Lim::RPC_DEBUG and $logger->debug('Call to ', $self, ' ', $orig_call);
+#                        
+#                        if (!defined $q) {
+#                            $q = {};
+#                        }
+#                        if (ref($q) ne 'HASH') {
+#                            $logger->warn($self, '->', $orig_call, '() called without data as hash');
+#                            $self->Error($cb);
+#                            return;
+#                        }
+#                        
+#                        if (exists $call_def->{in}) {
+#                            eval {
+#                                Lim::RPC::V($q, $call_def->{in});
+#                            };
+#                            if ($@) {
+#                                $logger->warn($self, '->', $orig_call, '() data validation failed: ', $@);
+#                                $self->Error($cb);
+#                                return;
+#                            }
+#                        }
+#                        elsif (%$q) {
+#                            $self->Error($cb);
+#                            return;
+#                        }
+#                        $cb->set_call_def($call_def);
+#                        
+#                        $self->$call($cb, $q, @args);
+#                        return;
+#                    };
+                #}
             }
             unless ($calls) {
                 next;
@@ -400,6 +421,20 @@ sub module_obj {
     }
 
     return $self->{module}->{$module}->{obj};
+}
+
+sub module_obj_by_protocol {
+    my ($self, $module, $protocol) = @_;
+    
+    unless (exists $self->{module}->{$module}) {
+        return;
+    }
+
+    unless (exists $self->{protocol}->{$protocol}) {
+        return;
+    }
+    
+    bless {}, $self->{module}->{$module}->{module}.'::Server::Protocol::'.$protocol;
 }
 
 =head1 AUTHOR

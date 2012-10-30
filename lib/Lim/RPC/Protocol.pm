@@ -3,6 +3,7 @@ package Lim::RPC::Protocol;
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed weaken);
 use Log::Log4perl ();
 
 use Lim ();
@@ -34,10 +35,17 @@ our $VERSION = $Lim::VERSION;
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
+    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
+
+    unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
+        confess __PACKAGE__, ': No server specified or invalid';
+    }
+    $self->{__server} = $args{server};
+    weaken($self->{__server});
 
     $self->Init(@_);
 
@@ -50,6 +58,7 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     
     $self->Destroy;
+    delete $self->{__server};
 }
 
 =head2 function1
@@ -94,8 +103,16 @@ sub handle {
 
 =cut
 
-sub result {
-    confess 'function result not overloaded';
+sub timeout {
+    confess 'function timeout not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub server {
+    $_[0]->{__server};
 }
 
 =head1 AUTHOR
