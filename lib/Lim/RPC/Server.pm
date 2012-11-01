@@ -162,11 +162,20 @@ sub serve {
                     undef($calls);
                     last;
                 }
-                
-                $self->{logger}->debug($call);
-                
-                #unless ($obj->can('__lim_rpc_'.$call)) {
-                    my ($orig_call, $rpc_call);
+
+                my $create_call = 0;
+
+                foreach my $protocol_name (keys %{$self->{protocol}}) {
+                    my $base = 'Lim::RPC::ProtocolCall::'.$protocol_name.'::'.ref($obj);
+
+                    if ($base->isa('UNIVERSAL') and $base->can($call)) {
+                        next;
+                    }
+                    $create_call = 1;
+                    last;
+                }
+
+                if ($create_call) {
                     my $call_def = $calls->{$call};
                     
                     unless (ref($call_def) eq 'HASH') {
@@ -306,66 +315,56 @@ sub serve {
                     my $logger = $self->{logger};
 
                     foreach my $protocol_name (keys %{$self->{protocol}}) {
-                        my $base = ref($obj).'::Protocol::'.$protocol_name;
+                        my $base = 'Lim::RPC::ProtocolCall::'.$protocol_name.'::'.ref($obj);
                         my $protocol_call = $base.'::'.$call;
+                        my $protocol = $self->{protocol}->{$protocol_name};
+                        weaken($protocol);
+                        my $weak_obj = $obj;
+                        weaken($obj);
 
                         if ($base->isa('UNIVERSAL') and $base->can($call)) {
                             next;
                         }
                         
-                        $self->{logger}->debug($protocol_call);
-
                         no strict 'refs';
                         *$protocol_call = sub {
-                            $logger->debug($_[0]);
+                            unless (defined $protocol and defined $weak_obj) {
+                                return;
+                            }
+                            my ($self, $cb, $q, @args) = $protocol->precall(@_);
+
+                            Lim::RPC_DEBUG and $logger->debug('Call to ', $weak_obj, ' ', $call);
+
+                            if (!defined $q) {
+                                $q = {};
+                            }
+                            if (ref($q) ne 'HASH') {
+                                $logger->warn($weak_obj, '->', $call, '() called without data as hash');
+                                $weak_obj->Error($cb);
+                                return;
+                            }
+                            
+                            if (exists $call_def->{in}) {
+                                eval {
+                                    Lim::RPC::V($q, $call_def->{in});
+                                };
+                                if ($@) {
+                                    $logger->warn($weak_obj, '->', $call, '() data validation failed: ', $@);
+                                    $weak_obj->Error($cb);
+                                    return;
+                                }
+                            }
+                            elsif (%$q) {
+                                $weak_obj->Error($cb);
+                                return;
+                            }
+                            $cb->set_call_def($call_def);
+                            
+                            $weak_obj->$call($cb, $q, @args);
+                            return;
                         };
                     }
-                    
-# TODO: create static functions in protocols to handle Lim::RPC::C/R
-#       in $protocol_call, handle input with ::C, call $obj->$call
-                    
-#                    $orig_call = ref($obj).'::'.$call;
-#                    $call = '__lim_rpc_'.$call;;
-#                    $rpc_call = ref($obj).'::'.$call;
-                    
-#                    my $logger = $self->{logger};
-#                    
-#                    no strict 'refs';
-#                    *$rpc_call = \&$orig_call;
-#                    *$orig_call = sub {
-#                        my ($self, $cb, $q, @args) = Lim::RPC::C(@_, undef);
-#                        
-#                        Lim::RPC_DEBUG and $logger->debug('Call to ', $self, ' ', $orig_call);
-#                        
-#                        if (!defined $q) {
-#                            $q = {};
-#                        }
-#                        if (ref($q) ne 'HASH') {
-#                            $logger->warn($self, '->', $orig_call, '() called without data as hash');
-#                            $self->Error($cb);
-#                            return;
-#                        }
-#                        
-#                        if (exists $call_def->{in}) {
-#                            eval {
-#                                Lim::RPC::V($q, $call_def->{in});
-#                            };
-#                            if ($@) {
-#                                $logger->warn($self, '->', $orig_call, '() data validation failed: ', $@);
-#                                $self->Error($cb);
-#                                return;
-#                            }
-#                        }
-#                        elsif (%$q) {
-#                            $self->Error($cb);
-#                            return;
-#                        }
-#                        $cb->set_call_def($call_def);
-#                        
-#                        $self->$call($cb, $q, @args);
-#                        return;
-#                    };
-                #}
+                }
             }
             unless ($calls) {
                 next;
@@ -434,7 +433,7 @@ sub module_obj_by_protocol {
         return;
     }
     
-    bless {}, $self->{module}->{$module}->{module}.'::Server::Protocol::'.$protocol;
+    bless {}, 'Lim::RPC::ProtocolCall::'.$protocol.'::'.$self->{module}->{$module}->{module}.'::Server';
 }
 
 =head1 AUTHOR

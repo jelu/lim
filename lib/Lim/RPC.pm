@@ -270,12 +270,12 @@ sub R {
         }
     }
     
-    if ($cb->isa('Lim::RPC::Callback::SOAP')) {
-        return $cb->cb->(defined $data ? SOAP::Data->value(Lim::RPC::__soap_result('base', $data)) : undef);
-    }
-    elsif ($cb->isa('Lim::RPC::Callback::XMLRPC')) {
-        return $cb->cb->(defined $data ? Lim::RPC::__xmlrpc_result('base', $data) : undef);
-    }
+#    if ($cb->isa('Lim::RPC::Callback::SOAP')) {
+#        return $cb->cb->(defined $data ? SOAP::Data->value(Lim::RPC::__soap_result('base', $data)) : undef);
+#    }
+#    elsif ($cb->isa('Lim::RPC::Callback::XMLRPC')) {
+#        return $cb->cb->(defined $data ? Lim::RPC::__xmlrpc_result('base', $data) : undef);
+#    }
 
     return $cb->cb->(defined $data ? $data : {});
 }

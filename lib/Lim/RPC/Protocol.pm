@@ -115,6 +115,15 @@ sub server {
     $_[0]->{__server};
 }
 
+=head2 function1
+
+=cut
+
+sub precall {
+    shift;
+    return @_;
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
