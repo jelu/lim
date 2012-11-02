@@ -63,7 +63,7 @@ sub Init {
         $self->{host} = $args{uri}->host;
         $self->{port} = $args{uri}->port;
     }
-
+    
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
 
@@ -72,7 +72,7 @@ sub Init {
         my $handle;
         $handle = AnyEvent::Handle->new(
             fh => $fh,
-            ($self->isa('Lim::RPC::Transport::HTTPS') ? (tls => 'accept', tls_ctx => $args{tls_ctx}) : ()),
+            ($self->isa('Lim::RPC::Transport::HTTPS') ? (tls => 'accept', tls_ctx => Lim::RPC::TLS->instance->tls_ctx) : ()),
 #            timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
@@ -135,6 +135,8 @@ sub Init {
                     $handle->destroy;
                     return;
                 }
+                
+                $self->{logger}->debug($handle->{rbuf});
                 
                 unless (exists $client->{content}) {
                     $client->{headers} .= $handle->{rbuf};
@@ -231,7 +233,7 @@ sub Init {
                             
                             foreach my $protocol ($self->protocols) {
                                 Lim::RPC_DEBUG and $self->{logger}->debug('Trying protocol ', $protocol->name);
-                                if ($protocol->handle($cb, $client->{request})) {
+                                if ($protocol->handle($cb, $client->{request}, $self)) {
                                     $client->{protocol} = $protocol;
                                     Lim::RPC_DEBUG and $self->{logger}->debug('Request handled by protocol ', $protocol->name);
                                     return;
@@ -252,6 +254,9 @@ sub Init {
         
         Lim::RPC_DEBUG and $self->{logger}->debug(__PACKAGE__, ' ', $self, ' ready at ', $host, ':', $port);
         
+        $self->{uri} = URI->new(
+            ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https://' : 'http://').
+            $host.':'.$port);
         Lim::SRV_LISTEN;
     };
 }
@@ -273,6 +278,14 @@ sub Destroy {
 
 sub name {
     'http';
+}
+
+=head2 function1
+
+=cut
+
+sub uri {
+    $_[0]->{uri};
 }
 
 =head1 AUTHOR

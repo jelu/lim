@@ -2,9 +2,14 @@ package Lim::RPC::Protocol::REST;
 
 use common::sense;
 
-use HTTP::Status qw(:constants);
-use JSON::XS ();
 use Scalar::Util qw(blessed weaken);
+
+use HTTP::Status qw(:constants);
+use HTTP::Request ();
+use HTTP::Response ();
+use URI ();
+use URI::QueryParam ();
+use JSON::XS ();
 
 use Lim ();
 use Lim::Util ();
@@ -222,6 +227,7 @@ sub handle {
                         }
                         
                         $cb->cb->($response);
+                        return;
                     },
                     reset_timeout => sub {
                         $cb->reset_timeout;

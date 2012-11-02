@@ -89,6 +89,14 @@ sub name {
 
 =cut
 
+sub uri {
+    confess 'function uri not overloaded';
+}
+
+=head2 function1
+
+=cut
+
 sub add_protocol {
     my $self = shift;
     

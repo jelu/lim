@@ -5,14 +5,8 @@ use Carp;
 
 use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
-use URI ();
-use URI::QueryParam ();
-use URI::Split ();
-use URI::Escape ();
 
-use AnyEvent ();
-use AnyEvent::Socket ();
-use AnyEvent::TLS ();
+use URI::Split ();
 
 use Lim ();
 use Lim::RPC ();
@@ -107,8 +101,8 @@ sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
 
-    delete $self->{module};
     delete $self->{transports};
+    delete $self->{module};
     delete $self->{protocol};
 }
 
@@ -313,6 +307,7 @@ sub serve {
                     }
                     
                     my $logger = $self->{logger};
+                    weaken($logger);
 
                     foreach my $protocol_name (keys %{$self->{protocol}}) {
                         my $base = 'Lim::RPC::ProtocolCall::'.$protocol_name.'::'.ref($obj);
@@ -320,7 +315,8 @@ sub serve {
                         my $protocol = $self->{protocol}->{$protocol_name};
                         weaken($protocol);
                         my $weak_obj = $obj;
-                        weaken($obj);
+                        weaken($weak_obj);
+                        weaken($call_def);
 
                         if ($base->isa('UNIVERSAL') and $base->can($call)) {
                             next;
@@ -328,18 +324,18 @@ sub serve {
                         
                         no strict 'refs';
                         *$protocol_call = sub {
-                            unless (defined $protocol and defined $weak_obj) {
+                            unless (defined $protocol and defined $weak_obj and defined $call_def) {
                                 return;
                             }
                             my ($self, $cb, $q, @args) = $protocol->precall(@_);
 
-                            Lim::RPC_DEBUG and $logger->debug('Call to ', $weak_obj, ' ', $call);
+                            Lim::RPC_DEBUG and defined $logger and $logger->debug('Call to ', $weak_obj, ' ', $call);
 
                             if (!defined $q) {
                                 $q = {};
                             }
                             if (ref($q) ne 'HASH') {
-                                $logger->warn($weak_obj, '->', $call, '() called without data as hash');
+                                defined $logger and $logger->warn($weak_obj, '->', $call, '() called without data as hash');
                                 $weak_obj->Error($cb);
                                 return;
                             }
@@ -349,7 +345,7 @@ sub serve {
                                     Lim::RPC::V($q, $call_def->{in});
                                 };
                                 if ($@) {
-                                    $logger->warn($weak_obj, '->', $call, '() data validation failed: ', $@);
+                                    defined $logger and $logger->warn($weak_obj, '->', $call, '() data validation failed: ', $@);
                                     $weak_obj->Error($cb);
                                     return;
                                 }
@@ -420,6 +416,16 @@ sub module_obj {
     }
 
     return $self->{module}->{$module}->{obj};
+}
+
+sub module_class {
+    my ($self, $module) = @_;
+
+    unless (exists $self->{module}->{$module}) {
+        return;
+    }
+
+    return $self->{module}->{$module}->{module};
 }
 
 sub module_obj_by_protocol {

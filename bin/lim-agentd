@@ -92,7 +92,7 @@ Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
 ));
 
 my $server = Lim::RPC::Server->new(
-    uri => 'http+rest://0.0.0.0:5353'
+    uri => (@ARGV == 1 ? $ARGV[0] : \@ARGV)
 );
 $server->serve(qw(Lim::Agent));
 $server->serve(Lim::Plugins->instance->LoadedModules);

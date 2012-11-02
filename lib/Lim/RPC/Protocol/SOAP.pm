@@ -2,7 +2,14 @@ package Lim::RPC::Protocol::SOAP;
 
 use common::sense;
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
+
+use HTTP::Status qw(:constants);
+use HTTP::Request ();
+use HTTP::Response ();
+use URI ();
+use URI::QueryParam ();
+use SOAP::Transport::HTTP ();
 
 use Lim ();
 
@@ -40,6 +47,10 @@ sub Init {
 =cut
 
 sub Destroy {
+    my ($self) = @_;
+    
+    delete $self->{soap};
+    delete $self->{wsdl};
 }
 
 =head2 function1
@@ -56,11 +67,16 @@ sub name {
 
 sub serve {
     my ($self, $module) = @_;
-    my ($wsdl, $calls, $tns, $soap_name);
+    my ($wsdl, $calls, $tns, $soap, $soap_name);
     
     $calls = $module->Calls;
     $tns = $module.'::Server';
     ($soap_name = $module) =~ s/:://go;
+
+    $soap = SOAP::Transport::HTTP::Server->new;
+    $soap->serializer->ns('urn:'.$tns, 'lim1');
+    $soap->serializer->autotype(0);
+    $self->{soap}->{$module} = $soap;
                 
     $wsdl =
 '<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -258,13 +274,139 @@ sub __wsdl_gen_complex_types {
 =cut
 
 sub handle {
-}
+    my ($self, $cb, $request, $transport) = @_;
+    
+    unless (blessed($request) and $request->isa('HTTP::Request')) {
+        return;
+    }
 
-=head2 function1
+    if ($request->header('SOAPAction') and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
+        my ($module) = ($1);
+        my $response = HTTP::Response->new;
+        $response->request($request);
+        $response->protocol($request->protocol);
+        
+        $module = lc($module);
+        my $server = $self->server;
+        if (defined $server and $server->have_module($module) and exists $self->{soap}->{$server->module_class($module)}) {
+            my ($action, $method_uri, $method_name);
+            my $real_self = $self;
+            my $soap = $self->{soap}->{$server->module_class($module)};
+            weaken($self);
+            weaken($soap);
 
-=cut
+            Lim::RPC_DEBUG and $self->{logger}->debug('SOAP dispatch to module ', $server->module_class($module), ' obj ', $server->module_obj($module));
 
-sub result {
+            $soap->on_dispatch(sub {
+                my ($request) = @_;
+                
+                unless (defined $self and defined $soap) {
+                    return;
+                }
+                
+                $request->{__lim_rpc_protocol_soap_cb} = Lim::RPC::Callback->new(
+                    cb => sub {
+                        my ($data) = @_;
+                        
+                        unless (defined $self and defined $soap) {
+                            return;
+                        }
+                        
+                        if (blessed $data and $data->isa('Lim::Error')) {
+                            $soap->make_fault($data->code, $data->message);
+                        }
+                        else {
+                            my $result;
+                            
+                            if (defined $data) {
+                                $result = $soap->serializer
+                                    ->prefix('s')
+                                    ->uri($method_uri)
+                                    ->envelope(response => $method_name . 'Response', $data);
+                            }
+                            else {
+                                $result = $soap->serializer
+                                    ->prefix('s')
+                                    ->uri($method_uri)
+                                    ->envelope(response => $method_name . 'Response');
+                                $result =~ s/ xsi:nil="true"//go;
+                            }
+                            
+                            $soap->make_response($SOAP::Constants::HTTP_ON_SUCCESS_CODE, $result);
+                        }
+                        
+                        $response = $soap->response;
+                        $response->header(
+                            'Cache-Control' => 'no-cache',
+                            'Pragma' => 'no-cache'
+                            );
+    
+                        $cb->cb->($response);
+                        return;
+                    },
+                    reset_timeout => sub {
+                        $cb->reset_timeout;
+                    });
+                
+                return;
+            });
+            
+            $soap->on_action(sub {
+                ($action, $method_uri, $method_name) = @_;
+            });
+
+            $soap->dispatch_to($server->module_obj_by_protocol($module, $self->name));
+            
+            eval {
+                $soap->request($request);
+                $soap->handle;
+            };
+            if ($@) {
+                $self->{logger}->warn('SOAP action failed: ', $@);
+                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+            }
+            else {
+                return 1;
+            }
+        }
+        else {
+            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $cb->cb->($response);
+        return 1;
+    }
+    elsif ($request->uri =~ /^\/([a-zA-Z]+)\.wsdl/o) {
+        my ($module) = ($1);
+        my $response = HTTP::Response->new;
+        $response->request($request);
+        $response->protocol($request->protocol);
+        
+        $module = lc($module);
+        my $server = $self->server;
+        if (defined $server and $server->have_module($module) and exists $self->{wsdl}->{$server->module_class($module)}) {
+            my $wsdl = $self->{wsdl}->{$server->module_class($module)};
+            my $uri = $transport->uri->clone;
+            $uri->path($module);
+            
+            $response->content($wsdl->[0].
+                $uri->as_string.
+                $wsdl->[1]);
+            $response->header(
+                'Content-Type' => 'text/xml; charset=utf-8',
+                'Cache-Control' => 'no-cache',
+                'Pragma' => 'no-cache'
+                );
+            $response->code(HTTP_OK);
+        }
+        else {
+            $response->code(HTTP_NOT_FOUND);
+        }
+
+        $cb->cb->($response);
+        return 1;
+    }
+    return;
 }
 
 =head1 AUTHOR
