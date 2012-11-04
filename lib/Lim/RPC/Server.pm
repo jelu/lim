@@ -327,8 +327,16 @@ sub serve {
                             unless (defined $protocol and defined $weak_obj and defined $call_def) {
                                 return;
                             }
-                            my ($self, $cb, $q, @args) = $protocol->precall(@_);
-
+                            my ($self, $cb, $q, @args);
+                            eval {
+                               ($self, $cb, $q, @args) = $protocol->precall($call, @_);
+                            };
+                            if ($@) {
+                                defined $logger and $logger->warn($weak_obj, '->', $call, '() precall failed: ', $@);
+                                $weak_obj->Error($cb);
+                                return;
+                            }
+                            
                             Lim::RPC_DEBUG and defined $logger and $logger->debug('Call to ', $weak_obj, ' ', $call);
 
                             if (!defined $q) {
@@ -366,10 +374,6 @@ sub serve {
                 next;
             }
 
-            foreach my $protocol (values %{$self->{protocol}}) {
-                $protocol->serve($module);
-            }
-            
             Lim::DEBUG and $self->{logger}->debug('serving ', $name);
             
             $self->{module}->{$name} = {
@@ -378,6 +382,10 @@ sub serve {
                 obj => $obj,
                 calls => $calls
             };
+
+            foreach my $protocol (values %{$self->{protocol}}) {
+                $protocol->serve($module, $name);
+            }
         }
     }
     

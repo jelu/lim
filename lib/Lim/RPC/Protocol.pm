@@ -120,7 +120,8 @@ sub server {
 =cut
 
 sub precall {
-    shift;
+    shift; # $self
+    shift; # $call
     return @_;
 }
 

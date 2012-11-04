@@ -4,14 +4,11 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use SOAP::Lite ();
 use Scalar::Util qw(blessed);
 
 use Lim ();
 use Lim::RPC ();
 use Lim::Error ();
-
-use base qw(SOAP::Server::Parameters);
 
 =encoding utf8
 

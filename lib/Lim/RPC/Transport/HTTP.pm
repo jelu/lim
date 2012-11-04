@@ -136,8 +136,6 @@ sub Init {
                     return;
                 }
                 
-                $self->{logger}->debug($handle->{rbuf});
-                
                 unless (exists $client->{content}) {
                     $client->{headers} .= $handle->{rbuf};
                     
@@ -154,7 +152,7 @@ sub Init {
                 $handle->{rbuf} = '';
                 
                 if (defined $client->{request} and length($client->{content}) == $client->{request}->header('Content-Length')) {
-                    $client->{request}->content($self->{content});
+                    $client->{request}->content($client->{content});
                     delete $client->{content};
                     $client->{headers} = '';
                     

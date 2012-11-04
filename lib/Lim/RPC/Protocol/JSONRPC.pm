@@ -62,13 +62,6 @@ sub serve {
 sub handle {
 }
 
-=head2 function1
-
-=cut
-
-sub result {
-}
-
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

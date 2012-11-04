@@ -1,6 +1,7 @@
 package Lim::RPC::Protocol::SOAP;
 
 use common::sense;
+use Carp;
 
 use Scalar::Util qw(blessed weaken);
 
@@ -9,6 +10,8 @@ use HTTP::Request ();
 use HTTP::Response ();
 use URI ();
 use URI::QueryParam ();
+
+use SOAP::Lite ();
 use SOAP::Transport::HTTP ();
 
 use Lim ();
@@ -66,8 +69,8 @@ sub name {
 =cut
 
 sub serve {
-    my ($self, $module) = @_;
-    my ($wsdl, $calls, $tns, $soap, $soap_name);
+    my ($self, $module, $module_shortname) = @_;
+    my ($wsdl, $calls, $tns, $soap, $soap_name, $dispatch, $obj, $obj_class);
     
     $calls = $module->Calls;
     $tns = $module.'::Server';
@@ -76,6 +79,18 @@ sub serve {
     $soap = SOAP::Transport::HTTP::Server->new;
     $soap->serializer->ns('urn:'.$tns, 'lim1');
     $soap->serializer->autotype(0);
+    $obj = $self->server->module_obj_by_protocol($module_shortname, $self->name);
+    $obj_class = ref($obj);
+    # TODO: check if $obj_class alread is a SOAP::Server::Parameters
+    eval "push(\@${obj_class}::ISA, 'SOAP::Server::Parameters');";
+    if ($@) {
+        die $@;
+    }
+    $dispatch = {};
+    foreach my $call (keys %$calls) {
+        $dispatch->{'urn:'.$tns.'#'.$call} = $obj;
+    }
+    $soap->dispatch_with($dispatch);
     $self->{soap}->{$module} = $soap;
                 
     $wsdl =
@@ -295,7 +310,7 @@ sub handle {
             weaken($self);
             weaken($soap);
 
-            Lim::RPC_DEBUG and $self->{logger}->debug('SOAP dispatch to module ', $server->module_class($module), ' obj ', $server->module_obj($module));
+            Lim::RPC_DEBUG and $self->{logger}->debug('SOAP dispatch to module ', $server->module_class($module), ' obj ', $server->module_obj($module), ' proto obj ', $server->module_obj_by_protocol($module, $self->name));
 
             $soap->on_dispatch(sub {
                 my ($request) = @_;
@@ -322,7 +337,7 @@ sub handle {
                                 $result = $soap->serializer
                                     ->prefix('s')
                                     ->uri($method_uri)
-                                    ->envelope(response => $method_name . 'Response', $data);
+                                    ->envelope(response => $method_name . 'Response', SOAP::Data->value(__soap_result('base', $data)));
                             }
                             else {
                                 $result = $soap->serializer
@@ -355,8 +370,6 @@ sub handle {
                 ($action, $method_uri, $method_name) = @_;
             });
 
-            $soap->dispatch_to($server->module_obj_by_protocol($module, $self->name));
-            
             eval {
                 $soap->request($request);
                 $soap->handle;
@@ -407,6 +420,81 @@ sub handle {
         return 1;
     }
     return;
+}
+
+=head2 function1
+
+=cut
+
+sub __soap_result {
+    my @a;
+    
+    foreach my $k (keys %{$_[1]}) {
+        if (ref($_[1]->{$k}) eq 'ARRAY') {
+            foreach my $v (@{$_[1]->{$k}}) {
+                if (ref($v) eq 'HASH') {
+                    push(@a,
+                        SOAP::Data->new->name($k)
+                        ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $v))
+                        );
+                }
+                else {
+                    push(@a,
+                        SOAP::Data->new->name($k)
+                        ->value($v)
+                        );
+                }
+            }
+        }
+        elsif (ref($_[1]->{$k}) eq 'HASH') {
+            push(@a,
+                SOAP::Data->new->name($k)
+                ->value(Lim::RPC::__soap_result($_[0].'.'.$k, $_[1]->{$k}))
+                );
+        }
+        else {
+            push(@a,
+                SOAP::Data->new->name($k)
+                ->value($_[1]->{$k})
+                );
+        }
+    }
+
+    if ($_[0] eq 'base') {
+        return @a;
+    }
+    else {
+        return \@a;
+    }
+}
+
+=head2 function1
+
+=cut
+
+sub precall {
+    my ($self, $call, $object, $som) = @_;
+    
+    unless (ref($call) eq '' and blessed($object) and blessed($som) and $som->isa('SOAP::SOM')) {
+        confess __PACKAGE__, ': Invalid SOAP call';
+    }
+
+    unless (exists $som->{__lim_rpc_protocol_soap_cb} and blessed($som->{__lim_rpc_protocol_soap_cb}) and $som->{__lim_rpc_protocol_soap_cb}->isa('Lim::RPC::Callback')) {
+        confess __PACKAGE__, ': SOAP::SOM does not contain lim rpc callback or invalid';
+    }
+    my $cb = delete $som->{__lim_rpc_protocol_soap_cb};
+    my $valueof = $som->valueof('//'.$call.'/');
+    
+    if ($valueof) {
+        unless (ref($valueof) eq 'HASH') {
+            confess __PACKAGE__, ': Invalid data in SOAP call';
+        }
+    }
+    else {
+        undef($valueof);
+    }
+
+    return ($object, $cb, $valueof);
 }
 
 =head1 AUTHOR
