@@ -379,6 +379,9 @@ sub handle {
                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
             }
             else {
+                if ($soap->response) {
+                    $cb->cb->($soap->response);
+                }
                 return 1;
             }
         }

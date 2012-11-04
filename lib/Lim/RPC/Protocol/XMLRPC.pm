@@ -12,7 +12,7 @@ use URI ();
 use URI::QueryParam ();
 
 use XMLRPC::Lite ();
-use XMLRPC::Transport::HTTP ();
+use XMLRPC::Transport::HTTP::Server ();
 
 use Lim ();
 
@@ -50,6 +50,9 @@ sub Init {
 =cut
 
 sub Destroy {
+    my ($self) = @_;
+    
+    delete $self->{xmlrpc};
 }
 
 =head2 function1
@@ -65,6 +68,21 @@ sub name {
 =cut
 
 sub serve {
+    my ($self, $module, $module_shortname) = @_;
+    my ($calls, $tns, $xmlrpc, $obj, $obj_class);
+    
+    $calls = $module->Calls;
+    $tns = $module.'::Server';
+
+    $xmlrpc = XMLRPC::Transport::HTTP::Server->new;
+    $obj = $self->server->module_obj_by_protocol($module_shortname, $self->name);
+    $obj_class = ref($obj);
+    # TODO: check if $obj_class alread is a XMLRPC::Server::Parameters
+    eval "push(\@${obj_class}::ISA, 'XMLRPC::Server::Parameters');";
+    if ($@) {
+        die $@;
+    }
+    $self->{xmlrpc}->{$module} = $xmlrpc;
 }
 
 =head2 function1
@@ -72,6 +90,115 @@ sub serve {
 =cut
 
 sub handle {
+    my ($self, $cb, $request, $transport) = @_;
+    
+    unless (blessed($request) and $request->isa('HTTP::Request')) {
+        return;
+    }
+
+    if ($request->header('Content-Type') =~ /(?:^|\s)text\/xml(?:$|\s)/o and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
+        my ($module) = ($1);
+        my $response = HTTP::Response->new;
+        $response->request($request);
+        $response->protocol($request->protocol);
+        
+        $module = lc($module);
+        my $server = $self->server;
+        if (defined $server and $server->have_module($module) and exists $self->{xmlrpc}->{$server->module_class($module)}) {
+            my ($action, $method_uri, $method_name);
+            my $real_self = $self;
+            my $xmlrpc = $self->{xmlrpc}->{$server->module_class($module)};
+            my $protocol_obj = $server->module_obj_by_protocol($module, $self->name);
+            weaken($self);
+            weaken($xmlrpc);
+
+            $method_uri = 'urn:'.ref($protocol_obj);
+
+            Lim::RPC_DEBUG and $self->{logger}->debug('XMLRPC dispatch to module ', $server->module_class($module), ' obj ', $server->module_obj($module), ' proto obj ', $protocol_obj);
+
+            $xmlrpc->on_dispatch(sub {
+                my ($request) = @_;
+                
+                unless (defined $self and defined $xmlrpc) {
+                    return;
+                }
+                
+                $request->{__lim_rpc_protocol_xmlrpc_cb} = Lim::RPC::Callback->new(
+                    cb => sub {
+                        my ($data) = @_;
+                        
+                        unless (defined $self and defined $xmlrpc) {
+                            return;
+                        }
+                        
+                        if (blessed $data and $data->isa('Lim::Error')) {
+                            $xmlrpc->make_fault($data->code, $data->message);
+                        }
+                        else {
+                            my $result;
+                            
+                            if (defined $data) {
+                                $result = $xmlrpc->serializer
+                                    ->prefix('s')
+                                    ->uri($method_uri)
+                                    ->envelope(response => $method_name . 'Response', __xmlrpc_result('base', $data));
+                            }
+                            else {
+                                $result = $xmlrpc->serializer
+                                    ->prefix('s')
+                                    ->uri($method_uri)
+                                    ->envelope(response => $method_name . 'Response');
+                            }
+                            
+                            $xmlrpc->make_response($XMLRPC::Constants::HTTP_ON_SUCCESS_CODE, $result);
+                        }
+                        
+                        $response = $xmlrpc->response;
+                        $response->header(
+                            'Cache-Control' => 'no-cache',
+                            'Pragma' => 'no-cache'
+                            );
+    
+                        $cb->cb->($response);
+                        return;
+                    },
+                    reset_timeout => sub {
+                        $cb->reset_timeout;
+                    });
+
+                unless ($request->method =~ /^\w+$/o) {
+                    $request->{__lim_rpc_protocol_xmlrpc_cb}->(Lim::Error->new(500, 'Invalid characters in method name'));
+                    return;
+                }
+
+                return ($method_uri, ($method_name = $request->method));
+            });
+
+            $xmlrpc->dispatch_to($protocol_obj);
+
+            eval {
+                $xmlrpc->request($request);
+                $xmlrpc->handle;
+            };
+            if ($@) {
+                $self->{logger}->warn('XMLRPC action failed: ', $@);
+                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+            }
+            else {
+                if ($xmlrpc->response) {
+                    $cb->cb->($xmlrpc->response);
+                }
+                return 1;
+            }
+        }
+        else {
+            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $cb->cb->($response);
+        return 1;
+    }
+    return;
 }
 
 =head2 function1
