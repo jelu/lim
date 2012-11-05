@@ -1,4 +1,4 @@
-package Lim::RPC::Protocol::JSONRPC;
+package Lim::RPC::Protocol::JSONRPC2;
 
 use common::sense;
 
@@ -56,7 +56,7 @@ sub Destroy {
 =cut
 
 sub name {
-    'jsonrpc';
+    'jsonrpc2';
 }
 
 =head2 function1
@@ -92,7 +92,7 @@ sub handle {
                 $jsonreq = $JSON->decode($request->content);
             };
             unless ($@) {
-                if (ref($jsonreq) eq 'HASH' and exists $jsonreq->{jsonrpc} and exists $jsonreq->{id} and exists $jsonreq->{method}) {
+                if (ref($jsonreq) eq 'HASH' and exists $jsonreq->{jsonrpc} and exists $jsonreq->{id} and exists $jsonreq->{method} and $jsonreq->{jsonrpc} eq '2.0') {
                     my $id = $jsonreq->{id};
                     my $call = $jsonreq->{method};
                     
@@ -168,28 +168,31 @@ sub handle {
                         return 1;
                     }
                     else {
+                        $response->code(HTTP_NOT_FOUND);
                         $jsonresp = {
                             jsonrpc => '2.0',
                             error => {
                                 code => -32601,
                                 message => 'Method not found'
                             },
-                            id => $jsonreq->{id}
+                            id => $id
                         };
                     }
                 }
                 else {
+                    $response->code(HTTP_BAD_REQUEST);
                     $jsonresp = {
                         jsonrpc => '2.0',
                         error => {
                             code => -32600,
                             message => 'Invalid Request'
                         },
-                        id => $jsonreq->{id}
+                        id => undef
                     };
                 }
             }
             if ($@ and !defined $jsonresp) {
+                $response->code(HTTP_INTERNAL_SERVER_ERROR);
                 $jsonresp = {
                     jsonrpc => '2.0',
                     error => {
@@ -262,4 +265,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocol::JSONRPC
+1; # End of Lim::RPC::Protocol::JSONRPC2
