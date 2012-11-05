@@ -1,14 +1,16 @@
-package Lim::RPC::Callback::JSONRPC;
+package Lim::RPC::Transport::HTTPS;
 
 use common::sense;
 
-use base qw(Lim::RPC::Callback);
+use Lim::RPC::Transport::HTTP ();
+
+use base qw(Lim::RPC::Transport::HTTP);
 
 =encoding utf8
 
 =head1 NAME
 
-Lim::RPC::Callback::JSONRPC - Callback for JSONRPC RPC request.
+...
 
 =head1 VERSION
 
@@ -16,20 +18,21 @@ See L<Lim> for version.
 
 =cut
 
+our $VERSION = $Lim::RPC::Transport::HTTP::VERSION;
+
 =head1 SYNOPSIS
 
-=over 4
+...
 
-use Lim::RPC::Callback::JSONRPC;
+=head1 SUBROUTINES/METHODS
 
-$json_callback = Lim::RPC::Callback::JSONRPC(key => value...)
+=head2 function1
 
-=back
+=cut
 
-=head1 METHODS
-
-This module uses L<Lim::RPC::Callback> as base, see that modules documentation
-for methods.
+sub name {
+    'https';
+}
 
 =head1 AUTHOR
 
@@ -43,7 +46,7 @@ Please report any bugs or feature requests to L<https://github.com/jelu/lim/issu
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Lim::RPC::Callback::JSONRPC
+perldoc Lim
 
 You can also look for information at:
 
@@ -70,4 +73,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Callback::JSONRPC
+1; # End of Lim::RPC::Transport::HTTPS

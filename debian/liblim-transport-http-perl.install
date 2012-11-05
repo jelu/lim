@@ -1,0 +1,4 @@
+usr/share/man/man3/Lim::RPC::Transport::HTTP.3pm
+usr/share/man/man3/Lim::RPC::Transport::HTTPS.3pm
+usr/share/perl5/Lim/RPC/Transport/HTTP.pm
+usr/share/perl5/Lim/RPC/Transport/HTTPS.pm

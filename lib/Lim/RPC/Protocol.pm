@@ -1,14 +1,12 @@
-package Lim::Component::Server;
+package Lim::RPC::Protocol;
 
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed weaken);
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
 
 use Lim ();
-use Lim::RPC ();
-use Lim::Error ();
 
 =encoding utf8
 
@@ -37,19 +35,20 @@ our $VERSION = $Lim::VERSION;
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
+    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
 
-    eval {
-        $self->Init(@_);
-    };
-    if ($@) {
-        $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
-        return;
+    unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
+        confess __PACKAGE__, ': No server specified or invalid';
     }
-    
+    $self->{__server} = $args{server};
+    weaken($self->{__server});
+
+    $self->Init(@_);
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -59,6 +58,7 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
     
     $self->Destroy;
+    delete $self->{__server};
 }
 
 =head2 function1
@@ -79,37 +79,50 @@ sub Destroy {
 
 =cut
 
-sub Successful {
-    my ($self, $cb, $data) = @_;
-    
-    eval {
-        Lim::RPC::R($cb, $data);
-    };
-    if ($@) {
-        $self->{logger}->warn('data validation failed: ', $@);
-        Lim::RPC::R($cb, Lim::Error->new());
-    }
+sub name {
+    confess 'function name not overloaded';
 }
 
 =head2 function1
 
 =cut
 
-sub Error {
-    my ($self, $cb, $error, @rest) = @_;
-    
-    if (blessed($error) and $error->isa('Lim::Error')) {
-        Lim::RPC::R($cb, $error);
-    }
-    elsif (defined $error) {
-        if (scalar @rest) {
-            $error .= join('', @rest);
-        }
-        Lim::RPC::R($cb, Lim::Error->new(module => $self, message => $error));
-    }
-    else {
-        Lim::RPC::R($cb, Lim::Error->new(module => $self));
-    }
+sub serve {
+    confess 'function serve not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub handle {
+    confess 'function handle not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub timeout {
+    confess 'function timeout not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub server {
+    $_[0]->{__server};
+}
+
+=head2 function1
+
+=cut
+
+sub precall {
+    shift; # $self
+    shift; # $call
+    return @_;
 }
 
 =head1 AUTHOR
@@ -124,7 +137,7 @@ Please report any bugs or feature requests to L<https://github.com/jelu/lim/issu
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Lim
+perldoc Lim
 
 You can also look for information at:
 
@@ -151,4 +164,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Base
+1; # End of Lim::RPC::Protocol

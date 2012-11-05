@@ -73,13 +73,25 @@ sub Config {
         prefix => ['', '/usr', '/usr/local'],
         rpc => {
             timeout => 30,
-            call_timeout => 300
+            call_timeout => 300,
+            transport => {
+                http => {
+                    host => undef,
+                    port => 5353,
+                    html => '/usr/share/lim/html'
+                }
+            }
         },
         cli => {
             history_length => 1000,
             history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
             config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
             editor => $ENV{EDITOR}
+        },
+        ssl => {
+            method => 'any',
+            verify => 1,
+            verify_require_client_cert => 1    
         }
     };
 }

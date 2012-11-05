@@ -65,13 +65,13 @@ sub new {
     unless (defined $args{cb} and ref($args{cb}) eq 'CODE') {
         confess __PACKAGE__, ': cb not given or invalid';
     }
-    unless (defined $args{client} and ref($args{client}) eq 'Lim::RPC::Server::Client') {
-        confess __PACKAGE__, ': client not given or invalid';
+    unless (defined $args{reset_timeout} and ref($args{reset_timeout}) eq 'CODE') {
+        confess __PACKAGE__, ': reset_timeout not given or invalid';
     }
     
     $self->{cb} = $args{cb};
-    $self->{client} = $args{client};
-    
+    $self->{reset_timeout} = $args{reset_timeout};
+
     $self->Init(@_);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -119,16 +119,6 @@ sub cb {
     $_[0]->{cb};
 }
 
-=item $callback->client
-
-Return the client.
-
-=cut
-
-sub client {
-    $_[0]->{client};
-}
-
 =item $callback->call_def
 
 Return the call definition set by C<set_call_def>.
@@ -161,7 +151,7 @@ Reset the timeout of the client related to this callback.
 =cut
 
 sub reset_timeout {
-    $_[0]->{client}->reset_timeout;
+    $_[0]->{reset_timeout}->();
 }
 
 =back

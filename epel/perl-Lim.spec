@@ -87,6 +87,41 @@ Version: 0.12
 %description -n lim-cli
 The Lim CLI used to control a local or remote Lim agent.
 
+%package -n perl-Lim-Transport-HTTP
+Summary: Lim HTTP/HTTPS transport perl libraries
+Group: Development/Libraries
+Version: 0.12
+%description -n perl-Lim-Transport-HTTP
+Lim perl libraries for HTTP/HTTPS transport.
+
+%package -n perl-Lim-Protocol-REST
+Summary: Lim REST protocol perl libraries
+Group: Development/Libraries
+Version: 0.12
+%description -n perl-Lim-Transport-REST
+Lim perl libraries for REST protocol.
+
+%package -n perl-Lim-Protocol-SOAP
+Summary: Lim SOAP protocol perl libraries
+Group: Development/Libraries
+Version: 0.12
+%description -n perl-Lim-Transport-SOAP
+Lim perl libraries for SOAP protocol.
+
+%package -n perl-Lim-Protocol-XMLRPC
+Summary: Lim XMLRPC protocol perl libraries
+Group: Development/Libraries
+Version: 0.12
+%description -n perl-Lim-Transport-XMLRPC
+Lim perl libraries for XMLRPC protocol.
+
+%package -n perl-Lim-Protocol-JSONRPC
+Summary: Lim JSONRPC protocol perl libraries
+Group: Development/Libraries
+Version: 0.12
+%description -n perl-Lim-Transport-JSONRPC
+Lim perl libraries for JSONRPC protocol.
+
 
 %prep
 %setup -q -n lim
@@ -117,7 +152,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc Changes README
 %{_mandir}/man3/Lim::Component.3*
 %{_mandir}/man3/Lim::RPC::Value::Collection.3*
-%{_mandir}/man3/Lim::RPC::Client::TLS.3*
+%{_mandir}/man3/Lim::RPC::TLS.3*
 %{_mandir}/man3/Lim::RPC::Call.3*
 %{_mandir}/man3/Lim::RPC::Value.3*
 %{_mandir}/man3/Lim::Plugins.3*
@@ -133,7 +168,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/Component/Client.pm
 %{perl_vendorlib}/Lim/Util.pm
 %{perl_vendorlib}/Lim/RPC/Client.pm
-%{perl_vendorlib}/Lim/RPC/Client/TLS.pm
+%{perl_vendorlib}/Lim/RPC/TLS.pm
 %{perl_vendorlib}/Lim/RPC/Value/Collection.pm
 %{perl_vendorlib}/Lim/RPC/Call.pm
 %{perl_vendorlib}/Lim/RPC/Value.pm
@@ -144,20 +179,18 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_mandir}/man3/Lim::Component::Server.3*
 %{_mandir}/man3/Lim::RPC::Callback.3*
-%{_mandir}/man3/Lim::RPC::Callback::XMLRPC.3*
-%{_mandir}/man3/Lim::RPC::Callback::SOAP.3*
-%{_mandir}/man3/Lim::RPC::Callback::JSON.3*
-%{_mandir}/man3/Lim::RPC::Server::Client.3*
-%{_mandir}/man3/Lim::RPC::Callback::JSONRPC.3*
 %{_mandir}/man3/Lim::RPC::Server.3*
+%{_mandir}/man3/Lim::RPC::Transport.3*
+%{_mandir}/man3/Lim::RPC::Transports.3*
+%{_mandir}/man3/Lim::RPC::Protocol.3*
+%{_mandir}/man3/Lim::RPC::Protocols.3*
 %{perl_vendorlib}/Lim/Component/Server.pm
-%{perl_vendorlib}/Lim/RPC/Server/Client.pm
 %{perl_vendorlib}/Lim/RPC/Callback.pm
-%{perl_vendorlib}/Lim/RPC/Callback/XMLRPC.pm
-%{perl_vendorlib}/Lim/RPC/Callback/SOAP.pm
-%{perl_vendorlib}/Lim/RPC/Callback/JSONRPC.pm
-%{perl_vendorlib}/Lim/RPC/Callback/JSON.pm
 %{perl_vendorlib}/Lim/RPC/Server.pm
+%{perl_vendorlib}/Lim/RPC/Transport.pm
+%{perl_vendorlib}/Lim/RPC/Transports.pm
+%{perl_vendorlib}/Lim/RPC/Protocol.pm
+%{perl_vendorlib}/Lim/RPC/Protocols.pm
 %{_datadir}/lim/html
 
 %files -n perl-Lim-CLI
@@ -196,6 +229,30 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_mandir}/man1/lim-cli.1*
 %{_bindir}/lim-cli
+
+%files -n perl-Lim-Transport-HTTP
+%{_mandir}/man3/Lim::RPC::Transport::HTTP.3*
+%{_mandir}/man3/Lim::RPC::Transport::HTTPS.3*
+%{perl_vendorlib}/Lim/RPC/Transport/HTTP.pm
+%{perl_vendorlib}/Lim/RPC/Transport/HTTPS.pm
+
+%files -n perl-Lim-Protocol-REST
+%{_mandir}/man3/Lim::RPC::Protocol::REST.3*
+%{perl_vendorlib}/Lim/RPC/Protocol/REST.pm
+
+%files -n perl-Lim-Protocol-SOAP
+%{_mandir}/man3/Lim::RPC::Protocol::SOAP.3*
+%{perl_vendorlib}/Lim/RPC/Protocol/SOAP.pm
+
+%files -n perl-Lim-Protocol-XMLRPC
+%{_mandir}/man3/Lim::RPC::Protocol::XMLRPC.3*
+%{perl_vendorlib}/Lim/RPC/Protocol/XMLRPC.pm
+
+%files -n perl-Lim-Protocol-JSONRPC
+%{_mandir}/man3/Lim::RPC::Protocol::JSONRPC1.3*
+%{_mandir}/man3/Lim::RPC::Protocol::JSONRPC2.3*
+%{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC1.pm
+%{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC2.pm
 
 
 %changelog

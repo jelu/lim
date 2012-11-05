@@ -9,7 +9,7 @@ use AnyEvent ();
 
 use Lim ();
 use Lim::RPC::Server ();
-use Lim::RPC::Client::TLS ();
+use Lim::RPC::TLS ();
 use Lim::Agent ();
 use Lim::Plugins ();
 
@@ -36,6 +36,11 @@ unless (-d $html) {
     print STDERR 'Path to HTML directory invalid or non existing: ', $html, "\n";
     exit(1);
 }
+
+Lim::Config->{ssl}->{ca_file} = $key;
+Lim::Config->{ssl}->{cert_file} = $key;
+Lim::Config->{ssl}->{key_file} = $key;
+Lim::Config->{html} = $html;
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
@@ -82,15 +87,12 @@ push(@watchers,
 
 $html =~ s/\/*$//o;
 
-Lim::RPC::Client::TLS->set_instance(Lim::RPC::Client::TLS->new(
+Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
     key => $key
 ));
 
 my $server = Lim::RPC::Server->new(
-    host => $host,
-    port => $port,
-    key => $key,
-    html => $html
+    uri => (@ARGV == 1 ? $ARGV[0] : \@ARGV)
 );
 $server->serve(qw(Lim::Agent));
 $server->serve(Lim::Plugins->instance->LoadedModules);

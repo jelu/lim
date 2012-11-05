@@ -1,11 +1,10 @@
-package Lim::RPC::Client::TLS;
+package Lim::RPC::Transport;
 
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed weaken);
 use Log::Log4perl ();
-
-use AnyEvent::TLS ();
 
 use Lim ();
 
@@ -22,7 +21,6 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $INSTANCE;
 
 =head1 SYNOPSIS
 
@@ -40,21 +38,17 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
+        __protocols => []
     };
     bless $self, $class;
-    
-    unless (defined $args{key} and -f $args{key}) {
-        confess __PACKAGE__, ': No key file specified or not found';
-    }
 
-    $self->{tls_ctx} = AnyEvent::TLS->new(
-        method => 'any',
-        ca_file => $args{key},
-        cert_file => $args{key},
-        key_file => $args{key},
-        verify => 1,
-        verify_require_client_cert => 1
-        );
+    unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
+        confess __PACKAGE__, ': No server specified or invalid';
+    }
+    $self->{__server} = $args{server};
+    weaken($self->{__server});
+    
+    $self->Init(@_);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
@@ -63,35 +57,73 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-}
-
-END {
-    undef($INSTANCE);
-}
-
-=head2 function1
-
-=cut
-
-sub instance {
-    $INSTANCE ||= Lim::RPC::Client::TLS->new;
+    
+    $self->Destroy;
+    delete $self->{__protocols};
+    delete $self->{__server};
 }
 
 =head2 function1
 
 =cut
 
-sub set_instance {
-    shift;
-    $INSTANCE = shift;
+sub Init {
 }
 
 =head2 function1
 
 =cut
 
-sub tls_ctx {
-    $_[0]->{tls_ctx};
+sub Destroy {
+}
+
+=head2 function1
+
+=cut
+
+sub name {
+    confess 'function name not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub uri {
+    confess 'function uri not overloaded';
+}
+
+=head2 function1
+
+=cut
+
+sub add_protocol {
+    my $self = shift;
+    
+    foreach (@_) {
+        unless (blessed($_) and $_->isa('Lim::RPC::Protocol')) {
+            confess 'Argument is not a Lim::RPC::Protocol';
+        }
+    }
+    push(@{$self->{__protocols}}, @_);
+    
+    $self;
+}
+
+=head2 function1
+
+=cut
+
+sub protocols {
+    @{$_[0]->{__protocols}};
+}
+
+=head2 function1
+
+=cut
+
+sub server {
+    $_[0]->{__server};
 }
 
 =head1 AUTHOR
@@ -133,4 +165,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Client::TLS
+1; # End of Lim::RPC::Transport

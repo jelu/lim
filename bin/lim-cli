@@ -10,7 +10,7 @@ use AnyEvent ();
 
 use Lim ();
 use Lim::CLI ();
-use Lim::RPC::Client::TLS ();
+use Lim::RPC::TLS ();
 
 my $help = 0;
 my $conf;
@@ -91,7 +91,7 @@ push(@watchers,
     }),
 );
 
-Lim::RPC::Client::TLS->set_instance(Lim::RPC::Client::TLS->new(
+Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
     key => $key
 ));
 
