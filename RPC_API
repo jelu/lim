@@ -1,26 +1,3 @@
-Internal Class layout
-
-          +-----------+
-          | Requests  |
-          +-----------+
-    request |       | response
-          +-----------+
-          | Transport |
-          +-----------+
-     handle |       | result
-          +-----------+
-          | Protocol  |
-          +-----------+
-     handle |       | result
-          +-----------+
-          |  Server   |
-          +-----------+
-     method |       | callback
-          +-----------+
-          |  Plugin   |
-          +-----------+
-
-
 RESTful
 
 	GET = Get request
