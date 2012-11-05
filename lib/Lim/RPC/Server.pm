@@ -392,6 +392,10 @@ sub serve {
     $self;
 }
 
+=head2 function2
+
+=cut
+
 sub have_module {
     my ($self, $module) = @_;
     
@@ -401,6 +405,10 @@ sub have_module {
     
     return 1;
 }
+
+=head2 function2
+
+=cut
 
 sub have_module_call {
     my ($self, $module, $call) = @_;
@@ -416,6 +424,10 @@ sub have_module_call {
     return 1;
 }
 
+=head2 function2
+
+=cut
+
 sub module_obj {
     my ($self, $module) = @_;
 
@@ -426,6 +438,10 @@ sub module_obj {
     return $self->{module}->{$module}->{obj};
 }
 
+=head2 function2
+
+=cut
+
 sub module_class {
     my ($self, $module) = @_;
 
@@ -435,6 +451,10 @@ sub module_class {
 
     return $self->{module}->{$module}->{module};
 }
+
+=head2 function2
+
+=cut
 
 sub module_obj_by_protocol {
     my ($self, $module, $protocol) = @_;
