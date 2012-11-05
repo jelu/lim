@@ -13,6 +13,7 @@ use JSON::XS ();
 
 use Lim ();
 use Lim::Util ();
+use Lim::RPC::Callback ();
 
 use base qw(Lim::RPC::Protocol);
 

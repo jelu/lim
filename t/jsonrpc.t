@@ -4,7 +4,7 @@ use JSON::XS;
 use LWP::UserAgent;
 use Data::Dumper;
 
-$req = HTTP::Request->new(GET => 'https://127.0.0.1:5353/agent');
+$req = HTTP::Request->new(GET => 'http://127.0.0.1:5353/agent');
 $req->content_type('application/json');
 $req->content(JSON::XS->new->ascii->encode({
     jsonrpc => '2.0',

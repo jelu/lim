@@ -15,6 +15,7 @@ use XMLRPC::Lite ();
 use XMLRPC::Transport::HTTP::Server ();
 
 use Lim ();
+use Lim::RPC::Callback ();
 
 use base qw(Lim::RPC::Protocol);
 
@@ -192,7 +193,7 @@ sub handle {
             }
         }
         else {
-            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+            $response->code(HTTP_NOT_FOUND);
         }
 
         $cb->cb->($response);
