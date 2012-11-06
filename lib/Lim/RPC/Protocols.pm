@@ -88,6 +88,13 @@ sub load {
             $self->{logger}->warn('Protocol ', $module, ' already loaded');
             next;
         }
+        
+        if ($module =~ /^([\w:]+)$/o) {
+            $module = $1;
+        }
+        else {
+            next;
+        }
 
         my $name;
         eval {
@@ -164,6 +171,7 @@ sub protocol {
             }
         }
     }
+    return;
 }
 
 =back

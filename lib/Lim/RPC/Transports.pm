@@ -89,6 +89,13 @@ sub load {
             next;
         }
 
+        if ($module =~ /^([\w:]+)$/o) {
+            $module = $1;
+        }
+        else {
+            next;
+        }
+
         my $name;
         eval {
             eval "require $module;";
@@ -165,6 +172,7 @@ sub transport {
             }
         }
     }
+    return;
 }
 
 =back
