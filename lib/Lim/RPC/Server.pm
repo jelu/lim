@@ -14,6 +14,7 @@ use Lim::RPC::Value ();
 use Lim::RPC::Value::Collection ();
 use Lim::RPC::Protocols ();
 use Lim::RPC::Transports ();
+use Lim::RPC::URIMaps ();
 
 =encoding utf8
 
@@ -150,6 +151,9 @@ sub serve {
                 $self->{logger}->info('Not serving ', $name, ', nothing to serve');
                 next;
             }
+            
+            my $uri_maps = {};
+            
             foreach my $call (keys %$calls) {
                 unless ($obj->can($call)) {
                     $self->{logger}->warn('Can not serve ', $name, ': Missing specified call ', $call, ' function');
@@ -176,6 +180,29 @@ sub serve {
                         $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid definition');
                         undef($calls);
                         last;
+                    }
+                    
+                    if (exists $call_def->{uri_map}) {
+                        unless (ref($call_def->{uri_map}) eq 'ARRAY') {
+                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map parameter definition');
+                            undef($calls);
+                            last;
+                        }
+                        
+                        my $uri_map = Lim::RPC::URIMaps->new;
+                        
+                        foreach my $map (@{$call_def->{uri_map}}) {
+                            unless ($uri_map->add($map)) {
+                                $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: ', $@);
+                                undef($calls);
+                                last;
+                            }
+                        }
+                        unless (defined $calls) {
+                            last;
+                        }
+                        
+                        $uri_maps->{$call} = $uri_map;
                     }
                     
                     if (exists $call_def->{in}) {
@@ -380,7 +407,8 @@ sub serve {
                 name => $name,
                 module => $module,
                 obj => $obj,
-                calls => $calls
+                calls => $calls,
+                uri_maps => $uri_maps
             };
 
             foreach my $protocol (values %{$self->{protocol}}) {
@@ -468,6 +496,28 @@ sub module_obj_by_protocol {
     }
     
     bless {}, 'Lim::RPC::ProtocolCall::'.$protocol.'::'.$self->{module}->{$module}->{module}.'::Server';
+}
+
+=head2 function2
+
+=cut
+
+sub process_module_call_uri_map {
+    my ($self, $module, $call, $uri, $data) = @_;
+
+    unless (exists $self->{module}->{$module}) {
+        return;
+    }
+    
+    unless (ref($data) eq 'HASH') {
+        return;
+    }
+
+    unless (exists $self->{module}->{$module}->{uri_maps}->{$call}) {
+        return;
+    }
+
+    return $self->{module}->{$module}->{uri_maps}->{$call}->process($uri, $data);
 }
 
 =head1 AUTHOR

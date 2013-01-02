@@ -109,17 +109,10 @@ sub handle {
                 $obj = $server->module_obj_by_protocol($module, $self->name);
             }
             
-            my ($query, @parameters);
+            my ($query);
             if (defined $obj) {
                 Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
-                if (defined $parameters) {
-                    foreach my $parameter (split(/\//o, $parameters)) {
-                        $parameter =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-                        push(@parameters, $parameter);
-                    }
-                }
-            
                 if ($request->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
                     my $query_str = $request->content;
                     $query_str =~ s/[\015\012]+$//o;
@@ -175,6 +168,10 @@ sub handle {
                             }
                         }
                     }
+                }
+                
+                if (defined $parameters) {
+                    $server->process_module_call_uri_map($module, $call, $parameters, $query);
                 }
             }
                 
@@ -232,7 +229,7 @@ sub handle {
                     },
                     reset_timeout => sub {
                         $cb->reset_timeout;
-                    }), $query, @parameters);
+                    }), $query);
                 return 1;
             }
             else {

@@ -54,6 +54,24 @@ sub Calls {
                     loaded => 'bool'
                 }
             }
+        },
+        ReadPlugin => {
+            uri_map => [
+                'plugin.name=\w+'
+            ],
+            in => {
+                plugin => {
+                    name => 'string'
+                }
+            },
+            out => {
+                plugin => {
+                    name => 'string',
+                    module => 'string',
+                    version => 'string',
+                    loaded => 'bool'
+                }
+            }
         }
     };
 }

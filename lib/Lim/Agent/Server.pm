@@ -47,6 +47,25 @@ sub ReadPlugins {
     $self->Successful($cb, { plugin => [ Lim::Plugins->instance->Loaded ] });
 }
 
+=head2 function1
+
+=cut
+
+sub ReadPlugin {
+    my ($self, $cb, $q) = @_;
+    my @plugins = ( Lim::Plugins->instance->Loaded );
+    my $result = {};
+
+    foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
+        foreach my $loaded (@plugins) {
+            if (lc($loaded->{name}) eq $plugin->{name}) {
+                push(@{$result->{plugin}}, $loaded);
+            }
+        }
+    }
+    $self->Successful($cb, $result);
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
