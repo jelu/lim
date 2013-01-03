@@ -112,6 +112,7 @@ sub Load {
             $self->{plugin}->{$module} = {
                 name => $name,
                 module => $module,
+                version => -1,
                 loaded => 0,
                 error => $@
             };

@@ -44,7 +44,7 @@ sub ReadVersion {
 sub ReadPlugins {
     my ($self, $cb) = @_;
     
-    $self->Successful($cb, { plugin => [ Lim::Plugins->instance->Loaded ] });
+    $self->Successful($cb, { plugin => [ Lim::Plugins->instance->All ] });
 }
 
 =head2 function1
@@ -53,7 +53,7 @@ sub ReadPlugins {
 
 sub ReadPlugin {
     my ($self, $cb, $q) = @_;
-    my @plugins = ( Lim::Plugins->instance->Loaded );
+    my @plugins = ( Lim::Plugins->instance->All );
     my $result = {};
 
     foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
@@ -72,7 +72,7 @@ sub ReadPlugin {
 
 sub ReadPluginVersion {
     my ($self, $cb, $q) = @_;
-    my @plugins = ( Lim::Plugins->instance->Loaded );
+    my @plugins = ( Lim::Plugins->instance->All );
     my $result = {};
 
     foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
@@ -94,7 +94,7 @@ sub ReadPluginVersion {
 
 sub ReadPluginLoaded {
     my ($self, $cb, $q) = @_;
-    my @plugins = ( Lim::Plugins->instance->Loaded );
+    my @plugins = ( Lim::Plugins->instance->All );
     my $result = {};
 
     foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
