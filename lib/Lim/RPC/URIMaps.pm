@@ -56,11 +56,18 @@ sub DESTROY {
 
 sub add {
     my ($self, $map) = @_;
-    my (@regexps, @variables, $regexp, $n, $code);
+    my (@regexps, @variables, $regexp, $n, $code, $call);
     
     #
     # Validate and pull out parts of the map used to generate regexp and code
     #
+    
+    if ($map =~ /^(\S+)\s+=>\s+(\w+)$/o) {
+        ($map, $call) = ($1, $2);
+    }
+    else {
+        $call = '';
+    }
     
     foreach my $map_part (split(/\//o, $map)) {
         if ($map_part =~ /^\w+$/o) {
@@ -120,7 +127,7 @@ sub add {
     # Create the subroutine from the generated code
     #
     
-    eval '$code = sub { my ($uri, $data)=@_; if($uri =~ /'.$regexp.'/o) { '.$code.' return 1;} return; };';
+    eval '$code = sub { my ($uri, $data)=@_; if($uri =~ /'.$regexp.'/o) { '.$code.' return \''.$call.'\';} return; };';
     if ($@) {
         Lim::DEBUG and $self->{logger}->debug('Code generation of map "', $map, '" failed: ', $@);
         return;
@@ -131,7 +138,7 @@ sub add {
     #
 
     push(@{$self->{maps}}, $code);
-    return 1;
+    return $call;
 }
 
 =head2 function1
@@ -146,8 +153,8 @@ sub process {
     }
     
     foreach my $map (@{$self->{maps}}) {
-        if ($map->($uri, $data)) {
-            return 1;
+        if (defined (my $ret = $map->($uri, $data))) {
+            return $ret;
         }
     }
     return;

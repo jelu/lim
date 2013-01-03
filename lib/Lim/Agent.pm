@@ -57,7 +57,9 @@ sub Calls {
         },
         ReadPlugin => {
             uri_map => [
-                'plugin.name=\w+'
+                'plugin.name=\w+',
+                'plugin.name=\w+/version => ReadPluginVersion',
+                'plugin.name=\w+/loaded => ReadPluginLoaded'
             ],
             in => {
                 plugin => {
@@ -69,6 +71,38 @@ sub Calls {
                     name => 'string',
                     module => 'string',
                     version => 'string',
+                    loaded => 'bool'
+                }
+            }
+        },
+        ReadPluginVersion => {
+            uri_map => [
+                'plugin.name=\w+'
+            ],
+            in => {
+                plugin => {
+                    name => 'string'
+                }
+            },
+            out => {
+                plugin => {
+                    name => 'string',
+                    version => 'string'
+                }
+            }
+        },
+        ReadPluginLoaded => {
+            uri_map => [
+                'plugin.name=\w+'
+            ],
+            in => {
+                plugin => {
+                    name => 'string'
+                }
+            },
+            out => {
+                plugin => {
+                    name => 'string',
                     loaded => 'bool'
                 }
             }

@@ -66,6 +66,50 @@ sub ReadPlugin {
     $self->Successful($cb, $result);
 }
 
+=head2 function1
+
+=cut
+
+sub ReadPluginVersion {
+    my ($self, $cb, $q) = @_;
+    my @plugins = ( Lim::Plugins->instance->Loaded );
+    my $result = {};
+
+    foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
+        foreach my $loaded (@plugins) {
+            if (lc($loaded->{name}) eq $plugin->{name}) {
+                push(@{$result->{plugin}}, {
+                    name => $loaded->{name},
+                    version => $loaded->{version}
+                });
+            }
+        }
+    }
+    $self->Successful($cb, $result);
+}
+
+=head2 function1
+
+=cut
+
+sub ReadPluginLoaded {
+    my ($self, $cb, $q) = @_;
+    my @plugins = ( Lim::Plugins->instance->Loaded );
+    my $result = {};
+
+    foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
+        foreach my $loaded (@plugins) {
+            if (lc($loaded->{name}) eq $plugin->{name}) {
+                push(@{$result->{plugin}}, {
+                    name => $loaded->{name},
+                    loaded => $loaded->{loaded}
+                });
+            }
+        }
+    }
+    $self->Successful($cb, $result);
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

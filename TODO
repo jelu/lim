@@ -4,7 +4,4 @@
 - Lim::CLI Ask(text, cb)/Confirm(text, cb)
 - RPC calls should not be able to kill server/client
 - Schema cache settings
-- Schema rewrite
-  rewrite => { '/:object=>id/subcall' => 'ReadThisSubcall' }
-  - extend map with rewriting to other calls
 - Simple logging for plugins

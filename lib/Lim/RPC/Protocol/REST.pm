@@ -171,7 +171,12 @@ sub handle {
                 }
                 
                 if (defined $parameters) {
-                    $server->process_module_call_uri_map($module, $call, $parameters, $query);
+                    my $redirect_call = $server->process_module_call_uri_map($module, $call, $parameters, $query);
+                    
+                    if (defined $redirect_call and $redirect_call) {
+                        Lim::DEBUG and $self->{logger}->debug('API call redirected ', $call, ' => ', $redirect_call);
+                        $call = $redirect_call;
+                    }
                 }
             }
                 

@@ -192,7 +192,16 @@ sub serve {
                         my $uri_map = Lim::RPC::URIMaps->new;
                         
                         foreach my $map (@{$call_def->{uri_map}}) {
-                            unless ($uri_map->add($map)) {
+                            if (defined (my $redirect_call = $uri_map->add($map))) {
+                                if ($redirect_call) {
+                                    unless (exists $calls->{$redirect_call}) {
+                                        $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: redirected to non-existing call ', $redirect_call);
+                                        undef($calls);
+                                        last;
+                                    }
+                                }
+                            }
+                            else {
                                 $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: ', $@);
                                 undef($calls);
                                 last;
