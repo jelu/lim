@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed weaken);
+use Scalar::Util qw(weaken);
 
 use Lim ();
 
@@ -21,6 +21,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our %_MAP_CACHE_CODE;
 
 =head1 SYNOPSIS
 
@@ -57,17 +58,26 @@ sub DESTROY {
 sub add {
     my ($self, $map) = @_;
     my (@regexps, @variables, $regexp, $n, $code, $call);
-    
+
     #
-    # Validate and pull out parts of the map used to generate regexp and code
+    # See if this is a redirect call and check if we have the map in cache
     #
-    
+
     if ($map =~ /^(\S+)\s+=>\s+(\w+)$/o) {
         ($map, $call) = ($1, $2);
     }
     else {
         $call = '';
     }
+    
+    if (exists $_MAP_CACHE_CODE{$map} and defined $_MAP_CACHE_CODE{$map}) {
+        push(@{$self->{maps}}, $_MAP_CACHE_CODE{$map});
+        return $call;
+    }
+    
+    #
+    # Validate and pull out parts of the map used to generate regexp and code
+    #
     
     foreach my $map_part (split(/\//o, $map)) {
         if ($map_part =~ /^\w+$/o) {
@@ -106,14 +116,16 @@ sub add {
 
     $n = 1;
     while ($n <= scalar @variables) {
-        $code .= '$v'.$n++;
+        $code .= '$v'.$n.($n != scalar @variables ? ',' : '');
+        $n++;
     }
     
     $code .= ')=(';
 
     $n = 1;
     while ($n <= scalar @variables) {
-        $code .= '$'.$n++;
+        $code .= '$'.$n.($n != scalar @variables ? ',' : '');
+        $n++;
     }
     
     $code .= ');';
@@ -134,9 +146,23 @@ sub add {
     }
     
     #
+    # Verify code by calling it in eval
+    #
+    
+    eval {
+        $code->('', {});
+    };
+    if ($@) {
+        Lim::DEBUG and $self->{logger}->debug('Verify code of map "', $map, '" failed: ', $@);
+        return;
+    }
+    
+    #
     # Store the generated subroutine and return success
     #
 
+    $_MAP_CACHE_CODE{$map} = $code;
+    weaken($_MAP_CACHE_CODE{$map});
     push(@{$self->{maps}}, $code);
     return $call;
 }
