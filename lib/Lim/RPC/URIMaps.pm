@@ -57,14 +57,17 @@ sub DESTROY {
 
 sub add {
     my ($self, $map) = @_;
-    my (@regexps, @variables, $regexp, $n, $code, $call);
+    my (@regexps, @variables, $regexp, $n, $code, $call, $predata);
 
     #
     # See if this is a redirect call and check if we have the map in cache
     #
 
-    if ($map =~ /^(\S+)\s+=>\s+(\w+)$/o) {
-        ($map, $call) = ($1, $2);
+    if ($map =~ /^(\S+)\s+=>\s+(\w+)(?:\s+(\S+))?$/o) {
+        ($map, $call, $predata) = ($1, $2, $3);
+    }
+    elsif ($map =~ /^(\S+)\s+(\S+)$/o) {
+        ($map, $call, $predata) = ($1, '', $2);
     }
     else {
         $call = '';
@@ -111,6 +114,21 @@ sub add {
     # Generate the code that checked given URI with generated regexp and adds
     # data gotten by the regexp to the data structure defined by the map
     #
+    
+    if ($predata) {
+        foreach my $predata_variable (split(/,/o, $predata)) {
+            if ($predata_variable =~ /^([^=]+)=(.+)$/o) {
+                my ($variable, $value) = ($1, $2);
+
+                $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = \''.$value.'\'';
+            }
+            else {
+                Lim::DEBUG and $self->{logger}->debug('Predata of map "', $map, '" invalid');
+                $@ = 'Predata is not valid';
+                return;
+            }
+        }
+    }
 
     if (scalar @variables) {
         $code = 'my (';
