@@ -112,27 +112,32 @@ sub add {
     # data gotten by the regexp to the data structure defined by the map
     #
 
-    $code = 'my (';
-
-    $n = 1;
-    while ($n <= scalar @variables) {
-        $code .= '$v'.$n.($n != scalar @variables ? ',' : '');
-        $n++;
-    }
+    if (scalar @variables) {
+        $code = 'my (';
     
-    $code .= ')=(';
-
-    $n = 1;
-    while ($n <= scalar @variables) {
-        $code .= '$'.$n.($n != scalar @variables ? ',' : '');
-        $n++;
-    }
+        $n = 1;
+        while ($n <= scalar @variables) {
+            $code .= '$v'.$n.($n != scalar @variables ? ',' : '');
+            $n++;
+        }
+        
+        $code .= ')=(';
     
-    $code .= ');';
-
-    $n = 1;
-    foreach my $variable (@variables) {
-        $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = $v'.($n++).';';
+        $n = 1;
+        while ($n <= scalar @variables) {
+            $code .= '$'.$n.($n != scalar @variables ? ',' : '');
+            $n++;
+        }
+        
+        $code .= ');';
+    
+        $n = 1;
+        foreach my $variable (@variables) {
+            $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = $v'.($n++).';';
+        }
+    }
+    else {
+        $code = '';
     }
 
     #
