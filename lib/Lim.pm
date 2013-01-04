@@ -134,19 +134,54 @@ configuration.
 =cut
 
 sub LoadConfig {
-    my ($config) = @_;
+    my ($filename) = @_;
     
-    if (defined $config and -r $config) {
+    if (defined $filename and -r $filename) {
         my $yaml;
         
         eval {
-            $yaml = YAML::Any::LoadFile($config);
+            $yaml = YAML::Any::LoadFile($filename);
         };
         if ($@) {
-            confess __PACKAGE__, ': Unable to read configuration file ', $config, ': ', $@, "\n";
-            exit(1);
+            confess __PACKAGE__, ': Unable to read configuration file ', $filename, ': ', $@, "\n";
         }
         Lim::MergeConfig($yaml);
+        return 1;
+    }
+    return;
+}
+
+=item Lim::LoadConfigDirectory($directory)
+
+Load the given configuration in directory C<$directory> and merge it into Lim's
+configuration.
+
+=cut
+
+sub LoadConfigDirectory {
+    my ($directory) = @_;
+    
+    if (defined $directory and -d $directory) {
+        unless(opendir(CONFIGS, $directory)) {
+            confess __PACKAGE__, ': Unable to read configurations in directory ', $directory, ': ', $!, "\n";
+        }
+
+        foreach my $entry (sort readdir(CONFIGS)) {
+            my $yaml;
+            
+            unless(-r $entry and $entry =~ /\.yaml$/o) {
+                next;
+            }
+            
+            eval {
+                $yaml = YAML::Any::LoadFile($entry);
+            };
+            if ($@) {
+                confess __PACKAGE__, ': Unable to read configuration file ', $entry, ' from directory ', $directory, ': ', $@, "\n";
+            }
+            Lim::MergeConfig($yaml);
+        }
+        closedir(CONFIGS);
         return 1;
     }
     return;
