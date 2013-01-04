@@ -29,6 +29,9 @@ Getopt::Long::GetOptions(
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
+Lim::LoadConfig('/etc/lim/cli.yaml');
+Lim::LoadConfigDirectory('/etc/lim/cli.d');
+
 if (defined $conf) {
     unless (-r $conf and Lim::LoadConfig($conf)) {
         print STDERR 'Unable to read configuration file: ', $conf, "\n";
