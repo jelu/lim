@@ -86,7 +86,7 @@ sub add {
         if ($map_part =~ /^\w+$/o) {
             push(@regexps, $map_part);
         }
-        elsif ($map_part =~ /^((?:\w+\.)+\w+)=(.+)$/o) {
+        elsif ($map_part =~ /^((?:\w+\.)*\w+)=(.+)$/o) {
             push(@variables, $1);
             push(@regexps, '('.$2.')');
         }
