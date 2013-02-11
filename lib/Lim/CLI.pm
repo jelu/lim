@@ -248,6 +248,7 @@ sub new {
     if (defined (my $appender = Log::Log4perl->appender_by_name('LimCLI'))) {
         Log::Log4perl->eradicate_appender('Screen');
         $appender->{cli} = $self;
+        weaken($appender->{cli});
     }
     
     $self->println('Welcome to LIM ', $Lim::VERSION, ' command line interface');
