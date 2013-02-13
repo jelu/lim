@@ -384,6 +384,7 @@ sub prompt {
     }
     
     $self->print($self->{prompt});
+    IO::Handle::flush STDOUT;
 }
 
 =item $cli->set_prompt
@@ -423,6 +424,7 @@ sub clear_line {
     else {
         $self->{stdin_watcher}->{rbuf} = '';
         print "\r";
+        IO::Handle::flush STDOUT;
     }
     
     $self;
@@ -456,7 +458,10 @@ sub print {
         $self->{rl}->print(@_);
     }
     else {
-        print @_;
+        foreach (@_) {
+            print;
+            IO::Handle::flush STDOUT;
+        }
     }
     
     $self;
@@ -478,7 +483,12 @@ sub println {
         $self->{rl}->show;
     }
     else {
-        print @_, "\n";
+        foreach (@_) {
+            print;
+            IO::Handle::flush STDOUT;
+        }
+        print "\n";
+        IO::Handle::flush STDOUT;
     }
 
     $self;
