@@ -477,7 +477,8 @@ sub __soap_result {
 =cut
 
 sub precall {
-    my ($self, $call, $object, $som) = @_;
+    my ($self, $call, $object) = @_;
+    my $som = pop(@_);
     
     unless (ref($call) eq '' and blessed($object) and blessed($som) and $som->isa('SOAP::SOM')) {
         confess __PACKAGE__, ': Invalid SOAP call';
