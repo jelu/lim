@@ -20,9 +20,11 @@ See L<Lim> for version.
 our $VERSION = $Lim::VERSION;
 
 sub OPT_REQUIRED (){ 0x00000001 }
+sub OPT_SWALLOW (){ 0x00000002 }
 
 our %OPTIONS = (
-    'required' => OPT_REQUIRED
+    'required' => OPT_REQUIRED,
+    'swallow' => OPT_SWALLOW
 );
 
 =head1 SYNOPSIS
@@ -108,6 +110,14 @@ sub set_children {
 
 sub required {
     $_[0]->{options} & OPT_REQUIRED ? 1 : 0;
+}
+
+=head2 function1
+
+=cut
+
+sub swallow {
+    $_[0]->{options} & OPT_SWALLOW ? 1 : 0;
 }
 
 =head2 function1

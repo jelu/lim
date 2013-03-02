@@ -96,7 +96,9 @@ sub V {
                             push(@v, [$q->{$k}, $def->{$k}]);
                         }
                         elsif (blessed $def->{$k} and $def->{$k}->isa('Lim::RPC::Value::Collection')) {
-                            push(@v, [$q->{$k}, $def->{$k}->children]);
+                            unless ($def->{$k}->swallow) {
+                                push(@v, [$q->{$k}, $def->{$k}->children]);
+                            }
                         }
                         else {
                             confess __PACKAGE__, ': invalid definition, can not validate data';
