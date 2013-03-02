@@ -395,6 +395,7 @@ sub serve {
                                 }
                             }
                             elsif (%$q) {
+                                defined $logger and $logger->warn($weak_obj, '->', $call, '() have data but no definition');
                                 $weak_obj->Error($cb);
                                 return;
                             }
