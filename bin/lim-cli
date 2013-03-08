@@ -5,6 +5,7 @@ use Getopt::Long ();
 use Pod::Usage ();
 use Log::Log4perl ();
 use Log::Log4perl::Appender::Lim::CLI ();
+$Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
 
 use AnyEvent ();
 

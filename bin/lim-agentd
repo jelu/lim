@@ -4,6 +4,7 @@ use common::sense;
 use Getopt::Long ();
 use Pod::Usage ();
 use Log::Log4perl ();
+$Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
 
 use AnyEvent ();
 
