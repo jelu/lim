@@ -77,14 +77,22 @@ sub Init {
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
                 
+                unless (defined $self) {
+                    return;
+                }
+
                 $self->{logger}->warn($handle, ' Error: ', $message);
     
-                $handle->destroy;
                 delete $self->{client}->{$handle};
+                $handle->destroy;
             },
             on_timeout => sub {
                 my ($handle) = @_;
                 
+                unless (defined $self) {
+                    return;
+                }
+
                 $self->{logger}->warn($handle, ' TIMEOUT');
                 
 #                my $client = $self->{client}->{$handle};
@@ -95,24 +103,39 @@ sub Init {
 #                    }
 #                }
                 
-                $handle->destroy;
                 delete $self->{client}->{$handle};
+                $handle->destroy;
             },
             on_eof => sub {
                 my ($handle) = @_;
                 
+                unless (defined $self) {
+                    return;
+                }
+
                 Lim::RPC_DEBUG and $self->{logger}->debug($handle, ' EOF');
                 
-                $handle->destroy;
                 delete $self->{client}->{$handle};
+                $handle->destroy;
             },
             on_drain => sub {
+                my ($handle) = @_;
+
+                unless (defined $self) {
+                    return;
+                }
+
                 if ($self->{client}->{$handle}->{close}) {
-                    shutdown $_[0]{fh}, 2;
+                    shutdown $handle->{fh}, 2;
                 }
             },
             on_read => sub {
                 my ($handle) = @_;
+
+                unless (defined $self) {
+                    return;
+                }
+
                 my $client = $self->{client}->{$handle};
                 
                 unless (defined $client) {

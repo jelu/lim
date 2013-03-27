@@ -147,12 +147,21 @@ sub new {
         $self->{rl} = AnyEvent::ReadLine::Gnu->new(
             prompt => 'lim> ',
             on_line => sub {
+                unless (defined $self) {
+                    return;
+                }
+                
                 $self->process(@_);
             });
     
         $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
         $self->{rl}->Attribs->{attempted_completion_function} = sub {
             my ($text, $line, $start, $end) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+            
             my @parts = split(/\s+/o, substr($line, 0, $start));
             my $builtins = 0;
             
@@ -222,25 +231,34 @@ sub new {
     }
     else {
         $self->{stdin_watcher} = AnyEvent::Handle->new(
-             fh => \*STDIN,
-             on_error => sub {
-                my ($handle, $fatal, $msg) = @_;
-                $handle->destroy;
-                $self->{on_quit}($self);
-             },
-             on_eof => sub {
-                 my ($handle) = @_;
-                 $handle->destroy;
-                 $self->{on_quit}($self);
-             },
-             on_read => sub {
-                 my ($handle) = @_;
-                 
-                 $handle->push_read(line => sub {
-                     shift;
-                     $self->process(@_);
-                 });
-             });
+            fh => \*STDIN,
+            on_error => sub {
+            my ($handle, $fatal, $msg) = @_;
+            $handle->destroy;
+            unless (defined $self) {
+                return;
+            }
+            $self->{on_quit}($self);
+        },
+        on_eof => sub {
+            my ($handle) = @_;
+            $handle->destroy;
+            unless (defined $self) {
+                return;
+            }
+            $self->{on_quit}($self);
+        },
+        on_read => sub {
+            my ($handle) = @_;
+
+            $handle->push_read(line => sub {
+                shift;
+                unless (defined $self) {
+                    return;
+                }
+                $self->process(@_);
+            });
+        });
     
         IO::Handle::autoflush STDOUT 1;
     }

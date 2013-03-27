@@ -115,6 +115,10 @@ sub new {
 
     $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
+
+        unless (defined $self) {
+            return;
+        }
         
         unless (defined $fh) {
             $self->{logger}->warn('Error: ', $!);
@@ -136,6 +140,10 @@ sub new {
             timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
+
+                unless (defined $self) {
+                    return;
+                }
                 
                 $self->{logger}->warn($handle, ' Error: ', $message);
                 $self->{status} = ERROR;
@@ -153,6 +161,10 @@ sub new {
             on_timeout => sub {
                 my ($handle) = @_;
                 
+                unless (defined $self) {
+                    return;
+                }
+
                 $self->{logger}->warn($handle, ' TIMEOUT');
                 $self->{status} = ERROR;
                 $self->{error} = 'Connection/Request/Response Timeout';
@@ -170,6 +182,10 @@ sub new {
             on_eof => sub {
                 my ($handle) = @_;
                 
+                unless (defined $self) {
+                    return;
+                }
+
                 $self->{logger}->warn($handle, ' EOF');
                 
                 if (exists $self->{cb}) {
@@ -181,6 +197,10 @@ sub new {
             on_read => sub {
                 my ($handle) = @_;
                 
+                unless (defined $self) {
+                    return;
+                }
+
                 if ((length($self->{rbuf}) + length($handle->{rbuf})) > MAX_RESPONSE_LEN) {
                     if (exists $self->{on_error}) {
                         $self->{on_error}->($self, 1, 'Response too long');
