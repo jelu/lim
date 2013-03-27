@@ -87,6 +87,11 @@ sub Successful {
     };
     if ($@) {
         $self->{logger}->warn('data validation failed: ', $@);
+        Lim::DEBUG and eval {
+            use Data::Dumper;
+            $self->{logger}->debug(Dumper($data));
+            $self->{logger}->debug(Dumper($cb->call_def->{out}));
+        };
         Lim::RPC::R($cb, Lim::Error->new());
     }
 }

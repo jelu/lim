@@ -390,6 +390,11 @@ sub serve {
                                 };
                                 if ($@) {
                                     defined $logger and $logger->warn($weak_obj, '->', $call, '() data validation failed: ', $@);
+                                    Lim::DEBUG and defined $logger and eval {
+                                        use Data::Dumper;
+                                        $logger->debug(Dumper($q));
+                                        $logger->debug(Dumper($call_def->{in}));
+                                    };
                                     $weak_obj->Error($cb);
                                     return;
                                 }
