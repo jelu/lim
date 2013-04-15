@@ -15,6 +15,8 @@ use AnyEvent::Util ();
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::Util - Utilities for plugins
@@ -198,9 +200,17 @@ sub FileWriteContent {
         $tell = $fh->tell;
         $fh->seek(0, SEEK_SET);
         unless ($fh->read($read, $tell) == $tell) {
+            $fh->close;
+            unless ($file->isa('File::Temp')) {
+                unlink($filename);
+            }
             return;
         }
         unless (Digest::SHA::sha1_base64($content) eq Digest::SHA::sha1_base64($read)) {
+            $fh->close;
+            unless ($file->isa('File::Temp')) {
+                unlink($filename);
+            }
             return;
         }
     }
@@ -497,7 +507,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

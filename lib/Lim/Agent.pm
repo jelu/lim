@@ -6,6 +6,8 @@ use Lim ();
 
 use base qw(Lim::Component);
 
+=encoding utf8
+
 =head1 NAME
 
 ...
@@ -52,6 +54,58 @@ sub Calls {
                     loaded => 'bool'
                 }
             }
+        },
+        ReadPlugin => {
+            uri_map => [
+                'plugin.name=\w+',
+                'plugin.name=\w+/version => ReadPluginVersion',
+                'plugin.name=\w+/loaded => ReadPluginLoaded'
+            ],
+            in => {
+                plugin => {
+                    name => 'string'
+                }
+            },
+            out => {
+                plugin => {
+                    name => 'string',
+                    module => 'string',
+                    version => 'string',
+                    loaded => 'bool'
+                }
+            }
+        },
+        ReadPluginVersion => {
+            uri_map => [
+                'plugin.name=\w+'
+            ],
+            in => {
+                plugin => {
+                    name => 'string'
+                }
+            },
+            out => {
+                plugin => {
+                    name => 'string',
+                    version => 'string'
+                }
+            }
+        },
+        ReadPluginLoaded => {
+            uri_map => [
+                'plugin.name=\w+'
+            ],
+            in => {
+                plugin => {
+                    name => 'string'
+                }
+            },
+            out => {
+                plugin => {
+                    name => 'string',
+                    loaded => 'bool'
+                }
+            }
         }
     };
 }
@@ -95,7 +149,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

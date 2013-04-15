@@ -1,5 +1,5 @@
 Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
-Maintainer: Jerry Lundstr�m <lundstrom.jerry@gmail.com>
+Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Source: http://search.cpan.org/dist/Lim/
 Name: Lim
 DISCLAIMER: This copyright info was automatically extracted 
@@ -12,11 +12,11 @@ DISCLAIMER: This copyright info was automatically extracted
  with this file.
 
 Files: *
-Copyright: Jerry Lundstr�m <lundstrom.jerry@gmail.com>
+Copyright: Jerry Lundström <lundstrom.jerry@gmail.com>
 License: Artistic or GPL-1+
 
 Files: debian/*
-Copyright: 2012, Jerry Lundström <lundstrom.jerry@gmail.com>
+Copyright: 2012-2013, Jerry Lundström <lundstrom.jerry@gmail.com>
 License: Artistic or GPL-1+
 
 License: Artistic

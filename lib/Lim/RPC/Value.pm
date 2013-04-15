@@ -5,6 +5,8 @@ use Carp;
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...
@@ -20,21 +22,25 @@ our $VERSION = $Lim::VERSION;
 sub STRING (){ 'string' }
 sub INTEGER (){ 'integer' }
 sub BOOL (){ 'bool' }
+sub BASE64 (){ 'base64' }
 
 our %TYPE = (
     STRING() => STRING,
     INTEGER() => INTEGER,
-    BOOL() => BOOL
+    BOOL() => BOOL,
+    BASE64() => BASE64
 );
 our %XSD_TYPE = (
     STRING() => 'xsd:string',
     INTEGER() => 'xsd:integer',
-    BOOL() => 'xsd:boolean'
+    BOOL() => 'xsd:boolean',
+    BASE64() => 'xsd:base64Binary'
 );
 our %XMLRPC_TYPE = (
     STRING() => 'string',
     INTEGER() => 'int',
-    BOOL() => 'boolean'
+    BOOL() => 'boolean',
+    BASE64() => 'base64'
 );
 
 sub OPT_REQUIRED (){ 0x00000001 }
@@ -205,7 +211,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

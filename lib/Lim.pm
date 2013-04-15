@@ -5,27 +5,63 @@ use Carp;
 
 use YAML::Any ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.12
+Version 0.13
 
 =cut
 
-our $VERSION = '0.12';
-our $CONFIG;
+our $VERSION = '0.13';
+our $CONFIG = {
+    log => {
+        obj_debug => 1,
+        rpc_debug => 1,
+        debug => 1,
+        info => 1,
+        warn => 1,
+        err => 1
+    },
+    prefix => ['', '/usr', '/usr/local'],
+    rpc => {
+        srv_listen => 10,
+        timeout => 30,
+        call_timeout => 300,
+        transport => {
+            http => {
+                host => undef,
+                port => 5353,
+                html => '/usr/share/lim/html'
+            }
+        }
+    },
+    agent => {
+        config_file => ''
+    },
+    cli => {
+        history_length => 1000,
+        history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
+        config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
+        editor => $ENV{EDITOR}
+    },
+    ssl => {
+        method => 'any',
+        verify => 1,
+        verify_require_client_cert => 1
+    }
+};
 
-sub OBJ_DEBUG (){ 1 }
-sub RPC_DEBUG (){ 1 }
-sub DEBUG (){ 1 }
-sub INFO (){ 1 }
-sub WARN (){ 1 }
-sub ERR (){ 1 }
-
-sub SRV_LISTEN (){ 10 }
+sub OBJ_DEBUG { 1 }
+sub RPC_DEBUG { 1 }
+sub DEBUG { 1 }
+sub INFO { 1 }
+sub WARN { 1 }
+sub ERR { 1 }
 
 =head1 SYNOPSIS
 
@@ -66,21 +102,7 @@ Return a hash reference to the configuration.
 
 =cut
 
-sub Config {
-    $CONFIG ||= {
-        prefix => ['', '/usr', '/usr/local'],
-        rpc => {
-            timeout => 30,
-            call_timeout => 300
-        },
-        cli => {
-            history_length => 1000,
-            history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
-            config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
-            editor => $ENV{EDITOR}
-        }
-    };
-}
+sub Config (){ $CONFIG }
 
 =item Lim::MergeConfig($config)
 
@@ -120,22 +142,75 @@ configuration.
 =cut
 
 sub LoadConfig {
-    my ($config) = @_;
+    my ($filename) = @_;
     
-    if (defined $config and -r $config) {
+    if (defined $filename and -r $filename) {
         my $yaml;
         
+        Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $filename);
         eval {
-            $yaml = YAML::Any::LoadFile($config);
+            $yaml = YAML::Any::LoadFile($filename);
         };
         if ($@) {
-            confess __PACKAGE__, ': Unable to read configuration file ', $config, ': ', $@, "\n";
-            exit(1);
+            confess __PACKAGE__, ': Unable to read configuration file ', $filename, ': ', $@, "\n";
         }
         Lim::MergeConfig($yaml);
         return 1;
     }
     return;
+}
+
+=item Lim::LoadConfigDirectory($directory)
+
+Load the given configuration in directory C<$directory> and merge it into Lim's
+configuration.
+
+=cut
+
+sub LoadConfigDirectory {
+    my ($directory) = @_;
+    
+    if (defined $directory and -d $directory) {
+        unless(opendir(CONFIGS, $directory)) {
+            confess __PACKAGE__, ': Unable to read configurations in directory ', $directory, ': ', $!, "\n";
+        }
+
+        foreach my $entry (sort readdir(CONFIGS)) {
+            my $yaml;
+            
+            unless(-r $entry and $entry =~ /\.yaml$/o) {
+                next;
+            }
+            
+            Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry);
+            eval {
+                $yaml = YAML::Any::LoadFile($entry);
+            };
+            if ($@) {
+                confess __PACKAGE__, ': Unable to read configuration file ', $entry, ' from directory ', $directory, ': ', $@, "\n";
+            }
+            Lim::MergeConfig($yaml);
+        }
+        closedir(CONFIGS);
+        return 1;
+    }
+    return;
+}
+
+=item Lim::UpdateConfig
+
+Used after L<LoadConfig> and/or L<LoadConfigDirectory> to update and do post
+configuration tasks.
+
+=cut
+
+sub UpdateConfig {
+    foreach my $key (keys %{$CONFIG->{log}}) {
+        {
+            no warnings;
+            eval 'sub '.uc($key).' {'.($CONFIG->{log}->{$key} ? '1' : '0').'}';
+        }
+    }
 }
 
 =back
@@ -168,7 +243,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

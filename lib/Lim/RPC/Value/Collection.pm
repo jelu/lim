@@ -5,6 +5,8 @@ use Carp;
 
 use Lim ();
 
+=encoding utf8
+
 =head1 NAME
 
 ...
@@ -18,9 +20,11 @@ See L<Lim> for version.
 our $VERSION = $Lim::VERSION;
 
 sub OPT_REQUIRED (){ 0x00000001 }
+sub OPT_SWALLOW (){ 0x00000002 }
 
 our %OPTIONS = (
-    'required' => OPT_REQUIRED
+    'required' => OPT_REQUIRED,
+    'swallow' => OPT_SWALLOW
 );
 
 =head1 SYNOPSIS
@@ -112,6 +116,14 @@ sub required {
 
 =cut
 
+sub swallow {
+    $_[0]->{options} & OPT_SWALLOW ? 1 : 0;
+}
+
+=head2 function1
+
+=cut
+
 sub comform {
     unless (defined $_[1] and (ref($_[1]) eq 'HASH' or ref($_[1]) eq 'ARRAY')) {
         return 0;
@@ -147,7 +159,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

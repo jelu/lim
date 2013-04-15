@@ -1,3 +1,9 @@
+lim (0.13-1~unstable+1) unstable; urgency=low
+
+  * New release v0.13.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Mon, 15 Apr 2013 11:05:39 +0200
+
 lim (0.12-1~unstable+1) unstable; urgency=low
 
   * New release using git flow.

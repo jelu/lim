@@ -19,6 +19,8 @@ use Lim::Plugins ();
 use IO::Handle ();
 use AnyEvent::Handle ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::CLI - The command line interface to Lim
@@ -30,7 +32,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our @BUILTINS = (qw(quit help));
+our @BUILTINS = (qw(quit exit help));
 
 =head1 SYNOPSIS
 
@@ -57,6 +59,7 @@ Built in commands that can not be used by any plugins are:
 =over 4
 
 quit - Will quit the CLI
+exit - Will exit the relative section or quit the CLI
 help - Will show help for the relative section where the user is
 
 =back
@@ -144,12 +147,21 @@ sub new {
         $self->{rl} = AnyEvent::ReadLine::Gnu->new(
             prompt => 'lim> ',
             on_line => sub {
+                unless (defined $self) {
+                    return;
+                }
+                
                 $self->process(@_);
             });
     
         $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
         $self->{rl}->Attribs->{attempted_completion_function} = sub {
             my ($text, $line, $start, $end) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+            
             my @parts = split(/\s+/o, substr($line, 0, $start));
             my $builtins = 0;
             
@@ -167,7 +179,20 @@ sub new {
                     while (defined ($part = shift(@parts))) {
                         unless (exists $cmd->{$part} and ref($cmd->{$part}) eq 'HASH') {
                             if ($self->{no_completion}++ == 2) {
-                                $self->println('no completion found');
+                                if (ref($cmd->{$part}) eq 'ARRAY') {
+                                    if (@{$cmd->{$part}} == 1) {
+                                        $self->println('completion finished: ', $part, '<RET> - ', $cmd->{$part}->[0]);
+                                    }
+                                    elsif (@{$cmd->{$part}} == 2) {
+                                        $self->println('completion finished: ', $part, ' ', $cmd->{$part}->[0], ' <RET> - ', $cmd->{$part}->[1]);
+                                    }
+                                    else {
+                                        $self->println('no completion found');
+                                    }
+                                }
+                                else {
+                                    $self->println('no completion found');
+                                }
                             }
                             $self->{rl}->Attribs->{completion_word} = [];
                             return ();
@@ -206,25 +231,34 @@ sub new {
     }
     else {
         $self->{stdin_watcher} = AnyEvent::Handle->new(
-             fh => \*STDIN,
-             on_error => sub {
-                my ($handle, $fatal, $msg) = @_;
-                $handle->destroy;
-                $self->{on_quit}($self);
-             },
-             on_eof => sub {
-                 my ($handle) = @_;
-                 $handle->destroy;
-                 $self->{on_quit}($self);
-             },
-             on_read => sub {
-                 my ($handle) = @_;
-                 
-                 $handle->push_read(line => sub {
-                     shift;
-                     $self->process(@_);
-                 });
-             });
+            fh => \*STDIN,
+            on_error => sub {
+            my ($handle, $fatal, $msg) = @_;
+            $handle->destroy;
+            unless (defined $self) {
+                return;
+            }
+            $self->{on_quit}($self);
+        },
+        on_eof => sub {
+            my ($handle) = @_;
+            $handle->destroy;
+            unless (defined $self) {
+                return;
+            }
+            $self->{on_quit}($self);
+        },
+        on_read => sub {
+            my ($handle) = @_;
+
+            $handle->push_read(line => sub {
+                shift;
+                unless (defined $self) {
+                    return;
+                }
+                $self->process(@_);
+            });
+        });
     
         IO::Handle::autoflush STDOUT 1;
     }
@@ -232,6 +266,7 @@ sub new {
     if (defined (my $appender = Log::Log4perl->appender_by_name('LimCLI'))) {
         Log::Log4perl->eradicate_appender('Screen');
         $appender->{cli} = $self;
+        weaken($appender->{cli});
     }
     
     $self->println('Welcome to LIM ', $Lim::VERSION, ' command line interface');
@@ -280,7 +315,11 @@ sub process {
         $cmd = 'quit';
     }
      
-    if ($cmd eq 'quit' or $cmd eq 'exit') {
+    if ($cmd eq 'quit') {
+        $self->{on_quit}($self);
+        return;
+    }
+    elsif ($cmd eq 'exit') {
         if (exists $self->{current}) {
             delete $self->{current};
             $self->set_prompt('lim> ');
@@ -292,6 +331,14 @@ sub process {
         }
     }
     elsif ($cmd eq 'help') {
+        if (exists $self->{current}) {
+            $self->print_command_help($self->{current}->{module}->Commands);
+        }
+        else {
+            my @cmds = keys %{$self->{cli}};
+            push(@cmds, @BUILTINS);
+            $self->println('Available commands: ', join(' ', sort @cmds));
+        }
         $self->prompt;
     }
     else {
@@ -355,6 +402,7 @@ sub prompt {
     }
     
     $self->print($self->{prompt});
+    IO::Handle::flush STDOUT;
 }
 
 =item $cli->set_prompt
@@ -394,6 +442,7 @@ sub clear_line {
     else {
         $self->{stdin_watcher}->{rbuf} = '';
         print "\r";
+        IO::Handle::flush STDOUT;
     }
     
     $self;
@@ -427,7 +476,10 @@ sub print {
         $self->{rl}->print(@_);
     }
     else {
-        print @_;
+        foreach (@_) {
+            print;
+            IO::Handle::flush STDOUT;
+        }
     }
     
     $self;
@@ -449,9 +501,50 @@ sub println {
         $self->{rl}->show;
     }
     else {
-        print @_, "\n";
+        foreach (@_) {
+            print;
+            IO::Handle::flush STDOUT;
+        }
+        print "\n";
+        IO::Handle::flush STDOUT;
     }
 
+    $self;
+}
+
+=item $cli->print_command_help($module->Commands)
+
+Print the help for all commands from a module.
+
+=cut
+
+sub print_command_help {
+    my ($self, $commands, $level) = @_;
+    my $space = ' ' x ($level * 4);
+    
+    if (ref($commands) eq 'HASH') {
+        foreach my $key (sort (keys %$commands)) {
+            if (ref($commands->{$key}) eq 'HASH') {
+                $self->println($space, $key);
+                $self->print_command_help($commands->{$key}, $level+1);
+            }
+            elsif (ref($commands->{$key}) eq 'ARRAY') {
+                if (@{$commands->{$key}} == 1) {
+                    $self->println($space, $key, ' - ', $commands->{$key}->[0]);
+                }
+                elsif (@{$commands->{$key}} == 2) {
+                    $self->println($space, $key, ' ', $commands->{$key}->[0], ' - ', $commands->{$key}->[1]);
+                }
+                else {
+                    $self->println($space, $key, ' - unknown/invalid help');
+                }
+            }
+            else {
+                $self->println($space, $key, ' - no help');
+            }
+        }
+    }
+    
     $self;
 }
 
@@ -586,7 +679,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

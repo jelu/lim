@@ -4,14 +4,13 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use SOAP::Lite ();
 use Scalar::Util qw(blessed);
 
 use Lim ();
 use Lim::RPC ();
 use Lim::Error ();
 
-use base qw(SOAP::Server::Parameters);
+=encoding utf8
 
 =head1 NAME
 
@@ -88,6 +87,11 @@ sub Successful {
     };
     if ($@) {
         $self->{logger}->warn('data validation failed: ', $@);
+        Lim::DEBUG and eval {
+            use Data::Dumper;
+            $self->{logger}->debug(Dumper($data));
+            $self->{logger}->debug(Dumper($cb->call_def->{out}));
+        };
         Lim::RPC::R($cb, Lim::Error->new());
     }
 }
@@ -141,7 +145,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

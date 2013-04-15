@@ -7,6 +7,8 @@ use Lim::Plugins ();
 
 use base qw(Lim::Component::Server);
 
+=encoding utf8
+
 =head1 NAME
 
 ...
@@ -42,7 +44,70 @@ sub ReadVersion {
 sub ReadPlugins {
     my ($self, $cb) = @_;
     
-    $self->Successful($cb, { plugin => [ Lim::Plugins->instance->Loaded ] });
+    $self->Successful($cb, { plugin => [ Lim::Plugins->instance->All ] });
+}
+
+=head2 function1
+
+=cut
+
+sub ReadPlugin {
+    my ($self, $cb, $q) = @_;
+    my @plugins = ( Lim::Plugins->instance->All );
+    my $result = {};
+
+    foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
+        foreach my $loaded (@plugins) {
+            if (lc($loaded->{name}) eq $plugin->{name}) {
+                push(@{$result->{plugin}}, $loaded);
+            }
+        }
+    }
+    $self->Successful($cb, $result);
+}
+
+=head2 function1
+
+=cut
+
+sub ReadPluginVersion {
+    my ($self, $cb, $q) = @_;
+    my @plugins = ( Lim::Plugins->instance->All );
+    my $result = {};
+
+    foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
+        foreach my $loaded (@plugins) {
+            if (lc($loaded->{name}) eq $plugin->{name}) {
+                push(@{$result->{plugin}}, {
+                    name => $loaded->{name},
+                    version => $loaded->{version}
+                });
+            }
+        }
+    }
+    $self->Successful($cb, $result);
+}
+
+=head2 function1
+
+=cut
+
+sub ReadPluginLoaded {
+    my ($self, $cb, $q) = @_;
+    my @plugins = ( Lim::Plugins->instance->All );
+    my $result = {};
+
+    foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
+        foreach my $loaded (@plugins) {
+            if (lc($loaded->{name}) eq $plugin->{name}) {
+                push(@{$result->{plugin}}, {
+                    name => $loaded->{name},
+                    loaded => $loaded->{loaded}
+                });
+            }
+        }
+    }
+    $self->Successful($cb, $result);
 }
 
 =head1 AUTHOR
@@ -73,7 +138,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published

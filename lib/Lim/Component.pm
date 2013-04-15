@@ -11,6 +11,8 @@ use Lim::RPC::Value ();
 use Lim::RPC::Value::Collection ();
 use Lim::RPC::Call ();
 
+=encoding utf8
+
 =head1 NAME
 
 Lim::Component - Base class for plugins
@@ -303,7 +305,7 @@ L<https://github.com/jelu/lim/issues>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Jerry Lundström.
+Copyright 2012-2013 Jerry Lundström.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
