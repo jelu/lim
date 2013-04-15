@@ -5,6 +5,7 @@ usr/share/man/man3/Lim::RPC::Protocol.3pm
 usr/share/man/man3/Lim::RPC::Protocols.3pm
 usr/share/man/man3/Lim::RPC::Transport.3pm
 usr/share/man/man3/Lim::RPC::Transports.3pm
+usr/share/man/man3/Lim::RPC::URIMaps.3pm
 usr/share/perl5/Lim/Component/Server.pm
 usr/share/perl5/Lim/RPC/Callback.pm
 usr/share/perl5/Lim/RPC/Server.pm

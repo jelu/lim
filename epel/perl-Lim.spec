@@ -184,6 +184,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Transports.3*
 %{_mandir}/man3/Lim::RPC::Protocol.3*
 %{_mandir}/man3/Lim::RPC::Protocols.3*
+%{_mandir}/man3/Lim::RPC::URIMaps.3*
 %{perl_vendorlib}/Lim/Component/Server.pm
 %{perl_vendorlib}/Lim/RPC/Callback.pm
 %{perl_vendorlib}/Lim/RPC/Server.pm
