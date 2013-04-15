@@ -53,6 +53,7 @@ unless ($child) {
     exit;
 }
 
+use Lim ();
 use XMLRPC::Lite;
 
 $SIG{ALRM} = sub { return; };
@@ -67,6 +68,10 @@ my $res =
 use Data::Dumper;
 print Dumper($res);
 
-ok($res eq '0.12');
+if (ref($res) eq 'HASH') {
+    $res = $res->{version};
+}
+
+ok($res eq $Lim::VERSION);
 
 kill 15, $child;

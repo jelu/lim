@@ -1,5 +1,5 @@
 Name:           perl-Lim
-Version:        0.12
+Version:        0.13
 Release:        1%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
@@ -26,14 +26,14 @@ for processing protocol messages.
 %package -n perl-Lim-Common
 Summary: Common perl libraries for Lim
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Common
 Common Lim perl libraries depended by all Lim packages.
 
 %package -n perl-Lim-Server
 Summary: Lim server perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Server
 Lim server perl libraries for communicating with Lim via many different
 protocols.
@@ -41,84 +41,84 @@ protocols.
 %package -n perl-Lim-CLI
 Summary: Lim CLI perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-CLI
 Lim CLI perl libraries for controlling a local or remote Lim server.
 
 %package -n perl-Lim-Agent-Common
 Summary: Common perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Agent-Common
 Common lim-agentd perl libraries.
 
 %package -n perl-Lim-Agent-Server
 Summary: Server perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Agent-Server
 Server perl libraries for lim-agentd.
 
 %package -n perl-Lim-Agent-Client
 Summary: Client perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Agent-Client
 Client perl libraries for communicating with lim-agentd.
 
 %package -n perl-Lim-Agent-CLI
 Summary: CLI perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Agent-CLI
 CLI perl libraries for controlling lim-agentd via lim-cli.
 
 %package -n lim-agentd
 Summary: Lim agent daemon
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n lim-agentd
 The Lim agent daemon that serves all plugins.
 
 %package -n lim-cli
 Summary: Lim command line interface
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n lim-cli
 The Lim CLI used to control a local or remote Lim agent.
 
 %package -n perl-Lim-Transport-HTTP
 Summary: Lim HTTP/HTTPS transport perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Transport-HTTP
 Lim perl libraries for HTTP/HTTPS transport.
 
 %package -n perl-Lim-Protocol-REST
 Summary: Lim REST protocol perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Transport-REST
 Lim perl libraries for REST protocol.
 
 %package -n perl-Lim-Protocol-SOAP
 Summary: Lim SOAP protocol perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Transport-SOAP
 Lim perl libraries for SOAP protocol.
 
 %package -n perl-Lim-Protocol-XMLRPC
 Summary: Lim XMLRPC protocol perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Transport-XMLRPC
 Lim perl libraries for XMLRPC protocol.
 
 %package -n perl-Lim-Protocol-JSONRPC
 Summary: Lim JSONRPC protocol perl libraries
 Group: Development/Libraries
-Version: 0.12
+Version: 0.13
 %description -n perl-Lim-Transport-JSONRPC
 Lim perl libraries for JSONRPC protocol.
 
@@ -184,6 +184,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Transports.3*
 %{_mandir}/man3/Lim::RPC::Protocol.3*
 %{_mandir}/man3/Lim::RPC::Protocols.3*
+%{_mandir}/man3/Lim::RPC::URIMaps.3*
 %{perl_vendorlib}/Lim/Component/Server.pm
 %{perl_vendorlib}/Lim/RPC/Callback.pm
 %{perl_vendorlib}/Lim/RPC/Server.pm
@@ -191,6 +192,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/RPC/Transports.pm
 %{perl_vendorlib}/Lim/RPC/Protocol.pm
 %{perl_vendorlib}/Lim/RPC/Protocols.pm
+%{perl_vendorlib}/Lim/RPC/URIMaps.pm
 %{_datadir}/lim/html
 
 %files -n perl-Lim-CLI
@@ -256,6 +258,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Apr 15 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.13-1
+- Release 0.13
 * Tue Aug 07 2012 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.12-1
 - Initial package for Fedora
 

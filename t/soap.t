@@ -48,6 +48,7 @@ unless ($child) {
     exit;
 }
 
+use Lim ();
 use SOAP::Lite;
 
 $SIG{ALRM} = sub { return; };
@@ -60,6 +61,6 @@ my $res =
     -> call('ReadVersion')
     -> result;
 
-ok($res eq '0.12');
+ok($res eq $Lim::VERSION);
 
 kill 15, $child;
