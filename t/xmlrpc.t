@@ -68,6 +68,10 @@ my $res =
 use Data::Dumper;
 print Dumper($res);
 
+if (ref($res) eq 'HASH') {
+    $res = $res->{version};
+}
+
 ok($res eq $Lim::VERSION);
 
 kill 15, $child;
