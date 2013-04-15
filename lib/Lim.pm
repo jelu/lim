@@ -18,16 +18,50 @@ Version 0.12
 =cut
 
 our $VERSION = '0.12';
-our $CONFIG;
+our $CONFIG = {
+    log => {
+        obj_debug => 1,
+        rpc_debug => 1,
+        debug => 1,
+        info => 1,
+        warn => 1,
+        err => 1
+    },
+    prefix => ['', '/usr', '/usr/local'],
+    rpc => {
+        srv_listen => 10,
+        timeout => 30,
+        call_timeout => 300,
+        transport => {
+            http => {
+                host => undef,
+                port => 5353,
+                html => '/usr/share/lim/html'
+            }
+        }
+    },
+    agent => {
+        config_file => ''
+    },
+    cli => {
+        history_length => 1000,
+        history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
+        config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
+        editor => $ENV{EDITOR}
+    },
+    ssl => {
+        method => 'any',
+        verify => 1,
+        verify_require_client_cert => 1
+    }
+};
 
-sub OBJ_DEBUG (){ 1 }
-sub RPC_DEBUG (){ 1 }
-sub DEBUG (){ 1 }
-sub INFO (){ 1 }
-sub WARN (){ 1 }
-sub ERR (){ 1 }
-
-sub SRV_LISTEN (){ 10 }
+sub OBJ_DEBUG { 1 }
+sub RPC_DEBUG { 1 }
+sub DEBUG { 1 }
+sub INFO { 1 }
+sub WARN { 1 }
+sub ERR { 1 }
 
 =head1 SYNOPSIS
 
@@ -68,33 +102,7 @@ Return a hash reference to the configuration.
 
 =cut
 
-sub Config {
-    $CONFIG ||= {
-        prefix => ['', '/usr', '/usr/local'],
-        rpc => {
-            timeout => 30,
-            call_timeout => 300,
-            transport => {
-                http => {
-                    host => undef,
-                    port => 5353,
-                    html => '/usr/share/lim/html'
-                }
-            }
-        },
-        cli => {
-            history_length => 1000,
-            history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
-            config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
-            editor => $ENV{EDITOR}
-        },
-        ssl => {
-            method => 'any',
-            verify => 1,
-            verify_require_client_cert => 1    
-        }
-    };
-}
+sub Config (){ $CONFIG }
 
 =item Lim::MergeConfig($config)
 
@@ -139,6 +147,7 @@ sub LoadConfig {
     if (defined $filename and -r $filename) {
         my $yaml;
         
+        Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $filename);
         eval {
             $yaml = YAML::Any::LoadFile($filename);
         };
@@ -173,6 +182,7 @@ sub LoadConfigDirectory {
                 next;
             }
             
+            Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry);
             eval {
                 $yaml = YAML::Any::LoadFile($entry);
             };
@@ -185,6 +195,22 @@ sub LoadConfigDirectory {
         return 1;
     }
     return;
+}
+
+=item Lim::UpdateConfig
+
+Used after L<LoadConfig> and/or L<LoadConfigDirectory> to update and do post
+configuration tasks.
+
+=cut
+
+sub UpdateConfig {
+    foreach my $key (keys %{$CONFIG->{log}}) {
+        {
+            no warnings;
+            eval 'sub '.uc($key).' {'.($CONFIG->{log}->{$key} ? '1' : '0').'}';
+        }
+    }
 }
 
 =back
