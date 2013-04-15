@@ -78,12 +78,10 @@ my $cv = AnyEvent->condvar;
 my @watchers;
 
 push(@watchers,
-# TODO Implement config files
-#    AnyEvent->signal(signal => "HUP", cb => sub {
-#        if (defined($server)) {
-#            $server->reload;
-#        }
-#    }),
+    AnyEvent->signal(signal => "HUP", cb => sub {
+    }),
+    AnyEvent->signal(signal => "PIPE", cb => sub {
+    }),
     AnyEvent->signal(signal => "INT", cb => sub {
         $cv->send;
     }),
