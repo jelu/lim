@@ -15,6 +15,7 @@ use Lim::Agent ();
 use Lim::Plugins ();
 
 my $help = 0;
+my $conf;
 my $host = '0.0.0.0';
 my $port = 5353;
 my $key;
@@ -24,24 +25,12 @@ my $prefix;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
-    'host:s' => \$host,
-    'port:i' => \$port,
-    'key=s' => \$key,
+    'conf:s' => \$conf,
+    'key:s' => \$key,
     'log4perl:s' => \$log4perl,
-    'html:s' => \$html,
     'prefix:s' => \$prefix
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
-
-unless (-d $html) {
-    print STDERR 'Path to HTML directory invalid or non existing: ', $html, "\n";
-    exit(1);
-}
-
-Lim::Config->{ssl}->{ca_file} = $key;
-Lim::Config->{ssl}->{cert_file} = $key;
-Lim::Config->{ssl}->{key_file} = $key;
-Lim::Config->{html} = $html;
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
@@ -54,6 +43,26 @@ else {
     log4perl.appender.Screen.layout   = Log::Log4perl::Layout::PatternLayout
     log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
     ) );
+}
+
+if (defined $conf) {
+    unless (-r $conf and Lim::LoadConfig($conf)) {
+        print STDERR 'Unable to read configuration file: ', $conf, "\n";
+        exit(1);
+    }
+    Lim::Config->{agent}->{config_file} = $conf;
+}
+else {
+    Lim::LoadConfig('/etc/lim/agent.yaml');
+}
+
+Lim::LoadConfigDirectory('/etc/lim/agent.d');
+Lim::UpdateConfig;
+
+if (defined $key) {
+    Lim::Config->{ssl}->{ca_file} = $key;
+    Lim::Config->{ssl}->{cert_file} = $key;
+    Lim::Config->{ssl}->{key_file} = $key;
 }
 
 if (defined $prefix) {
@@ -89,7 +98,7 @@ push(@watchers,
 $html =~ s/\/*$//o;
 
 Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
-    key => $key
+    key => Lim::Config->{ssl}->{key_file}
 ));
 
 my $server = Lim::RPC::Server->new(
@@ -113,27 +122,19 @@ lim-agentd - Lim Agent Daemon
 
 =head1 SYNOPSIS
 
-lim-agentd [options]
+lim-agentd [options] <uri>
 
 =head1 OPTIONS
 
 =over 8
 
-=item B<--host <ip>>
+=item B<--conf <file>>
 
-Specify the host/IP to bind to (default 0.0.0.0).
-
-=item B<--port <port>>
-
-Specify the port to listen on (default 5353).
+Specify the configure file to use (default /etc/lim/agent.yaml).
 
 =item B<--key <key>>
 
 Specify the SSL/TLS key to use for HTTPS.
-
-=item B<--html <path>>
-
-Specify the HTML directory (default /usr/share/lim/html).
 
 =item B<--log4perl <file>>
 

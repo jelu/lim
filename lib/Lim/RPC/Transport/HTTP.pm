@@ -278,7 +278,7 @@ sub Init {
         $self->{uri} = URI->new(
             ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https://' : 'http://').
             $host.':'.$port);
-        Lim::SRV_LISTEN;
+        $Lim::CONFIG->{rpc}->{srv_listen};
     };
 }
 

@@ -1,6 +1,7 @@
 - Plugins reload, restart, unload
 - Agent reload, restart and unload plugins API/CLI
 - lim-agentd /etc/lim/* configs, /etc/lim.d/* per plugin configs
+- lim-cli needs to load configs from compile time paths
 - Lim::CLI Ask(text, cb)/Confirm(text, cb)
 - RPC calls should not be able to kill server/client
 - Schema cache settings

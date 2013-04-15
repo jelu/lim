@@ -1,0 +1,16 @@
+#
+#
+#
+---
+cli: 
+#
+# config_file: <path to config file>
+
+#
+# editor: vi
+
+#
+# history_file: <path to history file>
+
+#
+# history_length: 1000

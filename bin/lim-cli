@@ -25,21 +25,10 @@ Getopt::Long::GetOptions(
     'conf:s' => \$conf,
     'host:s' => \$host,
     'port:i' => \$port,
-    'key=s' => \$key,
+    'key:s' => \$key,
     'log4perl:s' => \$log4perl
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
-
-if (defined $conf) {
-    unless (-r $conf and Lim::LoadConfig($conf)) {
-        print STDERR 'Unable to read configuration file: ', $conf, "\n";
-        exit(1);
-    }
-    Lim::Config->{cli}->{config_file} = $conf;
-}
-else {
-    Lim::LoadConfig(Lim::Config->{cli}->{config_file});
-}
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
@@ -59,12 +48,34 @@ else {
     ) );
 }
 
+Lim::LoadConfig('/etc/lim/cli.yaml');
+Lim::LoadConfigDirectory('/etc/lim/cli.d');
+
+if (defined $conf) {
+    unless (-r $conf and Lim::LoadConfig($conf)) {
+        print STDERR 'Unable to read configuration file: ', $conf, "\n";
+        exit(1);
+    }
+    Lim::Config->{cli}->{config_file} = $conf;
+}
+else {
+    Lim::LoadConfig(Lim::Config->{cli}->{config_file});
+}
+
+Lim::UpdateConfig;
+
 if (defined $host) {
     Lim::Config->{host} = $host;
 }
 
 if (defined $port) {
     Lim::Config->{port} = $port;
+}
+
+if (defined $key) {
+    Lim::Config->{ssl}->{ca_file} = $key;
+    Lim::Config->{ssl}->{cert_file} = $key;
+    Lim::Config->{ssl}->{key_file} = $key;
 }
 
 my $cv = AnyEvent->condvar;
@@ -93,7 +104,7 @@ push(@watchers,
 );
 
 Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
-    key => $key
+    key => Lim::Config->{ssl}->{key_file}
 ));
 
 $cli = Lim::CLI->new(
