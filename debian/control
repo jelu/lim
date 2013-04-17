@@ -7,7 +7,8 @@ Build-Depends-Indep: libanyevent-perl (>= 5), libcommon-sense-perl (>= 3),
  libsoap-lite-perl (>= 0.71), liburi-perl (>= 1), libwww-perl (>= 5),
  libyaml-perl (>= 0.70), perl (>= 5.10.1), libnet-ssleay-perl (>= 1.35),
  libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
- liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1)
+ liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1),
+ liblog-dispatch-perl
 Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Standards-Version: 3.9.1
 Homepage: http://github.com/jelu/lim/wiki
@@ -95,7 +96,8 @@ Description: CLI perl libraries for lim-agentd
 
 Package: lim-agentd
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-server-perl (= 0.13-1~unstable+1)
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-server-perl (= 0.13-1~unstable+1),
+ liblog-dispatch-perl
 Description: Lim agent daemon
  The Lim agent daemon that serves all plugins.
 

@@ -22,26 +22,38 @@ my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
 my $prefix;
+my $foreground = 0;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
     'conf:s' => \$conf,
     'key:s' => \$key,
     'log4perl:s' => \$log4perl,
-    'prefix:s' => \$prefix
+    'prefix:s' => \$prefix,
+    'foreground' => \$foreground
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
 if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
 }
-else {
+elsif ($foreground) {
     Log::Log4perl->init( \q(
     log4perl.logger                   = DEBUG, Screen
     log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
     log4perl.appender.Screen.stderr   = 0
     log4perl.appender.Screen.layout   = Log::Log4perl::Layout::PatternLayout
     log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
+    ) );
+}
+else {
+    Log::Log4perl->init( \q(
+    log4perl.logger                    = DEBUG, SYSLOG
+    log4perl.appender.SYSLOG           = Log::Dispatch::Syslog
+    log4perl.appender.SYSLOG.min_level = debug
+    log4perl.appender.SYSLOG.ident     = lim-agentd
+    log4perl.appender.SYSLOG.facility  = daemon
+    log4perl.appender.SYSLOG.layout    = Log::Log4perl::Layout::SimpleLayout
     ) );
 }
 
@@ -73,6 +85,8 @@ if (defined $prefix) {
         push(@{Lim::Config->{prefix}}, $_);
     }
 }
+
+# FORK & SAVE PID
 
 my $cv = AnyEvent->condvar;
 my @watchers;
