@@ -1,2 +1,4 @@
 usr/share/man/man1/lim-cli.1p
 usr/bin/lim-cli
+etc/lim/cli.d /etc/lim/
+etc/lim/cli.yaml /etc/lim/

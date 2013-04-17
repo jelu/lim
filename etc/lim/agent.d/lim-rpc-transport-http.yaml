@@ -1,0 +1,7 @@
+---
+#rpc:
+#  transport: 
+#    http: 
+#      host: ~
+#      html: /usr/share/lim/html
+#      port: 5353
