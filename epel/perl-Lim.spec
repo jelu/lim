@@ -137,6 +137,8 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}%{_datadir}/lim/html
 make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
+mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -m 755 ${RPM_BUILD_ROOT}/epel/lim-agentd %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
 
 
 %check
@@ -226,6 +228,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_mandir}/man1/lim-agentd.1*
 %{_bindir}/lim-agentd
+%attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/lim-agentd
 
 %files -n lim-cli
 %defattr(-,root,root,-)
@@ -233,28 +236,54 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lim-cli
 
 %files -n perl-Lim-Transport-HTTP
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Transport::HTTP.3*
 %{_mandir}/man3/Lim::RPC::Transport::HTTPS.3*
 %{perl_vendorlib}/Lim/RPC/Transport/HTTP.pm
 %{perl_vendorlib}/Lim/RPC/Transport/HTTPS.pm
 
 %files -n perl-Lim-Protocol-REST
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Protocol::REST.3*
 %{perl_vendorlib}/Lim/RPC/Protocol/REST.pm
 
 %files -n perl-Lim-Protocol-SOAP
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Protocol::SOAP.3*
 %{perl_vendorlib}/Lim/RPC/Protocol/SOAP.pm
 
 %files -n perl-Lim-Protocol-XMLRPC
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Protocol::XMLRPC.3*
 %{perl_vendorlib}/Lim/RPC/Protocol/XMLRPC.pm
 
 %files -n perl-Lim-Protocol-JSONRPC
+%defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Protocol::JSONRPC1.3*
 %{_mandir}/man3/Lim::RPC::Protocol::JSONRPC2.3*
 %{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC1.pm
 %{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC2.pm
+
+
+# Initscripts
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
+
+%post -n lim-agentd
+/sbin/chkconfig --add lim-agentd
+
+%preun -n lim-agentd
+if [ $1 -eq 0 ] ; then
+    /sbin/service lim-agentd stop >/dev/null 2>&1
+    /sbin/chkconfig --del lim-agentd
+fi
+
+%postun -n lim-agentd
+if [ "$1" -ge "1" ] ; then
+    /sbin/service lim-agentd condrestart >/dev/null 2>&1 || :
+fi
 
 
 %changelog
