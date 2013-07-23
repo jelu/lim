@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = configure ]; then
+	adduser --system \
+		--quiet \
+		--group \
+		--home /nonexistent \
+		--no-create-home \
+		--disabled-password \
+		lim &&
+
+    if [ ! -f /etc/lim/lim-agentd.key ]; then
+        openssl genrsa -out /etc/lim/lim-agentd.key 4096
+    fi &&
+    if [ ! -f /etc/lim/lim-agentd.csr ]; then
+        openssl req -new -batch -key /etc/lim/lim-agentd.key \
+          -out /etc/lim/lim-agentd.csr
+    fi &&
+    if [ ! -f /etc/lim/lim-agentd.crt ]; then
+        openssl x509 -req -days 3650 -in /etc/lim/lim-agentd.csr \
+          -signkey /etc/lim/lim-agentd.key -out /etc/lim/lim-agentd.crt
+    fi &&
+    if [ ! -f /etc/lim/lim-agentd.pem ]; then
+        cat /etc/lim/lim-agentd.key /etc/lim/lim-agentd.crt \
+          > /etc/lim/lim-agentd.pem
+    fi
+fi
