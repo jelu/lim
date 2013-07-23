@@ -5,6 +5,7 @@ use Getopt::Long ();
 use Pod::Usage ();
 use Log::Log4perl ();
 $Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
+use POSIX;
 
 use AnyEvent ();
 
@@ -23,6 +24,7 @@ my $log4perl;
 my $html = '/usr/share/lim/html';
 my $prefix;
 my $foreground = 0;
+my $pidfile = '/var/run/lim-agentd.pid';
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
@@ -30,7 +32,8 @@ Getopt::Long::GetOptions(
     'key:s' => \$key,
     'log4perl:s' => \$log4perl,
     'prefix:s' => \$prefix,
-    'foreground' => \$foreground
+    'foreground' => \$foreground,
+    'pidfile:s' => \$pidfile
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -86,7 +89,53 @@ if (defined $prefix) {
     }
 }
 
-# FORK & SAVE PID
+unless ($foreground) {
+    unless (POSIX::setsid) {
+        print STDERR 'Unable to create a new process session (setsid): ', $!, "\n";
+        exit(2);
+    }
+
+    my $pid = fork();
+    if ($pid < 0) {
+        print STDERR 'Unable to fork a new process: ', $!, "\n";
+        exit(2);
+    }
+    elsif ($pid) {
+        exit 0;
+    }
+    
+    if ($pidfile) {
+        unless(open(PIDFILE, '>', $pidfile,)) {
+            print STDERR 'Unable to open pidfile "', $pidfile, '" for writing: ', $!, "\n";
+            exit(2);
+        }
+        print PIDFILE POSIX::getpid, "\n";
+        close(PIDFILE);
+        
+        unless(open(PIDFILE, $pidfile)) {
+            print STDERR 'Unable to open pidfile "', $pidfile, '" for verifying pid: ', $!, "\n";
+            exit(2);
+        }
+        my $pidinfile = <PIDFILE>;
+        chomp($pidinfile);
+        close(PIDFILE);
+        
+        unless (POSIX::getpid == $pidinfile) {
+            print STDERR 'Unable to correctly write my pid to pidfile "', $pidfile, "\"\n";
+            exit(2);
+        }
+    }
+    
+    chdir('/');
+    umask(0);
+    foreach (0 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024)) {
+        POSIX::close($_);
+    }
+
+    open(STDIN, '<', '/dev/null');
+    open(STDOUT, '>', '/dev/null');
+    open(STDERR, '>', '/dev/null');
+}
 
 my $cv = AnyEvent->condvar;
 my @watchers;
@@ -126,6 +175,12 @@ if (defined $server) {
 
 @watchers = ();
 
+unless ($foreground) {
+    if ($pidfile) {
+        unlink($pidfile);
+    }
+}
+
 __END__
 
 =head1 NAME
@@ -151,6 +206,15 @@ Specify the SSL/TLS key to use for HTTPS.
 =item B<--log4perl <file>>
 
 Specify a Log::Log4perl configure file (default output to stdout).
+
+=item B<--foreground>
+
+Do not fork into background, output logs to STDOUT if no Log::Log4perl
+configuration file is used.
+
+=item B<--pidfile <file>>
+
+Use the given file as pidfile (default /var/run/lim-agentd.pid).
 
 =item B<--help>
 
