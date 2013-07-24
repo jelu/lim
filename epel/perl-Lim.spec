@@ -11,12 +11,25 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildArch:      noarch
 BuildRequires:  perl(ExtUtils::MakeMaker)
-# Needed for test
 BuildRequires:  perl(Test::Simple)
 BuildRequires:  perl(Net::SSLeay) >= 1.35
+BuildRequires:  perl(common::sense)
+BuildRequires:  perl(YAML)
+BuildRequires:  perl(AnyEvent)
+BuildRequires:  perl(EV)
+BuildRequires:  perl(Module::Find)
+BuildRequires:  perl(Digest::SHA)
+BuildRequires:  perl(JSON::XS)
 
 Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires:  perl(Net::SSLeay) >= 1.35
+Requires:  openssl
+
+Requires(pre): shadow-utils
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
 
 %description
 Lim provides a framework for calling plugins over multiple protocols.
@@ -98,28 +111,28 @@ Lim perl libraries for HTTP/HTTPS transport.
 Summary: Lim REST protocol perl libraries
 Group: Development/Libraries
 Version: 0.13
-%description -n perl-Lim-Transport-REST
+%description -n perl-Lim-Protocol-REST
 Lim perl libraries for REST protocol.
 
 %package -n perl-Lim-Protocol-SOAP
 Summary: Lim SOAP protocol perl libraries
 Group: Development/Libraries
 Version: 0.13
-%description -n perl-Lim-Transport-SOAP
+%description -n perl-Lim-Protocol-SOAP
 Lim perl libraries for SOAP protocol.
 
 %package -n perl-Lim-Protocol-XMLRPC
 Summary: Lim XMLRPC protocol perl libraries
 Group: Development/Libraries
 Version: 0.13
-%description -n perl-Lim-Transport-XMLRPC
+%description -n perl-Lim-Protocol-XMLRPC
 Lim perl libraries for XMLRPC protocol.
 
 %package -n perl-Lim-Protocol-JSONRPC
 Summary: Lim JSONRPC protocol perl libraries
 Group: Development/Libraries
 Version: 0.13
-%description -n perl-Lim-Transport-JSONRPC
+%description -n perl-Lim-Protocol-JSONRPC
 Lim perl libraries for JSONRPC protocol.
 
 
@@ -138,7 +151,8 @@ mkdir -p ${RPM_BUILD_ROOT}%{_datadir}/lim/html
 make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
-install -m 755 ${RPM_BUILD_ROOT}/epel/lim-agentd %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
+install -m 755 %{_builddir}/lim/epel/lim-agentd %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
+mkdir -p %{buildroot}%{_sysconfdir}/lim
 
 
 %check
@@ -229,6 +243,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/lim-agentd.1*
 %{_bindir}/lim-agentd
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/lim-agentd
+%{_sysconfdir}/lim
 
 %files -n lim-cli
 %defattr(-,root,root,-)
@@ -265,14 +280,30 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC2.pm
 
 
-# Initscripts
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
+%pre -n lim-agentd
+getent group lim >/dev/null || groupadd -r lim
+getent passwd lim >/dev/null || \
+    useradd -r -g lim -d / -s /sbin/nologin \
+    -c "lim-agentd" lim
+exit 0
 
 %post -n lim-agentd
 /sbin/chkconfig --add lim-agentd
+if [ ! -f /etc/lim/lim-agentd.key ]; then
+    openssl genrsa -out /etc/lim/lim-agentd.key 4096 >/dev/null 2>&1
+fi &&
+if [ ! -f /etc/lim/lim-agentd.csr ]; then
+    openssl req -new -batch -key /etc/lim/lim-agentd.key \
+      -out /etc/lim/lim-agentd.csr >/dev/null 2>&1
+fi &&
+if [ ! -f /etc/lim/lim-agentd.crt ]; then
+    openssl x509 -req -days 3650 -in /etc/lim/lim-agentd.csr \
+      -signkey /etc/lim/lim-agentd.key -out /etc/lim/lim-agentd.crt >/dev/null 2>&1
+fi &&
+if [ ! -f /etc/lim/lim-agentd.pem ]; then
+    cat /etc/lim/lim-agentd.key /etc/lim/lim-agentd.crt \
+      > /etc/lim/lim-agentd.pem 2>/dev/null
+fi
 
 %preun -n lim-agentd
 if [ $1 -eq 0 ] ; then
