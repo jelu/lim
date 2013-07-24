@@ -153,6 +153,13 @@ find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
 install -m 755 %{_builddir}/lim/epel/lim-agentd %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
 mkdir -p %{buildroot}%{_sysconfdir}/lim
+mkdir -p %{buildroot}%{_sysconfdir}/lim/agent.d
+mkdir -p %{buildroot}%{_sysconfdir}/lim/cli.d
+install -m 644 %{_builddir}/lim/etc/lim/agent.yaml %{buildroot}%{_sysconfdir}/lim/
+install -m 644 %{_builddir}/lim/etc/lim/agent.d/README %{buildroot}%{_sysconfdir}/lim/agent.d/
+install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-transport-http.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
+install -m 644 %{_builddir}/lim/etc/lim/cli.yaml %{buildroot}%{_sysconfdir}/lim/
+install -m 644 %{_builddir}/lim/etc/lim/cli.d/README %{buildroot}%{_sysconfdir}/lim/cli.d/
 
 
 %check
@@ -243,12 +250,15 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/lim-agentd.1*
 %{_bindir}/lim-agentd
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/lim-agentd
-%{_sysconfdir}/lim
+%config %{_sysconfdir}/lim/agent.yaml
+%{_sysconfdir}/lim/agent.d/README
 
 %files -n lim-cli
 %defattr(-,root,root,-)
 %{_mandir}/man1/lim-cli.1*
 %{_bindir}/lim-cli
+%config %{_sysconfdir}/lim/cli.yaml
+%{_sysconfdir}/lim/cli.d/README
 
 %files -n perl-Lim-Transport-HTTP
 %defattr(-,root,root,-)
@@ -256,6 +266,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Transport::HTTPS.3*
 %{perl_vendorlib}/Lim/RPC/Transport/HTTP.pm
 %{perl_vendorlib}/Lim/RPC/Transport/HTTPS.pm
+%config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
 
 %files -n perl-Lim-Protocol-REST
 %defattr(-,root,root,-)
