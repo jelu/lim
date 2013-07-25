@@ -47,13 +47,16 @@ our $CONFIG = {
         }
     },
     agent => {
-        config_file => ''
+        config_file => '',
+        uri => []
     },
     cli => {
         history_length => 1000,
         history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
         config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
-        editor => $ENV{EDITOR}
+        editor => $ENV{EDITOR},
+        host => 'localhost',
+        port => 5353
     }
 };
 
@@ -201,7 +204,7 @@ sub LoadConfigDirectory {
 =item Lim::ParseOptions(@options)
 
 Parse options given at command line and add them into configuration. Option
-groups are seperated by . (for example log.obj_debug=0).
+subgroups are seperated by . (for example log.obj_debug=0).
 
 =cut
 
@@ -216,7 +219,24 @@ sub ParseOptions {
         my $ref = $CONFIG;
         while (defined(my $part = shift(@parts))) {
             unless (scalar @parts) {
-                $ref->{$part} = $value;
+                if ($part =~ /^(.+)\[\]$/o) {
+                    $part = $1;
+                    
+                    if (exists $ref->{$part}) {
+                        if (ref($ref->{$part}) eq 'ARRAY') {
+                            push(@{$ref->{$part}}, $value);
+                        }
+                        else {
+                            $ref->{$part} = [ $ref->{$part}, $value ];
+                        }
+                    }
+                    else {
+                        $ref->{$part} = [ $value ];
+                    }
+                }
+                else {
+                    $ref->{$part} = $value;
+                }
                 last;
             }
             
