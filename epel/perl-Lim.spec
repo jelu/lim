@@ -27,6 +27,7 @@ Requires:  openssl
 
 Requires(pre): shadow-utils
 Requires(post): chkconfig
+Requires(post): net-tools
 Requires(preun): chkconfig
 Requires(preun): initscripts
 Requires(postun): initscripts
@@ -100,6 +101,13 @@ Version: 0.13
 %description -n lim-cli
 The Lim CLI used to control a local or remote Lim agent.
 
+%package -n lim-common
+Summary: Lim common files
+Group: Development/Libraries
+Version: 0.13
+%description -n lim-common
+Common Lim files and directories.
+
 %package -n perl-Lim-Transport-HTTP
 Summary: Lim HTTP/HTTPS transport perl libraries
 Group: Development/Libraries
@@ -158,8 +166,13 @@ mkdir -p %{buildroot}%{_sysconfdir}/lim/cli.d
 install -m 644 %{_builddir}/lim/etc/lim/agent.yaml %{buildroot}%{_sysconfdir}/lim/
 install -m 644 %{_builddir}/lim/etc/lim/agent.d/README %{buildroot}%{_sysconfdir}/lim/agent.d/
 install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-transport-http.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
+install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-tls.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
 install -m 644 %{_builddir}/lim/etc/lim/cli.yaml %{buildroot}%{_sysconfdir}/lim/
 install -m 644 %{_builddir}/lim/etc/lim/cli.d/README %{buildroot}%{_sysconfdir}/lim/cli.d/
+mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/certs
+mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/private
+install -m 644 %{_builddir}/lim/lim/ssl/certs/README %{buildroot}%{_sysconfdir}/lim/ssl/certs/
+install -m 644 %{_builddir}/lim/lim/ssl/private/README %{buildroot}%{_sysconfdir}/lim/ssl/private/
 
 
 %check
@@ -251,6 +264,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lim-agentd
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/lim-agentd
 %config %{_sysconfdir}/lim/agent.yaml
+%config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
+%config %{_sysconfdir}/lim/agent.d/lim-rpc-tls.yaml
 %{_sysconfdir}/lim/agent.d/README
 
 %files -n lim-cli
@@ -259,6 +274,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lim-cli
 %config %{_sysconfdir}/lim/cli.yaml
 %{_sysconfdir}/lim/cli.d/README
+
+%files -n lim-common
+%{_sysconfdir}/lim/ssl
 
 %files -n perl-Lim-Transport-HTTP
 %defattr(-,root,root,-)
@@ -300,21 +318,44 @@ exit 0
 
 %post -n lim-agentd
 /sbin/chkconfig --add lim-agentd
-if [ ! -f /etc/lim/lim-agentd.key ]; then
-    openssl genrsa -out /etc/lim/lim-agentd.key 4096 >/dev/null 2>&1
+if [ ! -f /etc/lim/ssl/private/lim-agentd.key ]; then
+    openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096 >/dev/null 2>&1
 fi &&
-if [ ! -f /etc/lim/lim-agentd.csr ]; then
-    openssl req -new -batch -key /etc/lim/lim-agentd.key \
-      -out /etc/lim/lim-agentd.csr >/dev/null 2>&1
+if [ ! -f /etc/lim/ssl/private/lim-agentd.csr ]; then
+    openssl req -new -batch \
+      -subj "/CN=Lim Agent Daemon/emailAddress=lim@`hostname -f`" \
+      -key /etc/lim/ssl/private/lim-agentd.key \
+      -out /etc/lim/ssl/private/lim-agentd.csr >/dev/null 2>&1
 fi &&
-if [ ! -f /etc/lim/lim-agentd.crt ]; then
-    openssl x509 -req -days 3650 -in /etc/lim/lim-agentd.csr \
-      -signkey /etc/lim/lim-agentd.key -out /etc/lim/lim-agentd.crt >/dev/null 2>&1
+if [ ! -f /etc/lim/ssl/private/lim-agentd.crt ]; then
+    openssl x509 -req -days 3650 -in /etc/lim/ssl/private/lim-agentd.csr \
+      -signkey /etc/lim/ssl/private/lim-agentd.key \
+      -out /etc/lim/ssl/private/lim-agentd.crt >/dev/null 2>&1
 fi &&
-if [ ! -f /etc/lim/lim-agentd.pem ]; then
-    cat /etc/lim/lim-agentd.key /etc/lim/lim-agentd.crt \
-      > /etc/lim/lim-agentd.pem 2>/dev/null
-fi
+if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
+    cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.crt
+fi &&
+c_rehash /etc/lim/ssl/certs
+
+%post -n lim-cli
+if [ ! -f /etc/lim/ssl/private/lim-cli.key ]; then
+    openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096
+fi &&
+if [ ! -f /etc/lim/ssl/private/lim-cli.csr ]; then
+    openssl req -new -batch \
+      -subj "/CN=Lim CLI/emailAddress=lim@`hostname -f`" \
+      -key /etc/lim/ssl/private/lim-cli.key \
+      -out /etc/lim/ssl/private/lim-cli.csr
+fi &&
+if [ ! -f /etc/lim/ssl/private/lim-cli.crt ]; then
+    openssl x509 -req -days 3650 -in /etc/lim/ssl/private/lim-cli.csr \
+      -signkey /etc/lim/ssl/private/lim-cli.key \
+      -out /etc/lim/ssl/private/lim-cli.crt
+fi &&
+if [ ! -f /etc/lim/ssl/certs/lim-cli.crt ]; then
+    cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.crt
+fi &&
+c_rehash /etc/lim/ssl/certs
 
 %preun -n lim-agentd
 if [ $1 -eq 0 ] ; then
