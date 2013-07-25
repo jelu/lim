@@ -103,7 +103,7 @@ Description: Lim agent daemon
 
 Package: lim-cli
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-cli-perl (= 0.13-1~unstable+1)
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-cli-perl (= 0.13-1~unstable+1),
   openssl, lim-common (= 0.13-1~unstable+1)
 Description: Lim command line interface
  The Lim CLI used to control a local or remote Lim agent.
