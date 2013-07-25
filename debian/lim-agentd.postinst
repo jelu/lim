@@ -11,19 +11,20 @@ if [ "$1" = configure ]; then
 		--disabled-password \
 		lim &&
 
-    if [ ! -f /etc/lim/lim-agentd.key ]; then
-        openssl genrsa -out /etc/lim/lim-agentd.key 4096
+    if [ ! -f /etc/lim/ssl/private/lim-agentd.key ]; then
+        openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096
     fi &&
-    if [ ! -f /etc/lim/lim-agentd.csr ]; then
-        openssl req -new -batch -key /etc/lim/lim-agentd.key \
-          -out /etc/lim/lim-agentd.csr
+    if [ ! -f /etc/lim/ssl/private/lim-agentd.csr ]; then
+        openssl req -new -batch -key /etc/lim/ssl/private/lim-agentd.key \
+          -out /etc/lim/ssl/private/lim-agentd.csr
     fi &&
-    if [ ! -f /etc/lim/lim-agentd.crt ]; then
-        openssl x509 -req -days 3650 -in /etc/lim/lim-agentd.csr \
-          -signkey /etc/lim/lim-agentd.key -out /etc/lim/lim-agentd.crt
+    if [ ! -f /etc/lim/ssl/private/lim-agentd.crt ]; then
+        openssl x509 -req -days 3650 -in /etc/lim/ssl/private/lim-agentd.csr \
+          -signkey /etc/lim/ssl/private/lim-agentd.key \
+          -out /etc/lim/ssl/private/lim-agentd.crt
     fi &&
-    if [ ! -f /etc/lim/lim-agentd.pem ]; then
-        cat /etc/lim/lim-agentd.key /etc/lim/lim-agentd.crt \
-          > /etc/lim/lim-agentd.pem
-    fi
+    if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
+        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.crt
+    fi &&
+    c_rehash /etc/lim/ssl/certs
 fi
