@@ -97,14 +97,14 @@ Description: CLI perl libraries for lim-agentd
 Package: lim-agentd
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-server-perl (= 0.13-1~unstable+1),
- liblog-dispatch-perl, openssl, lim-common (= 0.13-1~unstable+1)
+ liblog-dispatch-perl, openssl, lim-common (= 0.13-1~unstable+1), hostname
 Description: Lim agent daemon
  The Lim agent daemon that serves all plugins.
 
 Package: lim-cli
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, liblim-agent-cli-perl (= 0.13-1~unstable+1),
-  openssl, lim-common (= 0.13-1~unstable+1)
+  openssl, lim-common (= 0.13-1~unstable+1), hostname
 Description: Lim command line interface
  The Lim CLI used to control a local or remote Lim agent.
 

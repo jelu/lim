@@ -7,7 +7,9 @@ if [ "$1" = configure ]; then
         openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-cli.csr ]; then
-        openssl req -new -batch -key /etc/lim/ssl/private/lim-cli.key \
+        openssl req -new -batch \
+          -subj "/CN=Lim CLI/emailAddress=lim@`hostname -f`" \
+          -key /etc/lim/ssl/private/lim-cli.key \
           -out /etc/lim/ssl/private/lim-cli.csr
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-cli.crt ]; then

@@ -15,7 +15,9 @@ if [ "$1" = configure ]; then
         openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-agentd.csr ]; then
-        openssl req -new -batch -key /etc/lim/ssl/private/lim-agentd.key \
+        openssl req -new -batch \
+          -subj "/CN=Lim Agent Daemon/emailAddress=lim@`hostname -f`" \
+          -key /etc/lim/ssl/private/lim-agentd.key \
           -out /etc/lim/ssl/private/lim-agentd.csr
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-agentd.crt ]; then
