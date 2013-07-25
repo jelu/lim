@@ -17,7 +17,6 @@ my $help = 0;
 my $conf;
 my $host = 'localhost';
 my $port = 5353;
-my $key;
 my $log4perl;
 
 Getopt::Long::GetOptions(
@@ -25,7 +24,6 @@ Getopt::Long::GetOptions(
     'conf:s' => \$conf,
     'host:s' => \$host,
     'port:i' => \$port,
-    'key:s' => \$key,
     'log4perl:s' => \$log4perl
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
@@ -72,12 +70,6 @@ if (defined $port) {
     Lim::Config->{port} = $port;
 }
 
-if (defined $key) {
-    Lim::Config->{ssl}->{ca_file} = $key;
-    Lim::Config->{ssl}->{cert_file} = $key;
-    Lim::Config->{ssl}->{key_file} = $key;
-}
-
 my $cv = AnyEvent->condvar;
 my @watchers;
 my $cli;
@@ -102,10 +94,6 @@ push(@watchers,
         $cv->send;
     }),
 );
-
-Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
-    key => Lim::Config->{ssl}->{key_file}
-));
 
 $cli = Lim::CLI->new(
     on_quit => sub {

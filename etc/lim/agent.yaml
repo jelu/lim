@@ -22,11 +22,3 @@
 #  srv_listen: 10
 #  call_timeout: 300
 #  timeout: 30
-#
-#ssl: 
-#  method: any
-#  verify: 1
-#  verify_require_client_cert: 1
-#  ca_file:
-#  cert_file:
-#  key_file:

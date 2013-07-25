@@ -38,6 +38,12 @@ our $CONFIG = {
                 port => 5353,
                 html => '/usr/share/lim/html'
             }
+        },
+        tls => {
+            method => 'any',
+            verify => 1,
+            verify_require_client_cert => 1,
+            ca_path => '/etc/lim/ssl/certs'
         }
     },
     agent => {
@@ -48,11 +54,6 @@ our $CONFIG = {
         history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
         config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
         editor => $ENV{EDITOR}
-    },
-    ssl => {
-        method => 'any',
-        verify => 1,
-        verify_require_client_cert => 1
     }
 };
 

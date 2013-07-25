@@ -64,6 +64,10 @@ sub Init {
         $self->{port} = $args{uri}->port;
     }
     
+    if ($self->isa('Lim::RPC::Transport::HTTPS') and !defined Lim::RPC::TLS->instance->tls_ctx) {
+        confess 'using HTTPS but can not create TLS context';
+    }
+    
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
 

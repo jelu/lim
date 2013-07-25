@@ -81,6 +81,10 @@ sub new {
     if (defined $args{data} and ref($args{data}) ne 'HASH') {
         confess __PACKAGE__, ': Data is not a hash';
     }
+
+    if (!defined Lim::RPC::TLS->instance->tls_ctx) {
+        confess 'using HTTPS but can not create TLS context';
+    }
     
     $self->{host} = $args{host};
     $self->{port} = $args{port};

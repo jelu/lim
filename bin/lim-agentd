@@ -19,7 +19,6 @@ my $help = 0;
 my $conf;
 my $host = '0.0.0.0';
 my $port = 5353;
-my $key;
 my $log4perl;
 my $html = '/usr/share/lim/html';
 my $prefix;
@@ -29,7 +28,6 @@ my $pidfile = '/var/run/lim-agentd.pid';
 Getopt::Long::GetOptions(
     'help|?' => \$help,
     'conf:s' => \$conf,
-    'key:s' => \$key,
     'log4perl:s' => \$log4perl,
     'prefix:s' => \$prefix,
     'foreground' => \$foreground,
@@ -73,12 +71,6 @@ else {
 
 Lim::LoadConfigDirectory('/etc/lim/agent.d');
 Lim::UpdateConfig;
-
-if (defined $key) {
-    Lim::Config->{ssl}->{ca_file} = $key;
-    Lim::Config->{ssl}->{cert_file} = $key;
-    Lim::Config->{ssl}->{key_file} = $key;
-}
 
 if (defined $prefix) {
     Lim::Config->{prefix} = [];
@@ -157,10 +149,6 @@ push(@watchers,
 );
 
 $html =~ s/\/*$//o;
-
-Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
-    key => Lim::Config->{ssl}->{key_file}
-));
 
 my $server = Lim::RPC::Server->new(
     uri => (@ARGV == 1 ? $ARGV[0] : \@ARGV)
