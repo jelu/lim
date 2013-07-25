@@ -23,14 +23,6 @@ BuildRequires:  perl(JSON::XS)
 
 Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires:  perl(Net::SSLeay) >= 1.35
-Requires:  openssl
-
-Requires(pre): shadow-utils
-Requires(post): chkconfig
-Requires(post): net-tools
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
 
 %description
 Lim provides a framework for calling plugins over multiple protocols.
@@ -88,6 +80,15 @@ Version: 0.13
 CLI perl libraries for controlling lim-agentd via lim-cli.
 
 %package -n lim-agentd
+Requires(pre): shadow-utils
+Requires(post): chkconfig
+Requires(post): net-tools
+Requires(post): openssl
+Requires(post): openssl-perl
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
+Requires: lim-common
 Summary: Lim agent daemon
 Group: Development/Libraries
 Version: 0.13
@@ -95,6 +96,10 @@ Version: 0.13
 The Lim agent daemon that serves all plugins.
 
 %package -n lim-cli
+Requires(post): net-tools
+Requires(post): openssl
+Requires(post): openssl-perl
+Requires: lim-common
 Summary: Lim command line interface
 Group: Development/Libraries
 Version: 0.13
@@ -171,8 +176,8 @@ install -m 644 %{_builddir}/lim/etc/lim/cli.yaml %{buildroot}%{_sysconfdir}/lim/
 install -m 644 %{_builddir}/lim/etc/lim/cli.d/README %{buildroot}%{_sysconfdir}/lim/cli.d/
 mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/certs
 mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/private
-install -m 644 %{_builddir}/lim/lim/ssl/certs/README %{buildroot}%{_sysconfdir}/lim/ssl/certs/
-install -m 644 %{_builddir}/lim/lim/ssl/private/README %{buildroot}%{_sysconfdir}/lim/ssl/private/
+install -m 644 %{_builddir}/lim/etc/lim/ssl/certs/README %{buildroot}%{_sysconfdir}/lim/ssl/certs/
+install -m 644 %{_builddir}/lim/etc/lim/ssl/private/README %{buildroot}%{_sysconfdir}/lim/ssl/private/
 
 
 %check
@@ -333,29 +338,31 @@ if [ ! -f /etc/lim/ssl/private/lim-agentd.crt ]; then
       -out /etc/lim/ssl/private/lim-agentd.crt >/dev/null 2>&1
 fi &&
 if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
-    cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.crt
+    cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem \
+      >/dev/null 2>&1
 fi &&
-c_rehash /etc/lim/ssl/certs
+c_rehash /etc/lim/ssl/certs >/dev/null 2>&1
 
 %post -n lim-cli
 if [ ! -f /etc/lim/ssl/private/lim-cli.key ]; then
-    openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096
+    openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096 >/dev/null 2>&1
 fi &&
 if [ ! -f /etc/lim/ssl/private/lim-cli.csr ]; then
     openssl req -new -batch \
       -subj "/CN=Lim CLI/emailAddress=lim@`hostname -f`" \
       -key /etc/lim/ssl/private/lim-cli.key \
-      -out /etc/lim/ssl/private/lim-cli.csr
+      -out /etc/lim/ssl/private/lim-cli.csr >/dev/null 2>&1
 fi &&
 if [ ! -f /etc/lim/ssl/private/lim-cli.crt ]; then
     openssl x509 -req -days 3650 -in /etc/lim/ssl/private/lim-cli.csr \
       -signkey /etc/lim/ssl/private/lim-cli.key \
-      -out /etc/lim/ssl/private/lim-cli.crt
+      -out /etc/lim/ssl/private/lim-cli.crt >/dev/null 2>&1
 fi &&
 if [ ! -f /etc/lim/ssl/certs/lim-cli.crt ]; then
-    cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.crt
+    cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.pem \
+      >/dev/null 2>&1
 fi &&
-c_rehash /etc/lim/ssl/certs
+c_rehash /etc/lim/ssl/certs >/dev/null 2>&1
 
 %preun -n lim-agentd
 if [ $1 -eq 0 ] ; then

@@ -26,7 +26,7 @@ if [ "$1" = configure ]; then
           -out /etc/lim/ssl/private/lim-agentd.crt
     fi &&
     if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
-        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.crt
+        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem
     fi &&
     c_rehash /etc/lim/ssl/certs
 fi
