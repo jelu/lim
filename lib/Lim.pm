@@ -179,13 +179,13 @@ sub LoadConfigDirectory {
         foreach my $entry (sort readdir(CONFIGS)) {
             my $yaml;
             
-            unless(-r $entry and $entry =~ /\.yaml$/o) {
+            unless(-r $directory.'/'.$entry and $entry =~ /\.yaml$/o) {
                 next;
             }
             
-            Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry);
+            Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry, ' from directory ', $directory);
             eval {
-                $yaml = YAML::Any::LoadFile($entry);
+                $yaml = YAML::Any::LoadFile($directory.'/'.$entry);
             };
             if ($@) {
                 confess __PACKAGE__, ': Unable to read configuration file ', $entry, ' from directory ', $directory, ': ', $@, "\n";
