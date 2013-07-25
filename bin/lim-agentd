@@ -24,6 +24,7 @@ my $html = '/usr/share/lim/html';
 my $prefix;
 my $foreground = 0;
 my $pidfile = '/var/run/lim-agentd.pid';
+my @options;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
@@ -31,7 +32,8 @@ Getopt::Long::GetOptions(
     'log4perl:s' => \$log4perl,
     'prefix:s' => \$prefix,
     'foreground' => \$foreground,
-    'pidfile:s' => \$pidfile
+    'pidfile:s' => \$pidfile,
+    'option:s' => \@options
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -70,7 +72,11 @@ else {
 }
 
 Lim::LoadConfigDirectory('/etc/lim/agent.d');
+Lim::ParseOptions(@options);
 Lim::UpdateConfig;
+
+use Data::Dumper;
+print Dumper($Lim::CONFIG);
 
 if (defined $prefix) {
     Lim::Config->{prefix} = [];

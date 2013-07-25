@@ -18,13 +18,15 @@ my $conf;
 my $host = 'localhost';
 my $port = 5353;
 my $log4perl;
+my @options;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
     'conf:s' => \$conf,
     'host:s' => \$host,
     'port:i' => \$port,
-    'log4perl:s' => \$log4perl
+    'log4perl:s' => \$log4perl,
+    'option:s' => \@options
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -60,6 +62,7 @@ else {
     Lim::LoadConfig(Lim::Config->{cli}->{config_file});
 }
 
+Lim::ParseOptions(@options);
 Lim::UpdateConfig;
 
 if (defined $host) {

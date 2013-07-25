@@ -198,6 +198,36 @@ sub LoadConfigDirectory {
     return;
 }
 
+=item Lim::ParseOptions(@options)
+
+Parse options given at command line and add them into configuration. Option
+groups are seperated by . (for example log.obj_debug=0).
+
+=cut
+
+sub ParseOptions {
+    foreach my $option (@_) {
+        my ($name, $value) = split(/=/o, $option, 2);
+        unless ($name and defined $value) {
+            confess __PACKAGE__, ': Invalid or unknown option: ', $option, "\n";
+        }
+        
+        my @parts = split(/\./o, $name);
+        my $ref = $CONFIG;
+        while (defined(my $part = shift(@parts))) {
+            unless (scalar @parts) {
+                $ref->{$part} = $value;
+                last;
+            }
+            
+            unless (exists $ref->{$part}) {
+                $ref->{$part} = {};
+            }
+            $ref = $ref->{$part};
+        }
+    }
+}
+
 =item Lim::UpdateConfig
 
 Used after L<LoadConfig> and/or L<LoadConfigDirectory> to update and do post
