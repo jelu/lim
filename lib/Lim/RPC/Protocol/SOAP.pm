@@ -387,7 +387,7 @@ sub handle {
             }
         }
         else {
-            $response->code(HTTP_NOT_FOUND);
+            return;
         }
 
         $cb->cb->($response);
@@ -417,7 +417,7 @@ sub handle {
             $response->code(HTTP_OK);
         }
         else {
-            $response->code(HTTP_NOT_FOUND);
+            return;
         }
 
         $cb->cb->($response);

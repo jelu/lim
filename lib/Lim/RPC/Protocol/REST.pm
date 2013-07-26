@@ -237,9 +237,9 @@ sub handle {
                     }), $query);
                 return 1;
             }
-            else {
-                $response->code(HTTP_NOT_FOUND);
-            }
+        }
+        else {
+            return;
         }
 
         $cb->cb->($response);
