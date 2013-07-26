@@ -34,6 +34,14 @@ sub Module {
     'Agent';
 }
 
+=head2 function1
+
+=cut
+
+sub Description {
+    'This is the code module of the Lim Agent Daemon, it manage other modules and provides system information.';
+}
+
 =head2 function2
 
 =cut
@@ -49,6 +57,7 @@ sub Calls {
             out => {
                 plugin => {
                     name => 'string',
+                    description => 'string optional',
                     module => 'string',
                     version => 'string',
                     loaded => 'bool'
@@ -69,6 +78,7 @@ sub Calls {
             out => {
                 plugin => {
                     name => 'string',
+                    description => 'string optional',
                     module => 'string',
                     version => 'string',
                     loaded => 'bool'
