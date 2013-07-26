@@ -1,9 +1,9 @@
-#
-#
 --- 
 #
-#agent:
+agent:
 #  config_file:
+  uri:
+    - https+rest+soap+xmlrpc+jsonrpc2://0.0.0.0:5353
 #
 #log:
 #  obj_debug: 1

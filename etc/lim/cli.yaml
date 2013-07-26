@@ -1,16 +1,6 @@
-#
-#
-#
----
-cli: 
-#
-#  config_file: <path to config file>
-
-#
-#  editor: vi
-
-#
-#  history_file: <path to history file>
-
-#
+#---
+#cli: 
+#  config_file: $HOME/.limrc
+#  editor: $EDITOR
+#  history_file: $HOME/.lim_history
 #  history_length: 1000
