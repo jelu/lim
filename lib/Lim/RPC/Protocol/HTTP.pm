@@ -143,7 +143,7 @@ sub handle {
         }
         
         if ($request->header('If-Modified-Since')
-            and $request->header('If-Modified-Since') <= $mtime)
+            and $request->header('If-Modified-Since') >= $mtime)
         {
             close(FILE);
             $response->code(HTTP_NOT_MODIFIED);
