@@ -53,7 +53,6 @@ sub Init {
     $self->{client} = {};
     $self->{host} = Lim::Config->{rpc}->{transport}->{http}->{host};
     $self->{port} = Lim::Config->{rpc}->{transport}->{http}->{port};
-    $self->{html} = Lim::Config->{rpc}->{transport}->{http}->{html};
 
     if (exists $args{uri}) {
         unless (blessed($args{uri}) and $args{uri}->isa('URI')) {
@@ -139,7 +138,7 @@ sub Init {
                 unless (defined $self) {
                     return;
                 }
-
+                
                 my $client = $self->{client}->{$handle};
                 
                 unless (defined $client) {

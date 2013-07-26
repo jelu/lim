@@ -35,8 +35,12 @@ our $CONFIG = {
         transport => {
             http => {
                 host => undef,
-                port => 5353,
-                html => '/usr/share/lim/html'
+                port => 5353
+            }
+        },
+        protocol => {
+            http => {
+                webroot => '/usr/share/lim/html'
             }
         },
         tls => {

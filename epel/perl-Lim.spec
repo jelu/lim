@@ -20,6 +20,7 @@ BuildRequires:  perl(EV)
 BuildRequires:  perl(Module::Find)
 BuildRequires:  perl(Digest::SHA)
 BuildRequires:  perl(JSON::XS)
+BuildRequires:  perl(LWP::MediaTypes)
 
 Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires:  perl(Net::SSLeay) >= 1.35
@@ -147,6 +148,13 @@ Group: Development/Libraries
 Version: 0.13
 %description -n perl-Lim-Protocol-JSONRPC
 Lim perl libraries for JSONRPC protocol.
+
+%package -n perl-Lim-Protocol-HTTP
+Summary: Lim HTTP protocol perl libraries
+Group: Development/Libraries
+Version: 0.13
+%description -n perl-Lim-Protocol-HTTP
+Lim perl libraries for HTTP protocol.
 
 
 %prep
@@ -312,6 +320,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Protocol::JSONRPC2.3*
 %{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC1.pm
 %{perl_vendorlib}/Lim/RPC/Protocol/JSONRPC2.pm
+
+%files -n perl-Lim-Protocol-HTTP
+%defattr(-,root,root,-)
+%{_mandir}/man3/Lim::RPC::Protocol::HTTP.3*
+%{perl_vendorlib}/Lim/RPC/Protocol/HTTP.pm
 
 
 %pre -n lim-agentd
