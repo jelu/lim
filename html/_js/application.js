@@ -46,14 +46,37 @@
 				    		$('#modules').empty();
 				    		
 				    		$.each(data.plugin, function () {
+				    			var mod=this;
+				    			
 				    			$('#modules').append(
-						    		'<div class="span3">'+
-						    		'<h2>'+this.name+'</h2>'+
-						    		'<p>'+this.description+'</p>'+
-						    		'<p>Version '+this.version+'</p>'+
-						    		'<p><a class="btn" href="#" module="'+this.name.toLowerCase()+'">Manage &raquo;</a></p>'+
+						    		'<div id="module-'+mod.name+'" class="span3">'+
+						    		'<h2>'+mod.name+'</h2>'+
+						    		'<p>'+mod.description+'</p>'+
+						    		'<p>Version '+mod.version+'</p>'+
 						    		'</div>'
 				    				);
+				    			$.get(that.uri + '/_'+mod.name.toLowerCase()+'/index.html')
+				    			.done(function () {
+				    				$('#module-'+mod.name+' .label-warning').remove();
+				    				$('#module-'+mod.name).append(
+							    		'<p><a class="btn" href="#" module="'+mod.name.toLowerCase()+'">Manage &raquo;</a></p>'
+				    					);
+				    			})
+				    			.fail(function () {
+				    				$('#module-'+mod.name+' .label-warning').remove();
+				    				$('#module-'+mod.name).append(
+							    		'<p><span class="label label-important">Management Console not available!</span></p>'
+				    					);
+				    			});
+				    			window.setTimeout(function () {
+				    				if (!$('#module-'+mod.name+' .btn').length &&
+				    					!$('#module-'+mod.name+' .label').length)
+				    				{
+					    				$('#module-'+mod.name).append(
+								    		'<p><span class="label label-warning">Checking availability ...</span></p>'
+					    					);
+				    				}
+				    			}, 600);
 				    		});
 				    		$('#modules a.btn').click(function () {
 				    			that.loadModule($(this).attr('module'));
@@ -89,6 +112,10 @@
 				});
 			}
 		};
+		
+		$.ajaxSetup({
+			timeout: 30000
+		});
 		
 		window.lim.init();
 	    window.prettyPrint && prettyPrint();
