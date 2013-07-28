@@ -36,6 +36,30 @@
 			getJSON: function (uri) {
 				return $.getJSON(this.uri + uri);
 			},
+			putJSON: function (uri, data) {
+				return $.ajax({
+					dataType: "json",
+					url: this.uri + uri,
+					data: data,
+					type: 'PUT'
+				});
+			},
+			postJSON: function (uri, data) {
+				return $.ajax({
+					dataType: "json",
+					url: this.uri + uri,
+					data: data,
+					type: 'POST'
+				});
+			},
+			delJSON: function (uri, data) {
+				return $.ajax({
+					dataType: "json",
+					url: this.uri + uri,
+					data: data,
+					type: 'DELETE'
+				});
+			},
 			//
 			getModulesRetryInterval: 10,
 			getModulesRetry: 0,
