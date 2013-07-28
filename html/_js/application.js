@@ -17,18 +17,21 @@
 			},
 			//
 			loadHome: function () {
-				$.get(this.uri + '/home.html')
+				this.loadPage('/home.html')
 				.done(function (data) {
 					$('#content').html(data);
 					lim.getModules();
-				})
-				.fail(function () {
-					$('#content').text('Something went very wrong ...');
 				});
 			},
 			//
 			loadPage: function (page) {
-				return $.get(this.uri + page);
+				return $.get(this.uri + page)
+				.fail(function () {
+					$('#content').empty();
+					$('<div class="alert alert-error"></div>')
+					.text('Something went very wrong ... please check your system logs!')
+					.appendTo('#content');
+				});
 			},
 			getJSON: function (uri) {
 				return $.getJSON(this.uri + uri);
@@ -86,6 +89,46 @@
 				    				}
 				    			}, 600);
 				    		});
+				    		return;
+			    		}
+			    		else if (data.plugin.name) {
+			    			var mod=data.plugin;
+			    			
+			    			$('#modules')
+			    			.empty()
+			    			.append(
+					    		'<div id="module-'+mod.name+'" class="span3">'+
+					    		'<h2>'+mod.name+'</h2>'+
+					    		'<p>'+mod.description+'</p>'+
+					    		'<p>Version '+mod.version+'</p>'+
+					    		'</div>'
+			    				);
+			    			$.get(that.uri + '/_'+mod.name.toLowerCase()+'/index.html')
+			    			.done(function () {
+			    				$('#module-'+mod.name+' .label-warning').remove();
+			    				$('#module-'+mod.name).append(
+						    		'<p><a class="btn" href="#">Manage &raquo;</a></p>'
+			    					);
+					    		$('#module-'+mod.name+' a.btn').click(function () {
+					    			that.loadModule(mod.name.toLowerCase());
+					    			return false;
+					    		});
+			    			})
+			    			.fail(function () {
+			    				$('#module-'+mod.name+' .label-warning').remove();
+			    				$('#module-'+mod.name).append(
+						    		'<p><span class="label label-important">Management Console not available!</span></p>'
+			    					);
+			    			});
+			    			window.setTimeout(function () {
+			    				if (!$('#module-'+mod.name+' .btn').length &&
+			    					!$('#module-'+mod.name+' .label').length)
+			    				{
+				    				$('#module-'+mod.name).append(
+							    		'<p><span class="label label-warning">Checking availability ...</span></p>'
+				    					);
+			    				}
+			    			}, 600);
 				    		return;
 			    		}
 			    		

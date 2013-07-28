@@ -27,9 +27,6 @@
 				.done(function (data) {
 					$('#agent-content').html(data);
 					that.getSystemInformation();
-				})
-				.fail(function () {
-					$('#content').text('Something went very wrong ...');
 				});
 			},
 			getSystemInformation: function () {
@@ -54,9 +51,6 @@
 				.done(function (data) {
 					$('#agent-content').html(data);
 					that.getPlugins();
-				})
-				.fail(function () {
-					$('#content').text('Something went very wrong ...');
 				});
 			},
 			getPlugins: function () {
@@ -64,7 +58,11 @@
 				.done(function (data) {
 		    		if (data.plugin && data.plugin.length) {
 		    			$('#agent-content table tbody').empty();
-			    		
+
+			    		data.plugin.sort(function (a, b) {
+			    			return (a.name > b.name) ? 1 : ((a.name > b.name) ? -1 : 0);
+			    		});
+
 			    		$.each(data.plugin, function () {
 			    			$('#agent-content table tbody').append(
 			    				'<tr>'+
@@ -75,6 +73,19 @@
 			    				'</tr>'
 			    				);
 			    		});
+			    		return;
+		    		}
+		    		else if (data.plugin.name) {
+		    			$('#agent-content table tbody')
+		    			.empty()
+		    			.append(
+		    				'<tr>'+
+		    				'<td>'+data.plugin.name+'</td>'+
+		    				'<td>'+data.plugin.version+'</td>'+
+		    				'<td>'+(data.plugin.loaded ? 'Loaded' : 'Not loaded')+'</td>'+
+		    				'<td>'+data.plugin.module+'</td>'+
+		    				'</tr>'
+		    				);
 			    		return;
 		    		}
 		    		
