@@ -156,6 +156,22 @@ Version: 0.13
 %description -n perl-Lim-Protocol-HTTP
 Lim perl libraries for HTTP protocol.
 
+%package -n lim-management-console-common
+Requires: lim-agentd
+Summary: Lim Management Console common files
+Group: Development/Libraries
+Version: 0.13
+%description -n lim-management-console-common
+Common Lim Management Console files and directories.
+
+%package -n lim-management-console-agent
+Requires: lim-management-console-common
+Summary: Lim Agent Daemon's Management Console files
+Group: Development/Libraries
+Version: 0.13
+%description -n lim-management-console-agent
+Lim Agent Daemon's Management Console files.
+
 
 %prep
 %setup -q -n lim
@@ -168,7 +184,6 @@ make %{?_smp_mflags}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-mkdir -p ${RPM_BUILD_ROOT}%{_datadir}/lim/html
 make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
@@ -186,6 +201,28 @@ mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/certs
 mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/private
 install -m 644 %{_builddir}/lim/etc/lim/ssl/certs/README %{buildroot}%{_sysconfdir}/lim/ssl/certs/
 install -m 644 %{_builddir}/lim/etc/lim/ssl/private/README %{buildroot}%{_sysconfdir}/lim/ssl/private/
+mkdir -p %{buildroot}%{_datadir}/lim/html
+mkdir -p %{buildroot}%{_datadir}/lim/html/_css
+mkdir -p %{buildroot}%{_datadir}/lim/html/_js
+mkdir -p %{buildroot}%{_datadir}/lim/html/_agent
+mkdir -p %{buildroot}%{_datadir}/lim/html/_agent/js
+mkdir -p %{buildroot}%{_datadir}/lim/html/_img
+install -m 644 %{_builddir}/lim/html/home.html %{buildroot}%{_datadir}/lim/html/home.html
+install -m 644 %{_builddir}/lim/html/_css/bootstrap.min.css %{buildroot}%{_datadir}/lim/html/_css/bootstrap.min.css
+install -m 644 %{_builddir}/lim/html/_css/application.css %{buildroot}%{_datadir}/lim/html/_css/application.css
+install -m 644 %{_builddir}/lim/html/_css/prettify.css %{buildroot}%{_datadir}/lim/html/_css/prettify.css
+install -m 644 %{_builddir}/lim/html/index.html %{buildroot}%{_datadir}/lim/html/index.html
+install -m 644 %{_builddir}/lim/html/_js/application.js %{buildroot}%{_datadir}/lim/html/_js/application.js
+install -m 644 %{_builddir}/lim/html/_js/html5shiv.js %{buildroot}%{_datadir}/lim/html/_js/html5shiv.js
+install -m 644 %{_builddir}/lim/html/_js/jquery.min.js %{buildroot}%{_datadir}/lim/html/_js/jquery.min.js
+install -m 644 %{_builddir}/lim/html/_js/bootstrap.min.js %{buildroot}%{_datadir}/lim/html/_js/bootstrap.min.js
+install -m 644 %{_builddir}/lim/html/_js/prettify.js %{buildroot}%{_datadir}/lim/html/_js/prettify.js
+install -m 644 %{_builddir}/lim/html/_agent/system_information.html %{buildroot}%{_datadir}/lim/html/_agent/system_information.html
+install -m 644 %{_builddir}/lim/html/_agent/plugins.html %{buildroot}%{_datadir}/lim/html/_agent/plugins.html
+install -m 644 %{_builddir}/lim/html/_agent/index.html %{buildroot}%{_datadir}/lim/html/_agent/index.html
+install -m 644 %{_builddir}/lim/html/_agent/js/application.js %{buildroot}%{_datadir}/lim/html/_agent/js/application.js
+install -m 644 %{_builddir}/lim/html/_img/glyphicons-halflings-white.png %{buildroot}%{_datadir}/lim/html/_img/glyphicons-halflings-white.png
+install -m 644 %{_builddir}/lim/html/_img/glyphicons-halflings.png %{buildroot}%{_datadir}/lim/html/_img/glyphicons-halflings.png
 
 
 %check
@@ -325,6 +362,28 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Protocol::HTTP.3*
 %{perl_vendorlib}/Lim/RPC/Protocol/HTTP.pm
+
+%files -n lim-management-console-common
+%defattr(-,root,root,-)
+%{_datadir}/lim/html/home.html
+%{_datadir}/lim/html/_css/bootstrap.min.css
+%{_datadir}/lim/html/_css/application.css
+%{_datadir}/lim/html/_css/prettify.css
+%{_datadir}/lim/html/index.html
+%{_datadir}/lim/html/_js/application.js
+%{_datadir}/lim/html/_js/html5shiv.js
+%{_datadir}/lim/html/_js/jquery.min.js
+%{_datadir}/lim/html/_js/bootstrap.min.js
+%{_datadir}/lim/html/_js/prettify.js
+%{_datadir}/lim/html/_img/glyphicons-halflings-white.png
+%{_datadir}/lim/html/_img/glyphicons-halflings.png
+
+%files -n lim-management-console-agent
+%defattr(-,root,root,-)
+%{_datadir}/lim/html/_agent/system_information.html
+%{_datadir}/lim/html/_agent/plugins.html
+%{_datadir}/lim/html/_agent/index.html
+%{_datadir}/lim/html/_agent/js/application.js
 
 
 %pre -n lim-agentd

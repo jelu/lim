@@ -120,3 +120,15 @@ Architecture: all
 Depends: ${misc:Depends}
 Description: Lim common files
  Common Lim files and directories.
+
+Package: lim-management-console-common
+Architecture: all
+Depends: ${misc:Depends}, lim-agentd (= 0.13-1~unstable+1)
+Description: Lim Management Console common files
+ Common Lim Management Console files and directories.
+
+Package: lim-management-console-agent
+Architecture: all
+Depends: ${misc:Depends}, lim-management-console-common
+Description: Lim Agent Daemon's Management Console files
+ Lim Agent Daemon's Management Console files.
