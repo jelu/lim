@@ -264,6 +264,10 @@ sub Init {
                                 }
                             }
                             Lim::RPC_DEBUG and $self->{logger}->debug('Did not find any protocol handler for request');
+                            my $response = HTTP::Response->new;
+                            $response->request($client->{request});
+                            $response->protocol($client->{request}->protocol);
+                            $cb->cb->($response);
                         });
                 }
             });
