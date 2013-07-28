@@ -65,9 +65,9 @@ sub plugins {
 		my ($call, $response) = @_;
 		
 		if ($call->Successful) {
-		    $self->cli->println(join("\t", qw(Name Module Version)));
+		    $self->cli->println(join("\t", qw(Name Description Module Version)));
 		    foreach my $plugin (@{$response->{plugin}}) {
-		        $self->cli->println(join("\t", $plugin->{name}, $plugin->{module}, $plugin->{version}));
+		        $self->cli->println(join("\t", $plugin->{name}, $plugin->{description}, $plugin->{module}, $plugin->{version}));
 		    }
 			$self->Successful;
 		}

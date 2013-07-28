@@ -35,7 +35,8 @@ WriteMakefile(
         'URI' => 1,
         'YAML::Any' => 0.70,
         'Net::SSLeay' => 1.35,
-        'Log::Dispatch::Syslog' => 0
+        'Log::Dispatch::Syslog' => 0,
+        'LWP::MediaTypes' => 0
     },
     META_MERGE => {
         recommends => {

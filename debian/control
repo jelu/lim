@@ -8,7 +8,7 @@ Build-Depends-Indep: libanyevent-perl (>= 5), libcommon-sense-perl (>= 3),
  libyaml-perl (>= 0.70), perl (>= 5.10.1), libnet-ssleay-perl (>= 1.35),
  libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
  liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1),
- liblog-dispatch-perl
+ liblog-dispatch-perl, liblwp-mediatypes-perl
 Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Standards-Version: 3.9.1
 Homepage: http://github.com/jelu/lim/wiki
@@ -62,6 +62,13 @@ Depends: ${misc:Depends}, ${perl:Depends}, liblim-server-perl (= 0.13-1~unstable
 Description: Lim JSONRPC 1.0/2.0 protocol perl libraries
  Lim perl libraries for JSONRPC 1.0/2.0 protocol.
 
+Package: liblim-protocol-http-perl
+Architecture: all
+Depends: ${misc:Depends}, ${perl:Depends}, liblim-server-perl (= 0.13-1~unstable+1),
+ liblwp-mediatypes-perl
+Description: Lim HTTP protocol perl libraries
+ Lim perl libraries for HTTP protocol.
+
 Package: liblim-cli-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, liblim-common-perl (= 0.13-1~unstable+1)
@@ -113,3 +120,15 @@ Architecture: all
 Depends: ${misc:Depends}
 Description: Lim common files
  Common Lim files and directories.
+
+Package: lim-management-console-common
+Architecture: all
+Depends: ${misc:Depends}, lim-agentd (= 0.13-1~unstable+1)
+Description: Lim Management Console common files
+ Common Lim Management Console files and directories.
+
+Package: lim-management-console-agent
+Architecture: all
+Depends: ${misc:Depends}, lim-management-console-common
+Description: Lim Agent Daemon's Management Console files
+ Lim Agent Daemon's Management Console files.

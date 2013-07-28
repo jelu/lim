@@ -100,17 +100,19 @@ sub Load {
             next;
         }
 
-        my $name;
+        my ($name, $description);
         eval {
             eval "require $module;";
             die $@ if $@;
             $name = $module->Module;
+            $description = $module->Description;
         };
         
         if ($@) {
             $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
             $self->{plugin}->{$module} = {
                 name => $name,
+                description => $description,
                 module => $module,
                 version => -1,
                 loaded => 0,
@@ -121,6 +123,7 @@ sub Load {
         
         $self->{plugin}->{$module} = {
             name => $name,
+            description => $description,
             module => $module,
             version => $module->VERSION,
             loaded => 1

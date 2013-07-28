@@ -79,6 +79,16 @@ sub Module {
     confess 'Module not overloaded';
 }
 
+=item $module_name = Lim::Plugin::MyPlugin->Description
+
+Returns module description.
+
+=cut
+
+sub Description {
+    'No description for this module';
+}
+
 =item $call_hash_ref = Lim::Plugin::MyPlugin->Calls
 
 Returns a hash reference to the calls that can be made to this plugin, used both

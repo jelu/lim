@@ -193,7 +193,7 @@ sub handle {
             }
         }
         else {
-            $response->code(HTTP_NOT_FOUND);
+            return;
         }
 
         $cb->cb->($response);
