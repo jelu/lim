@@ -45,6 +45,10 @@
 			    		if (data.plugin && data.plugin.length) {
 				    		$('#modules').empty();
 				    		
+				    		data.plugin.sort(function (a, b) {
+				    			return (a.name > b.name) ? 1 : ((a.name > b.name) ? -1 : 0);
+				    		});
+				    		
 				    		$.each(data.plugin, function () {
 				    			var mod=this;
 				    			
