@@ -39,7 +39,7 @@ sub Module {
 =cut
 
 sub Description {
-    'This is the code module of the Lim Agent Daemon, it manage other modules and provides system information.';
+    'This is the core module of the Lim Agent Daemon, it manage other modules and provides system information.';
 }
 
 =head2 function2
