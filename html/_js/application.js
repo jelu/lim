@@ -59,8 +59,12 @@
 				    			.done(function () {
 				    				$('#module-'+mod.name+' .label-warning').remove();
 				    				$('#module-'+mod.name).append(
-							    		'<p><a class="btn" href="#" module="'+mod.name.toLowerCase()+'">Manage &raquo;</a></p>'
+							    		'<p><a class="btn" href="#">Manage &raquo;</a></p>'
 				    					);
+						    		$('#module-'+mod.name+' a.btn').click(function () {
+						    			that.loadModule(mod.name.toLowerCase());
+						    			return false;
+						    		});
 				    			})
 				    			.fail(function () {
 				    				$('#module-'+mod.name+' .label-warning').remove();
@@ -77,10 +81,6 @@
 					    					);
 				    				}
 				    			}, 600);
-				    		});
-				    		$('#modules a.btn').click(function () {
-				    			that.loadModule($(this).attr('module'));
-				    			return false;
 				    		});
 				    		return;
 			    		}
