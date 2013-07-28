@@ -129,6 +129,6 @@ Description: Lim Management Console common files
 
 Package: lim-management-console-agent
 Architecture: all
-Depends: ${misc:Depends}, lim-management-console-common
+Depends: ${misc:Depends}, lim-management-console-common (= 0.13-1~unstable+1)
 Description: Lim Agent Daemon's Management Console files
  Lim Agent Daemon's Management Console files.

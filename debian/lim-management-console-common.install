@@ -1,1 +1,5 @@
-html/_agent /usr/share/lim/html/
+html/_css /usr/share/lim/html/
+html/_img /usr/share/lim/html/
+html/_js /usr/share/lim/html/
+html/home.html /usr/share/lim/html/
+html/index.html /usr/share/lim/html/
