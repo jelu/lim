@@ -117,10 +117,7 @@ sub handle {
                     my $query_str = $request->content;
                     $query_str =~ s/[\015\012]+$//o;
 
-                    my $uri = URI->new;
-                    $uri->query($query_str);
-
-                    $query = $uri->query_form_hash;
+                    $query = Lim::Util::QueryDecode($query_str)
                 }
                 elsif ($request->header('Content-Type') =~ /application\/json/o) {
                     eval {
