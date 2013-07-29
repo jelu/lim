@@ -9,6 +9,7 @@ use Fcntl qw(:seek);
 use IO::File ();
 use Digest::SHA ();
 use Scalar::Util qw(blessed);
+use URI::Escape ();
 
 use AnyEvent ();
 use AnyEvent::Util ();
@@ -322,6 +323,46 @@ sub URIize {
     $uri = lc(join('_', @parts));
     
     return ($method, '/'.$uri);
+}
+
+=item $hash_ref = Lim::Util::QueryDecode($query_string)
+
+Returns an HASH reference of the decode query string.
+
+=cut
+
+sub QueryDecode {
+    my $href = {};
+    
+    foreach my $part (split(/&/o, $_[0])) {
+        my ($key, $value) = split(/=/o, $part, 2);
+
+        $key = URI::Escape::uri_unescape($key);
+        $value = URI::Escape::uri_unescape($value);
+        
+        unless ($key) {
+            return;
+        }
+        
+        use Data::Dumper;
+        
+        my @keys = split(/(?:\[|\]\[|\])/o, $key);
+        my $this = $href;
+        while (defined (my $k = shift(@keys))) {
+            unless (scalar @keys) {
+                $this->{$k} = $value;
+                last;
+            }
+            if (exists $this->{$k}) {
+                $this = $this->{$k};
+                next;
+            }
+            
+            $this = $this->{$k} = {};
+        }
+    }
+    
+    return $href;
 }
 
 =item $camelized = Lim::Util::Camelize($underscore)
