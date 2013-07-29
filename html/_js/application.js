@@ -33,8 +33,13 @@
 					.appendTo('#content');
 				});
 			},
-			getJSON: function (uri) {
-				return $.getJSON(this.uri + uri);
+			getJSON: function (uri, data) {
+				return $.ajax({
+					dataType: "json",
+					url: this.uri + uri,
+					data: data,
+					type: 'GET'
+				});
 			},
 			putJSON: function (uri, data) {
 				return $.ajax({
@@ -61,6 +66,21 @@
 				});
 			},
 			//
+			getXHRError: function (jqXHR) {
+				var message;
+				
+				try {
+					message = $.parseJSON(jqXHR.responseText)['Lim::Error'].message+'!';
+				}
+				catch (dummy) {
+				}
+				if (!message) {
+					message = 'Reason unknown, please check your system logs!';
+				}
+				
+				return message;
+			},
+			//
 			getModulesRetryInterval: 10,
 			getModulesRetry: 0,
 			getModules: function () {
@@ -80,12 +100,13 @@
 				    			var mod=this;
 				    			
 				    			$('#modules').append(
-						    		'<div id="module-'+mod.name+'" class="span3">'+
-						    		'<h2>'+mod.name+'</h2>'+
-						    		'<p>'+mod.description+'</p>'+
-						    		'<p>Version '+mod.version+'</p>'+
-						    		'</div>'
-				    				);
+						    		$('<div class="span3"></div>')
+						    		.attr('id', 'module-'+mod.name)
+						    		.append(
+						    			$('<h2></h2>').text(mod.name),
+						    			$('<p></p>').text(mod.description),
+						    			$('<p></p>').text('Version '+mod.version)
+					    			));
 				    			$.get(that.uri + '/_'+mod.name.toLowerCase()+'/index.html')
 				    			.done(function () {
 				    				$('#module-'+mod.name+' .label-warning').remove();
@@ -121,12 +142,13 @@
 			    			$('#modules')
 			    			.empty()
 			    			.append(
-					    		'<div id="module-'+mod.name+'" class="span3">'+
-					    		'<h2>'+mod.name+'</h2>'+
-					    		'<p>'+mod.description+'</p>'+
-					    		'<p>Version '+mod.version+'</p>'+
-					    		'</div>'
-			    				);
+					    		$('<div class="span3"></div>')
+					    		.attr('id', 'module-'+mod.name)
+					    		.append(
+					    			$('<h2></h2>').text(mod.name),
+					    			$('<p></p>').text(mod.description),
+					    			$('<p></p>').text('Version '+mod.version)
+				    			));
 			    			$.get(that.uri + '/_'+mod.name.toLowerCase()+'/index.html')
 			    			.done(function () {
 			    				$('#module-'+mod.name+' .label-warning').remove();
@@ -189,6 +211,6 @@
 		});
 		
 		window.lim.init();
-	    window.prettyPrint && prettyPrint();
+	    prettyPrint();
 	});
 })(window.jQuery);

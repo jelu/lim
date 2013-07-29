@@ -65,13 +65,13 @@
 
 			    		$.each(data.plugin, function () {
 			    			$('#agent-content table tbody').append(
-			    				'<tr>'+
-			    				'<td>'+this.name+'</td>'+
-			    				'<td>'+this.version+'</td>'+
-			    				'<td>'+(this.loaded ? 'Loaded' : 'Not loaded')+'</td>'+
-			    				'<td>'+this.module+'</td>'+
-			    				'</tr>'
-			    				);
+			    				$('<tr></tr>')
+			    				.append(
+			    					$('<td></td>').text(this.name),
+			    					$('<td></td>').text(this.version),
+			    					$('<td></td>').text(this.loaded ? 'Loaded' : 'Not loaded'),
+			    					$('<td></td>').text(this.module)
+		    					));
 			    		});
 			    		return;
 		    		}
@@ -79,13 +79,13 @@
 		    			$('#agent-content table tbody')
 		    			.empty()
 		    			.append(
-		    				'<tr>'+
-		    				'<td>'+data.plugin.name+'</td>'+
-		    				'<td>'+data.plugin.version+'</td>'+
-		    				'<td>'+(data.plugin.loaded ? 'Loaded' : 'Not loaded')+'</td>'+
-		    				'<td>'+data.plugin.module+'</td>'+
-		    				'</tr>'
-		    				);
+		    				$('<tr></tr>')
+		    				.append(
+		    					$('<td></td>').text(data.plugin.name),
+		    					$('<td></td>').text(data.plugin.version),
+		    					$('<td></td>').text(data.plugin.loaded ? 'Loaded' : 'Not loaded'),
+		    					$('<td></td>').text(data.plugin.module)
+	    					));
 			    		return;
 		    		}
 		    		
