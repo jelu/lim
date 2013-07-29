@@ -75,7 +75,7 @@
 			    		});
 			    		return;
 		    		}
-		    		else if (data.plugin.name) {
+		    		else if (data.plugin && data.plugin.name) {
 		    			$('#agent-content table tbody')
 		    			.empty()
 		    			.append(

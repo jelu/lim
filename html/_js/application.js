@@ -115,7 +115,7 @@
 				    		});
 				    		return;
 			    		}
-			    		else if (data.plugin.name) {
+			    		else if (data.plugin && data.plugin.name) {
 			    			var mod=data.plugin;
 			    			
 			    			$('#modules')
