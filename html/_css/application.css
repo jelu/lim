@@ -9,3 +9,8 @@ footer.footer p {
   color: #777777;
   margin-bottom: 0;
 }
+@media (max-width:979px) {
+  body {
+    padding-top: 0px;
+  }
+}
