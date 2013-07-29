@@ -4,4 +4,5 @@
 - RPC calls should not be able to kill server/client
 - Schema cache settings
 - Simple logging for plugins
-- Fix deep object decoding of query param
+- Fix dependencies for URI::Escape
+- Add application/x-www-form-urlencoded support to JSONRPC1/2
