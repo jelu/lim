@@ -113,13 +113,13 @@ sub handle {
             if (defined $obj) {
                 Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
-                if ($request->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
+                if ($request->header('Content-Type') =~ /(?:^|\s)application\/x-www-form-urlencoded(?:$|\s|;)/o) {
                     my $query_str = $request->content;
                     $query_str =~ s/[\015\012]+$//o;
 
-                    $query = Lim::Util::QueryDecode($query_str)
+                    $query = Lim::Util::QueryDecode($query_str);
                 }
-                elsif ($request->header('Content-Type') =~ /application\/json/o) {
+                elsif ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s|;)/o) {
                     eval {
                         $query = $JSON->decode($request->content);
                     };
@@ -130,7 +130,7 @@ sub handle {
                     }
                 }
                 else {
-                    $query = $request->uri->query_form_hash;
+                    $query = Lim::Util::QueryDecode($request->uri->query);
                 }
                 
                 if (ref($query) eq 'ARRAY' or ref($query) eq 'HASH') {

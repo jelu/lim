@@ -77,7 +77,7 @@ sub handle {
         return;
     }
 
-    if ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s)/o and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
+    if ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s|;)/o and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
         my ($module) = ($1);
         my $response = HTTP::Response->new;
         $response->request($request);
