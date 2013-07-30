@@ -344,8 +344,6 @@ sub QueryDecode {
             return;
         }
         
-        use Data::Dumper;
-        
         my @keys = split(/(?:\[|\]\[|\])/o, $key);
         my $this = $href;
         while (defined (my $k = shift(@keys))) {
