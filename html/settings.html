@@ -1,0 +1,19 @@
+<h2>Settings</h2>
+<form>
+  <fieldset>
+    <legend>Management console settings</legend>
+    <label>Lim Agent Daemon Location</label>
+    <div class="input-prepend input-append">
+      <span class="add-on">http://</span>
+      <input id="host" type="text" placeholder="Enter IP/hostname..." />
+      <span class="add-on">:</span>
+      <input id="port" type="text" placeholder="Port" />
+      <span class="add-on">/</span>
+    </div>
+    <span class="help-block">
+      This is the location of the Lim Agent Daemon, you can change this to start managing a different Lim Agent Daemon.<br />
+      By default you are connected to the same Lim Agent Daemon as the one your currently browing to.
+    </span>
+    <button id="submit" type="submit" class="btn btn-primary">Submit</button>
+  </fieldset>
+</form>

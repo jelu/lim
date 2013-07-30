@@ -9,7 +9,15 @@
 				var that = this;
 				
 				$('.navbar a[href="#"]').click(function () {
+					$('.navbar li').removeClass('active');
+					$(this).parent().addClass('active');
 					that.loadHome();
+	    			return false;
+				});
+				$('.navbar a[href="#settings"]').click(function () {
+					$('.navbar li').removeClass('active');
+					$(this).parent().addClass('active');
+					that.loadSettings();
 	    			return false;
 				});
 				
@@ -21,6 +29,16 @@
 				.done(function (data) {
 					$('#content').html(data);
 					lim.getModules();
+				});
+			},
+			//
+			loadSettings: function () {
+				this.loadPage('/settings.html')
+				.done(function (data) {
+					$('#content').html(data);
+					$('#content form').submit(function () {
+						return false;
+					});
 				});
 			},
 			//
