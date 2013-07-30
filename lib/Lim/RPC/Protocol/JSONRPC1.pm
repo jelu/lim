@@ -7,8 +7,6 @@ use Scalar::Util qw(blessed weaken);
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
-use URI ();
-use URI::QueryParam ();
 use JSON::XS ();
 
 use Lim ();

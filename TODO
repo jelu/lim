@@ -3,4 +3,3 @@
 - Lim::CLI Ask(text, cb)/Confirm(text, cb)
 - RPC calls should not be able to kill server/client
 - Schema cache settings
-- Fix dependencies for URI::Escape

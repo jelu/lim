@@ -13,8 +13,6 @@ use AnyEvent::Handle ();
 use HTTP::Request ();
 use HTTP::Response ();
 use HTTP::Status qw(:constants);
-use URI ();
-use URI::QueryParam ();
 
 use JSON::XS ();
 

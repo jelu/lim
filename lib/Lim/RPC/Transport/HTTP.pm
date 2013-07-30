@@ -11,6 +11,7 @@ use AnyEvent::Socket ();
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
+use URI ();
 
 use Lim ();
 use Lim::RPC::TLS ();

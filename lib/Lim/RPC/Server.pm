@@ -6,6 +6,7 @@ use Carp;
 use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 
+use URI ();
 use URI::Split ();
 
 use Lim ();

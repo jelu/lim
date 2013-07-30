@@ -8,8 +8,6 @@ use Scalar::Util qw(blessed weaken);
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
-use URI ();
-use URI::QueryParam ();
 
 use XMLRPC::Lite ();
 use XMLRPC::Transport::HTTP::Server ();
