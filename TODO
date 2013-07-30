@@ -5,4 +5,3 @@
 - Schema cache settings
 - Simple logging for plugins
 - Fix dependencies for URI::Escape
-- Add application/x-www-form-urlencoded support to JSONRPC1/2
