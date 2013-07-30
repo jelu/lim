@@ -87,8 +87,9 @@
 				var that = this;
 				
 				if (!this.getModulesRetry) {
+					$('#modules p').text('Unable to retrieve modules, retrying now please wait ...');
 					$.getJSON(this.uri + '/agent/plugins')
-			    	.done(function (data) {
+					.done(function (data) {
 			    		if (data.plugin && data.plugin.length) {
 				    		$('#modules').empty();
 				    		
