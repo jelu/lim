@@ -60,7 +60,7 @@
 		    			$('#agent-content table tbody').empty();
 
 			    		data.plugin.sort(function (a, b) {
-			    			return (a.name > b.name) ? 1 : ((a.name > b.name) ? -1 : 0);
+			    			return (a.name > b.name) ? 1 : ((a.name < b.name) ? -1 : 0);
 			    		});
 
 			    		$.each(data.plugin, function () {
