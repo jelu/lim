@@ -25,26 +25,58 @@
 			},
 			//
 			loadHome: function () {
+				var that = this;
 				this.loadPage('/home.html')
 				.done(function (data) {
-					$('#content').html(data);
-					lim.getModules();
+					that.display(data);
+					that.getModules();
 				});
 			},
 			//
 			loadSettings: function () {
+				var that = this;
+				
 				this.loadPage('/settings.html')
 				.done(function (data) {
-					$('#content').html(data);
+					that.display(data);
 					$('#content form').submit(function () {
+						if ($('#content #host').val()) {
+							that.uri =
+								($('#content #protocol').val() ? $('#content #protocol').val() : 'https') + '://' +
+								$('#content #host').val() +
+								($('#content #port').val() ? ':' + $('#content #port').val() : '');
+						}
+						that.loadHome();
 						return false;
 					});
 				});
 			},
 			//
+			display: function (data) {
+				if (typeof data === 'object') {
+					if (data.content) {
+						$('#content').html(data.content);
+						return;
+					}
+				}
+				else {
+					$('#content').html(data);
+					return;
+				}
+				$('#content').empty();
+				$('<div class="alert alert-error"></div>')
+				.text('Something went very wrong ... please check your system logs!')
+				.appendTo('#content');
+			},
 			loadPage: function (page) {
-				return $.get(this.uri + page)
-				.fail(function () {
+				return $.ajax({
+					dataType: (this.uri ? 'jsonp' : 'html'),
+					url: this.uri + page,
+					type: 'GET',
+					jsonp: 'jsonpCallback',
+					cache: true
+				})
+				.fail(function (jqXHR, textStatus, errorThrown) {
 					$('#content').empty();
 					$('<div class="alert alert-error"></div>')
 					.text('Something went very wrong ... please check your system logs!')
@@ -53,34 +85,42 @@
 			},
 			getJSON: function (uri, data) {
 				return $.ajax({
-					dataType: "json",
+					dataType: (this.uri ? 'jsonp' : 'json'),
 					url: this.uri + uri,
 					data: data,
-					type: 'GET'
+					type: 'GET',
+					jsonp: 'jsonpCallback',
+					cache: true
 				});
 			},
 			putJSON: function (uri, data) {
 				return $.ajax({
-					dataType: "json",
+					dataType: (this.uri ? 'jsonp' : 'json'),
 					url: this.uri + uri,
 					data: data,
-					type: 'PUT'
+					type: 'PUT',
+					jsonp: 'jsonpCallback',
+					cache: true
 				});
 			},
 			postJSON: function (uri, data) {
 				return $.ajax({
-					dataType: "json",
+					dataType: (this.uri ? 'jsonp' : 'json'),
 					url: this.uri + uri,
 					data: data,
-					type: 'POST'
-				});
+					type: 'POST',
+					jsonp: 'jsonpCallback',
+					cache: true
+			});
 			},
 			delJSON: function (uri, data) {
 				return $.ajax({
-					dataType: "json",
+					dataType: (this.uri ? 'jsonp' : 'json'),
 					url: this.uri + uri,
 					data: data,
-					type: 'DELETE'
+					type: 'DELETE',
+					jsonp: 'jsonpCallback',
+					cache: true
 				});
 			},
 			//
@@ -106,7 +146,7 @@
 				
 				if (!this.getModulesRetry) {
 					$('#modules p').text('Unable to retrieve modules, retrying now please wait ...');
-					$.getJSON(this.uri + '/agent/plugins')
+					this.getJSON('/agent/plugins')
 					.done(function (data) {
 			    		if (data.plugin && data.plugin.length) {
 				    		$('#modules').empty();
@@ -215,7 +255,7 @@
 	    		}, 1000);
 			},
 			loadModule: function (module) {
-				$.get(this.uri + '/_'+module+'/index.html')
+				this.loadPage('/_'+module+'/index.html')
 				.done(function (data) {
 					$('#content').html(data);
 				})
