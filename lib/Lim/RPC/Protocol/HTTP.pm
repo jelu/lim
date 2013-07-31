@@ -9,6 +9,7 @@ use HTTP::Request ();
 use HTTP::Response ();
 use LWP::MediaTypes ();
 use Fcntl ();
+use JSON::XS ();
 
 use Lim ();
 use Lim::Util ();
@@ -29,6 +30,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
+our $JSON = JSON::XS->new->ascii->convert_blessed;
 
 =head1 SYNOPSIS
 
@@ -116,6 +118,17 @@ sub handle {
         unless (-r $path) {
             return;
         }
+
+        my $query;
+        if ($request->header('Content-Type') =~ /(?:^|\s)application\/x-www-form-urlencoded(?:$|\s|;)/o) {
+            my $query_str = $request->content;
+            $query_str =~ s/[\015\012]+$//o;
+
+            $query = Lim::Util::QueryDecode($query_str);
+        }
+        else {
+            $query = Lim::Util::QueryDecode($request->uri->query);
+        }
         
         Lim::DEBUG and $self->{logger}->debug('Serving file ', $path);
 
@@ -136,6 +149,29 @@ sub handle {
         my ($size, $mtime) = (stat(FILE))[7,9];
         unless (defined $size and defined $mtime) {
             $response->code(HTTP_INTERNAL_SERVER_ERROR);
+            $cb->cb->($response);
+            return 1;
+        }
+        
+        if (defined $query->{jsonpCallback}) {
+            my ($content, $buf);
+            while (sysread(FILE, $buf, 64*1024)) {
+                $content .= $buf;
+            }
+            close(FILE);
+            
+            eval {
+                $content = $JSON->encode({ content => $content });
+            };
+            if ($@) {
+                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                $cb->cb->($response);
+                return 1;
+            }
+
+            $response->content($query->{jsonpCallback}.'('.$content.');');
+            $response->code(HTTP_OK);
+
             $cb->cb->($response);
             return 1;
         }
