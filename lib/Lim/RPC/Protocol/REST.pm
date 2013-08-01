@@ -107,7 +107,7 @@ sub handle {
                 $obj = $server->module_obj_by_protocol($module, $self->name);
             }
             
-            my ($query);
+            my ($query, $jsonp);
             if (defined $obj) {
                 Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
@@ -131,39 +131,7 @@ sub handle {
                     $query = Lim::Util::QueryDecode($request->uri->query);
                 }
                 
-                if (ref($query) eq 'ARRAY' or ref($query) eq 'HASH') {
-                    my @process = ($query);
-                    
-                    foreach my $process (shift(@process)) {
-                        if (ref($process) eq 'ARRAY') {
-                            push(@process, @$process);
-                        }
-                        elsif (ref($process) eq 'HASH') {
-                            foreach my $key (keys %$process) {
-                                if ($key =~ /^([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]$/o) {
-                                    my ($hname, $hkey) = ($1, $2);
-                                    
-                                    $process->{$hname}->{$hkey} = $process->{$key};
-                                    delete $process->{$key};
-                                    push(@process, $process->{$hname}->{$hkey});
-                                }
-                                elsif ($key =~ /^([a-zA-Z0-9_]+)\[\]$/o) {
-                                    my $aname = $1;
-                                    
-                                    if (ref($process->{$key}) eq 'ARRAY') {
-                                        push(@{$process->{$aname}}, @{$process->{$key}});
-                                        push(@process, @{$process->{$key}});
-                                    }
-                                    else {
-                                        push(@{$process->{$aname}}, $process->{$key});
-                                        push(@process, $process->{$key});
-                                    }
-                                    delete $process->{$key};
-                                }
-                            }
-                        }
-                    }
-                }
+                $jsonp = delete $query->{jsonpCallback};
                 
                 if (defined $parameters) {
                     my $redirect_call = $server->process_module_call_uri_map($module, $call, $parameters, $query);
@@ -201,6 +169,11 @@ sub handle {
                                     'Cache-Control' => 'no-cache',
                                     'Pragma' => 'no-cache'
                                     );
+
+                                if (defined $jsonp) {
+                                    $response->content($jsonp.'('.$response->content().');');
+                                    $response->header('Content-Type' => 'application/javascript; charset=utf-8');
+                                }
                             }
                         }
                         elsif (ref($result) eq 'HASH') {
@@ -218,6 +191,11 @@ sub handle {
                                     'Pragma' => 'no-cache'
                                     );
                                 $response->code(HTTP_OK);
+
+                                if (defined $jsonp) {
+                                    $response->content($jsonp.'('.$response->content().');');
+                                    $response->header('Content-Type' => 'application/javascript; charset=utf-8');
+                                }
                             }
                         }
                         else {

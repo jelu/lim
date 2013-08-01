@@ -132,12 +132,6 @@ sub handle {
         
         Lim::DEBUG and $self->{logger}->debug('Serving file ', $path);
 
-        unless (LWP::MediaTypes::guess_media_type($path, $response)) {
-            $response->code(HTTP_INTERNAL_SERVER_ERROR);
-            $cb->cb->($response);
-            return 1;
-        }
-
         unless (sysopen(FILE, $path, Fcntl::O_RDONLY)) {
             $response->code(HTTP_FORBIDDEN);
             $cb->cb->($response);
@@ -169,6 +163,7 @@ sub handle {
                 return 1;
             }
 
+            $response->header('Content-Type' => 'application/javascript; charset=utf-8');
             $response->content($query->{jsonpCallback}.'('.$content.');');
             $response->code(HTTP_OK);
 
@@ -176,6 +171,12 @@ sub handle {
             return 1;
         }
         
+        unless (LWP::MediaTypes::guess_media_type($path, $response)) {
+            $response->code(HTTP_INTERNAL_SERVER_ERROR);
+            $cb->cb->($response);
+            return 1;
+        }
+
         if ($request->header('If-Modified-Since')
             and $request->header('If-Modified-Since') >= $mtime)
         {
