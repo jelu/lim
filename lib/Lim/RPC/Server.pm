@@ -407,7 +407,13 @@ sub serve {
                             }
                             $cb->set_call_def($call_def);
                             
-                            $weak_obj->$call($cb, $q, @args);
+                            eval {
+                                $weak_obj->$call($cb, $q, @args);
+                            };
+                            if ($@) {
+                                defined $logger and $logger->warn($weak_obj, '->', $call, '() failed: ', $@);
+                                $weak_obj->Error($cb);
+                            }
                             return;
                         };
                     }
