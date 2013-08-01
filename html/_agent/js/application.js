@@ -25,7 +25,7 @@
 
 				window.lim.loadPage('/_agent/system_information.html')
 				.done(function (data) {
-					window.lim.display(data);
+					window.lim.display(data, '#agent-content');
 					that.getSystemInformation();
 				});
 			},
@@ -49,7 +49,7 @@
 
 				window.lim.loadPage('/_agent/plugins.html')
 				.done(function (data) {
-					window.lim.display(data);
+					window.lim.display(data, '#agent-content');
 					that.getPlugins();
 				});
 			},

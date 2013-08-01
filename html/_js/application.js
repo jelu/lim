@@ -8,13 +8,13 @@
 			init: function () {
 				var that = this;
 				
-				$('.navbar a[href="#"]').click(function () {
+				$('.navbar li a[href="#"]').click(function () {
 					$('.navbar li').removeClass('active');
 					$(this).parent().addClass('active');
 					that.loadHome();
 	    			return false;
 				});
-				$('.navbar a[href="#settings"]').click(function () {
+				$('.navbar li a[href="#settings"]').click(function () {
 					$('.navbar li').removeClass('active');
 					$(this).parent().addClass('active');
 					that.loadSettings();
@@ -52,15 +52,15 @@
 				});
 			},
 			//
-			display: function (data) {
+			display: function (data, where) {
 				if (typeof data === 'object') {
 					if (data.content) {
-						$('#content').html(data.content);
+						$(where ? where : '#content').html(data.content);
 						return;
 					}
 				}
 				else {
-					$('#content').html(data);
+					$(where ? where : '#content').html(data);
 					return;
 				}
 				$('#content').empty();
@@ -81,6 +81,16 @@
 					$('<div class="alert alert-error"></div>')
 					.text('Something went very wrong ... please check your system logs!')
 					.appendTo('#content');
+				});
+			},
+			getHTML: function (uri, data) {
+				return $.ajax({
+					dataType: (this.uri ? 'jsonp' : 'html'),
+					url: this.uri + uri,
+					data: data,
+					type: 'GET',
+					jsonp: 'jsonpCallback',
+					cache: true
 				});
 			},
 			getJSON: function (uri, data) {
@@ -166,9 +176,10 @@
 						    			$('<p></p>').text(mod.description),
 						    			$('<p></p>').text('Version '+mod.version)
 					    			));
-				    			$.get(that.uri + '/_'+mod.name.toLowerCase()+'/index.html')
+				    			that.getHTML('/_'+mod.name.toLowerCase()+'/index.html')
 				    			.done(function () {
 				    				$('#module-'+mod.name+' .label-warning').remove();
+				    				$('#module-'+mod.name+' .label-important').remove();
 				    				$('#module-'+mod.name).append(
 							    		'<p><a class="btn" href="#">Manage &raquo;</a></p>'
 				    					);
@@ -179,6 +190,7 @@
 				    			})
 				    			.fail(function () {
 				    				$('#module-'+mod.name+' .label-warning').remove();
+				    				$('#module-'+mod.name+' .label-important').remove();
 				    				$('#module-'+mod.name).append(
 							    		'<p><span class="label label-important">Management Console not available!</span></p>'
 				    					);
@@ -208,7 +220,7 @@
 					    			$('<p></p>').text(mod.description),
 					    			$('<p></p>').text('Version '+mod.version)
 				    			));
-			    			$.get(that.uri + '/_'+mod.name.toLowerCase()+'/index.html')
+			    			that.getHTML('/_'+mod.name.toLowerCase()+'/index.html')
 			    			.done(function () {
 			    				$('#module-'+mod.name+' .label-warning').remove();
 			    				$('#module-'+mod.name).append(
@@ -255,9 +267,10 @@
 	    		}, 1000);
 			},
 			loadModule: function (module) {
+				var that = this;
 				this.loadPage('/_'+module+'/index.html')
 				.done(function (data) {
-					$('#content').html(data);
+					that.display(data);
 				})
 				.fail(function () {
 					$('#content').text('Unable to load module '+module+'!');
