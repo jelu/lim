@@ -27,7 +27,7 @@ WriteMakefile(
         'IO::File' => 0,
         'IO::Handle' => 0,
         'JSON::XS' => 2,
-        'Log::Dispatch::Syslog' => 2.22,
+        'Log::Dispatch::Syslog' => 1.18,
         'Log::Log4perl' => 1,
         'Log::Log4perl::Appender::Lim::CLI' => 0.12,
         'LWP::MediaTypes' => 5.822,
