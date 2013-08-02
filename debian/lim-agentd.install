@@ -1,2 +1,4 @@
 usr/share/man/man1/lim-agentd.1p
 usr/bin/lim-agentd
+etc/lim/agent.d /etc/lim/
+etc/lim/agent.yaml /etc/lim/

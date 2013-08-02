@@ -1,6 +1,4 @@
 - Plugins reload, restart, unload
 - Agent reload, restart and unload plugins API/CLI
 - Lim::CLI Ask(text, cb)/Confirm(text, cb)
-- RPC calls should not be able to kill server/client
 - Schema cache settings
-- Simple logging for plugins

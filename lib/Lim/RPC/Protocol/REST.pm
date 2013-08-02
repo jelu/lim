@@ -7,8 +7,6 @@ use Scalar::Util qw(blessed weaken);
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
-use URI ();
-use URI::QueryParam ();
 use JSON::XS ();
 
 use Lim ();
@@ -109,20 +107,17 @@ sub handle {
                 $obj = $server->module_obj_by_protocol($module, $self->name);
             }
             
-            my ($query);
+            my ($query, $jsonp);
             if (defined $obj) {
                 Lim::DEBUG and $self->{logger}->debug('API call ', $module, '->', $call, '()');
                 
-                if ($request->header('Content-Type') =~ /application\/x-www-form-urlencoded/o) {
+                if ($request->header('Content-Type') =~ /(?:^|\s)application\/x-www-form-urlencoded(?:$|\s|;)/o) {
                     my $query_str = $request->content;
                     $query_str =~ s/[\015\012]+$//o;
 
-                    my $uri = URI->new;
-                    $uri->query($query_str);
-
-                    $query = $uri->query_form_hash;
+                    $query = Lim::Util::QueryDecode($query_str);
                 }
-                elsif ($request->header('Content-Type') =~ /application\/json/o) {
+                elsif ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s|;)/o) {
                     eval {
                         $query = $JSON->decode($request->content);
                     };
@@ -133,42 +128,10 @@ sub handle {
                     }
                 }
                 else {
-                    $query = $request->uri->query_form_hash;
+                    $query = Lim::Util::QueryDecode($request->uri->query);
                 }
                 
-                if (ref($query) eq 'ARRAY' or ref($query) eq 'HASH') {
-                    my @process = ($query);
-                    
-                    foreach my $process (shift(@process)) {
-                        if (ref($process) eq 'ARRAY') {
-                            push(@process, @$process);
-                        }
-                        elsif (ref($process) eq 'HASH') {
-                            foreach my $key (keys %$process) {
-                                if ($key =~ /^([a-zA-Z0-9_]+)\[([a-zA-Z0-9_]+)\]$/o) {
-                                    my ($hname, $hkey) = ($1, $2);
-                                    
-                                    $process->{$hname}->{$hkey} = $process->{$key};
-                                    delete $process->{$key};
-                                    push(@process, $process->{$hname}->{$hkey});
-                                }
-                                elsif ($key =~ /^([a-zA-Z0-9_]+)\[\]$/o) {
-                                    my $aname = $1;
-                                    
-                                    if (ref($process->{$key}) eq 'ARRAY') {
-                                        push(@{$process->{$aname}}, @{$process->{$key}});
-                                        push(@process, @{$process->{$key}});
-                                    }
-                                    else {
-                                        push(@{$process->{$aname}}, $process->{$key});
-                                        push(@process, $process->{$key});
-                                    }
-                                    delete $process->{$key};
-                                }
-                            }
-                        }
-                    }
-                }
+                $jsonp = delete $query->{jsonpCallback};
                 
                 if (defined $parameters) {
                     my $redirect_call = $server->process_module_call_uri_map($module, $call, $parameters, $query);
@@ -206,6 +169,11 @@ sub handle {
                                     'Cache-Control' => 'no-cache',
                                     'Pragma' => 'no-cache'
                                     );
+
+                                if (defined $jsonp) {
+                                    $response->content($jsonp.'('.$response->content().');');
+                                    $response->header('Content-Type' => 'application/javascript; charset=utf-8');
+                                }
                             }
                         }
                         elsif (ref($result) eq 'HASH') {
@@ -223,6 +191,11 @@ sub handle {
                                     'Pragma' => 'no-cache'
                                     );
                                 $response->code(HTTP_OK);
+
+                                if (defined $jsonp) {
+                                    $response->content($jsonp.'('.$response->content().');');
+                                    $response->header('Content-Type' => 'application/javascript; charset=utf-8');
+                                }
                             }
                         }
                         else {
@@ -237,9 +210,9 @@ sub handle {
                     }), $query);
                 return 1;
             }
-            else {
-                $response->code(HTTP_NOT_FOUND);
-            }
+        }
+        else {
+            return;
         }
 
         $cb->cb->($response);

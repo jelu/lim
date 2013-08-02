@@ -8,8 +8,6 @@ use Scalar::Util qw(blessed weaken);
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
-use URI ();
-use URI::QueryParam ();
 
 use SOAP::Lite ();
 use SOAP::Transport::HTTP ();
@@ -387,7 +385,7 @@ sub handle {
             }
         }
         else {
-            $response->code(HTTP_NOT_FOUND);
+            return;
         }
 
         $cb->cb->($response);
@@ -417,7 +415,7 @@ sub handle {
             $response->code(HTTP_OK);
         }
         else {
-            $response->code(HTTP_NOT_FOUND);
+            return;
         }
 
         $cb->cb->($response);

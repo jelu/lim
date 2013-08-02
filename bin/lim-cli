@@ -15,18 +15,18 @@ use Lim::RPC::TLS ();
 
 my $help = 0;
 my $conf;
-my $host = 'localhost';
-my $port = 5353;
-my $key;
+my $host;
+my $port;
 my $log4perl;
+my @options;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
     'conf:s' => \$conf,
     'host:s' => \$host,
     'port:i' => \$port,
-    'key:s' => \$key,
-    'log4perl:s' => \$log4perl
+    'log4perl:s' => \$log4perl,
+    'option:s' => \@options
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -62,20 +62,21 @@ else {
     Lim::LoadConfig(Lim::Config->{cli}->{config_file});
 }
 
+Lim::ParseOptions(@options);
 Lim::UpdateConfig;
 
 if (defined $host) {
     Lim::Config->{host} = $host;
 }
+else {
+    Lim::Config->{host} = Lim::Config->{cli}->{host};
+}
 
 if (defined $port) {
     Lim::Config->{port} = $port;
 }
-
-if (defined $key) {
-    Lim::Config->{ssl}->{ca_file} = $key;
-    Lim::Config->{ssl}->{cert_file} = $key;
-    Lim::Config->{ssl}->{key_file} = $key;
+else {
+    Lim::Config->{port} = Lim::Config->{cli}->{port};
 }
 
 my $cv = AnyEvent->condvar;
@@ -102,10 +103,6 @@ push(@watchers,
         $cv->send;
     }),
 );
-
-Lim::RPC::TLS->set_instance(Lim::RPC::TLS->new(
-    key => Lim::Config->{ssl}->{key_file}
-));
 
 $cli = Lim::CLI->new(
     on_quit => sub {
@@ -135,7 +132,14 @@ lim-cli [options]
 
 =item B<--conf <file>>
 
-Specify the configure file to use (default ~/.limrc).
+Specify the configuration file to use (default ~/.limrc).
+
+=item B<--option <name>=<value>>
+
+Specify configuration on the command line, these settings overrides settings in
+configuration files. Syntax <name>=<value> will set <name> to <value> and
+<name>[]=<value> will treat <name> as an multi option array and append <value>.
+Option subgroups are seperated by . (for example log.obj_debug=0). 
 
 =item B<--host <ip>>
 
@@ -144,10 +148,6 @@ Specify the host/IP to connect to (default localhost).
 =item B<--port <port>>
 
 Specify the port to listen on (default 5353).
-
-=item B<--key <key>>
-
-Specify the SSL/TLS key to use for HTTPS.
 
 =item B<--log4perl <file>>
 

@@ -11,6 +11,7 @@ use AnyEvent::Socket ();
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
+use URI ();
 
 use Lim ();
 use Lim::RPC::TLS ();
@@ -53,7 +54,6 @@ sub Init {
     $self->{client} = {};
     $self->{host} = Lim::Config->{rpc}->{transport}->{http}->{host};
     $self->{port} = Lim::Config->{rpc}->{transport}->{http}->{port};
-    $self->{html} = Lim::Config->{rpc}->{transport}->{http}->{html};
 
     if (exists $args{uri}) {
         unless (blessed($args{uri}) and $args{uri}->isa('URI')) {
@@ -62,6 +62,10 @@ sub Init {
         
         $self->{host} = $args{uri}->host;
         $self->{port} = $args{uri}->port;
+    }
+    
+    if ($self->isa('Lim::RPC::Transport::HTTPS') and !defined Lim::RPC::TLS->instance->tls_ctx) {
+        confess 'using HTTPS but can not create TLS context';
     }
     
     $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
@@ -135,7 +139,7 @@ sub Init {
                 unless (defined $self) {
                     return;
                 }
-
+                
                 my $client = $self->{client}->{$handle};
                 
                 unless (defined $client) {
@@ -261,6 +265,10 @@ sub Init {
                                 }
                             }
                             Lim::RPC_DEBUG and $self->{logger}->debug('Did not find any protocol handler for request');
+                            my $response = HTTP::Response->new;
+                            $response->request($client->{request});
+                            $response->protocol($client->{request}->protocol);
+                            $cb->cb->($response);
                         });
                 }
             });

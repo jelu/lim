@@ -13,8 +13,6 @@ use AnyEvent::Handle ();
 use HTTP::Request ();
 use HTTP::Response ();
 use HTTP::Status qw(:constants);
-use URI ();
-use URI::QueryParam ();
 
 use JSON::XS ();
 
@@ -80,6 +78,10 @@ sub new {
     }
     if (defined $args{data} and ref($args{data}) ne 'HASH') {
         confess __PACKAGE__, ': Data is not a hash';
+    }
+
+    if (!defined Lim::RPC::TLS->instance->tls_ctx) {
+        confess 'using HTTPS but can not create TLS context';
     }
     
     $self->{host} = $args{host};

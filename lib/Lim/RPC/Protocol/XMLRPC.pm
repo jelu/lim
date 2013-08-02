@@ -8,8 +8,6 @@ use Scalar::Util qw(blessed weaken);
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
-use URI ();
-use URI::QueryParam ();
 
 use XMLRPC::Lite ();
 use XMLRPC::Transport::HTTP::Server ();
@@ -97,7 +95,7 @@ sub handle {
         return;
     }
 
-    if ($request->header('Content-Type') =~ /(?:^|\s)text\/xml(?:$|\s)/o and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
+    if ($request->header('Content-Type') =~ /(?:^|\s)text\/xml(?:$|\s|;)/o and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
         my ($module) = ($1);
         my $response = HTTP::Response->new;
         $response->request($request);
@@ -193,7 +191,7 @@ sub handle {
             }
         }
         else {
-            $response->code(HTTP_NOT_FOUND);
+            return;
         }
 
         $cb->cb->($response);

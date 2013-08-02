@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = configure ]; then
+    if [ ! -f /etc/lim/ssl/private/lim-cli.key ]; then
+        openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096
+    fi &&
+    if [ ! -f /etc/lim/ssl/private/lim-cli.csr ]; then
+        openssl req -new -batch \
+          -subj "/CN=Lim CLI/emailAddress=lim@`hostname -f`" \
+          -key /etc/lim/ssl/private/lim-cli.key \
+          -out /etc/lim/ssl/private/lim-cli.csr
+    fi &&
+    if [ ! -f /etc/lim/ssl/private/lim-cli.crt ]; then
+        openssl x509 -req -days 3650 -in /etc/lim/ssl/private/lim-cli.csr \
+          -signkey /etc/lim/ssl/private/lim-cli.key \
+          -out /etc/lim/ssl/private/lim-cli.crt
+    fi &&
+    if [ ! -f /etc/lim/ssl/certs/lim-cli.crt ]; then
+        cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.pem
+    fi &&
+    c_rehash /etc/lim/ssl/certs
+fi

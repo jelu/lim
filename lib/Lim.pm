@@ -13,11 +13,11 @@ Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.13
+Version 0.14
 
 =cut
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 our $CONFIG = {
     log => {
         obj_debug => 1,
@@ -35,24 +35,32 @@ our $CONFIG = {
         transport => {
             http => {
                 host => undef,
-                port => 5353,
-                html => '/usr/share/lim/html'
+                port => 5353
             }
+        },
+        protocol => {
+            http => {
+                webroot => '/usr/share/lim/html'
+            }
+        },
+        tls => {
+            method => 'any',
+            verify => 1,
+            verify_require_client_cert => 1,
+            ca_path => '/etc/lim/ssl/certs'
         }
     },
     agent => {
-        config_file => ''
+        config_file => '',
+        uri => []
     },
     cli => {
         history_length => 1000,
         history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
         config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
-        editor => $ENV{EDITOR}
-    },
-    ssl => {
-        method => 'any',
-        verify => 1,
-        verify_require_client_cert => 1
+        editor => $ENV{EDITOR},
+        host => 'localhost',
+        port => 5353
     }
 };
 
@@ -178,13 +186,13 @@ sub LoadConfigDirectory {
         foreach my $entry (sort readdir(CONFIGS)) {
             my $yaml;
             
-            unless(-r $entry and $entry =~ /\.yaml$/o) {
+            unless(-r $directory.'/'.$entry and $entry =~ /\.yaml$/o) {
                 next;
             }
             
-            Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry);
+            Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry, ' from directory ', $directory);
             eval {
-                $yaml = YAML::Any::LoadFile($entry);
+                $yaml = YAML::Any::LoadFile($directory.'/'.$entry);
             };
             if ($@) {
                 confess __PACKAGE__, ': Unable to read configuration file ', $entry, ' from directory ', $directory, ': ', $@, "\n";
@@ -195,6 +203,53 @@ sub LoadConfigDirectory {
         return 1;
     }
     return;
+}
+
+=item Lim::ParseOptions(@options)
+
+Parse options given at command line and add them into configuration. Option
+subgroups are seperated by . (for example log.obj_debug=0).
+
+=cut
+
+sub ParseOptions {
+    foreach my $option (@_) {
+        my ($name, $value) = split(/=/o, $option, 2);
+        unless ($name and defined $value) {
+            confess __PACKAGE__, ': Invalid or unknown option: ', $option, "\n";
+        }
+        
+        my @parts = split(/\./o, $name);
+        my $ref = $CONFIG;
+        while (defined(my $part = shift(@parts))) {
+            unless (scalar @parts) {
+                if ($part =~ /^(.+)\[\]$/o) {
+                    $part = $1;
+                    
+                    if (exists $ref->{$part}) {
+                        if (ref($ref->{$part}) eq 'ARRAY') {
+                            push(@{$ref->{$part}}, $value);
+                        }
+                        else {
+                            $ref->{$part} = [ $ref->{$part}, $value ];
+                        }
+                    }
+                    else {
+                        $ref->{$part} = [ $value ];
+                    }
+                }
+                else {
+                    $ref->{$part} = $value;
+                }
+                last;
+            }
+            
+            unless (exists $ref->{$part}) {
+                $ref->{$part} = {};
+            }
+            $ref = $ref->{$part};
+        }
+    }
 }
 
 =item Lim::UpdateConfig
