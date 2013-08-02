@@ -1,3 +1,9 @@
+lim (0.14-1~unstable+1) unstable; urgency=low
+
+  * New release v0.14.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Fri, 02 Aug 2013 10:29:19 +0200
+
 lim (0.13-1~unstable+1) unstable; urgency=low
 
   * New release v0.13.
