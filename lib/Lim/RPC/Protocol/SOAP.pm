@@ -37,14 +37,14 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
@@ -55,7 +55,7 @@ sub Destroy {
     delete $self->{wsdl};
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -63,7 +63,7 @@ sub name {
     'soap';
 }
 
-=head2 function1
+=head2 serve
 
 =cut
 
@@ -213,7 +213,7 @@ sub serve {
     $self;
 }
 
-=head2 function2
+=head2 __wsdl_gen_complex_types
 
 =cut
 
@@ -283,7 +283,7 @@ sub __wsdl_gen_complex_types {
     $wsdl;
 }
 
-=head2 function1
+=head2 handle
 
 =cut
 
@@ -424,7 +424,7 @@ sub handle {
     return;
 }
 
-=head2 function1
+=head2 __soap_result
 
 =cut
 
@@ -470,7 +470,7 @@ sub __soap_result {
     }
 }
 
-=head2 function1
+=head2 precall
 
 =cut
 

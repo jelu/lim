@@ -26,7 +26,7 @@ our $VERSION = $Lim::RPC::Transport::HTTP::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 name
 
 =cut
 

@@ -27,7 +27,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 ReadVersion
 
 =cut
 
@@ -37,7 +37,7 @@ sub ReadVersion {
     $self->Successful($cb, { version => $VERSION });
 }
 
-=head2 function1
+=head2 ReadPlugins
 
 =cut
 
@@ -54,7 +54,7 @@ sub ReadPlugins {
     ] });
 }
 
-=head2 function1
+=head2 ReadPlugin
 
 =cut
 
@@ -81,7 +81,7 @@ sub ReadPlugin {
     $self->Successful($cb, $result);
 }
 
-=head2 function1
+=head2 ReadPluginVersion
 
 =cut
 
@@ -110,7 +110,7 @@ sub ReadPluginVersion {
     $self->Successful($cb, $result);
 }
 
-=head2 function1
+=head2 ReadPluginLoaded
 
 =cut
 

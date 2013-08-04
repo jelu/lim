@@ -28,7 +28,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -61,21 +61,21 @@ sub DESTROY {
     delete $self->{__server};
 }
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
 sub Destroy {
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -83,7 +83,7 @@ sub name {
     confess 'function name not overloaded';
 }
 
-=head2 function1
+=head2 serve
 
 =cut
 
@@ -91,7 +91,7 @@ sub serve {
     confess 'function serve not overloaded';
 }
 
-=head2 function1
+=head2 handle
 
 =cut
 
@@ -99,7 +99,7 @@ sub handle {
     confess 'function handle not overloaded';
 }
 
-=head2 function1
+=head2 timeout
 
 =cut
 
@@ -107,7 +107,7 @@ sub timeout {
     confess 'function timeout not overloaded';
 }
 
-=head2 function1
+=head2 server
 
 =cut
 
@@ -115,7 +115,7 @@ sub server {
     $_[0]->{__server};
 }
 
-=head2 function1
+=head2 precall
 
 =cut
 

@@ -29,7 +29,7 @@ our %_MAP_CACHE_CODE;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -51,7 +51,7 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
 }
 
-=head2 function1
+=head2 add
 
 =cut
 
@@ -190,7 +190,7 @@ sub add {
     return $call;
 }
 
-=head2 function1
+=head2 process
 
 =cut
 

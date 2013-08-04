@@ -15,6 +15,14 @@ use Lim ();
 
 See L<Lim> for version.
 
+=over 4
+
+=item OPT_REQUIRED
+
+=item OPT_SWALLOW
+
+=back
+
 =cut
 
 our $VERSION = $Lim::VERSION;
@@ -33,7 +41,7 @@ our %OPTIONS = (
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -84,7 +92,7 @@ sub DESTROY {
     my ($self) = @_;
 }
 
-=head2 function1
+=head2 children
 
 =cut
 
@@ -92,7 +100,7 @@ sub children {
     $_[0]->{children};
 }
 
-=head2 function1
+=head2 set_children
 
 =cut
 
@@ -104,7 +112,7 @@ sub set_children {
     $_[0];
 }
 
-=head2 function1
+=head2 required
 
 =cut
 
@@ -112,7 +120,7 @@ sub required {
     $_[0]->{options} & OPT_REQUIRED ? 1 : 0;
 }
 
-=head2 function1
+=head2 swallow
 
 =cut
 
@@ -120,7 +128,7 @@ sub swallow {
     $_[0]->{options} & OPT_SWALLOW ? 1 : 0;
 }
 
-=head2 function1
+=head2 comform
 
 =cut
 

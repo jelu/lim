@@ -26,7 +26,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 Module
 
 =cut
 
@@ -34,7 +34,7 @@ sub Module {
     'Agent';
 }
 
-=head2 function1
+=head2 Description
 
 =cut
 
@@ -42,7 +42,7 @@ sub Description {
     'This is the core module of the Lim Agent Daemon, it manage other modules and provides system information.';
 }
 
-=head2 function2
+=head2 Calls
 
 =cut
 
@@ -120,7 +120,7 @@ sub Calls {
     };
 }
 
-=head2 function2
+=head2 Commands
 
 =cut
 

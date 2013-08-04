@@ -42,21 +42,21 @@ our %REST_CRUD = (
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
 sub Destroy {
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -64,14 +64,14 @@ sub name {
     'rest';
 }
 
-=head2 function1
+=head2 serve
 
 =cut
 
 sub serve {
 }
 
-=head2 function1
+=head2 handle
 
 =cut
 

@@ -35,21 +35,21 @@ our $JSON = JSON::XS->new->ascii->convert_blessed;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
 sub Destroy {
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -57,14 +57,14 @@ sub name {
     'jsonrpc2';
 }
 
-=head2 function1
+=head2 serve
 
 =cut
 
 sub serve {
 }
 
-=head2 function1
+=head2 handle
 
 =cut
 

@@ -31,7 +31,7 @@ our $INSTANCE;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -72,7 +72,7 @@ END {
     undef($INSTANCE);
 }
 
-=head2 function1
+=head2 instance
 
 =cut
 
@@ -80,7 +80,7 @@ sub instance {
     $INSTANCE ||= Lim::RPC::TLS->new;
 }
 
-=head2 function1
+=head2 tls_ctx
 
 =cut
 

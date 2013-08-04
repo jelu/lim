@@ -28,7 +28,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -63,21 +63,21 @@ sub DESTROY {
     delete $self->{__server};
 }
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
 sub Destroy {
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -85,7 +85,7 @@ sub name {
     confess 'function name not overloaded';
 }
 
-=head2 function1
+=head2 uri
 
 =cut
 
@@ -93,7 +93,7 @@ sub uri {
     confess 'function uri not overloaded';
 }
 
-=head2 function1
+=head2 add_protocol
 
 =cut
 
@@ -110,7 +110,7 @@ sub add_protocol {
     $self;
 }
 
-=head2 function1
+=head2 protocols
 
 =cut
 
@@ -118,7 +118,7 @@ sub protocols {
     @{$_[0]->{__protocols}};
 }
 
-=head2 function1
+=head2 server
 
 =cut
 
