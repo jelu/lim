@@ -37,14 +37,14 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
@@ -54,7 +54,7 @@ sub Destroy {
     delete $self->{xmlrpc};
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -62,7 +62,7 @@ sub name {
     'xmlrpc';
 }
 
-=head2 function1
+=head2 serve
 
 =cut
 
@@ -84,7 +84,7 @@ sub serve {
     $self->{xmlrpc}->{$module} = $xmlrpc;
 }
 
-=head2 function1
+=head2 handle
 
 =cut
 
@@ -200,7 +200,7 @@ sub handle {
     return;
 }
 
-=head2 function1
+=head2 __xmlrpc_result
 
 =cut
 
@@ -242,7 +242,7 @@ sub __xmlrpc_result {
     }
 }
 
-=head2 function1
+=head2 precall
 
 =cut
 

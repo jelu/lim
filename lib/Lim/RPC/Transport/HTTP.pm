@@ -29,6 +29,12 @@ use base qw(Lim::RPC::Transport);
 
 See L<Lim> for version.
 
+=over 4
+
+=item MAX_REQUEST_LEN
+
+=back
+
 =cut
 
 our $VERSION = $Lim::VERSION;
@@ -41,7 +47,7 @@ sub MAX_REQUEST_LEN (){ 8 * 1024 * 1024 }
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 Init
 
 =cut
 
@@ -290,7 +296,7 @@ sub Init {
     };
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
@@ -301,7 +307,7 @@ sub Destroy {
     delete $self->{socket};
 }
 
-=head2 function1
+=head2 name
 
 =cut
 
@@ -309,7 +315,7 @@ sub name {
     'http';
 }
 
-=head2 function1
+=head2 uri
 
 =cut
 

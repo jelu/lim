@@ -37,7 +37,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -108,7 +108,7 @@ sub DESTROY {
     delete $self->{protocol};
 }
 
-=head2 function2
+=head2 serve
 
 =cut
 
@@ -442,7 +442,7 @@ sub serve {
     $self;
 }
 
-=head2 function2
+=head2 have_module
 
 =cut
 
@@ -456,7 +456,7 @@ sub have_module {
     return 1;
 }
 
-=head2 function2
+=head2 have_module_call
 
 =cut
 
@@ -474,7 +474,7 @@ sub have_module_call {
     return 1;
 }
 
-=head2 function2
+=head2 module_obj
 
 =cut
 
@@ -488,7 +488,7 @@ sub module_obj {
     return $self->{module}->{$module}->{obj};
 }
 
-=head2 function2
+=head2 module_class
 
 =cut
 
@@ -502,7 +502,7 @@ sub module_class {
     return $self->{module}->{$module}->{module};
 }
 
-=head2 function2
+=head2 module_obj_by_protocol
 
 =cut
 
@@ -520,7 +520,7 @@ sub module_obj_by_protocol {
     bless {}, 'Lim::RPC::ProtocolCall::'.$protocol.'::'.$self->{module}->{$module}->{module}.'::Server';
 }
 
-=head2 function2
+=head2 process_module_call_uri_map
 
 =cut
 

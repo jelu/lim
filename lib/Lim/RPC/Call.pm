@@ -22,6 +22,14 @@ use Lim::RPC::Client ();
 
 See L<Lim> for version.
 
+=over 4
+
+=item OK
+
+=item ERROR
+
+=back
+
 =cut
 
 our $VERSION = $Lim::VERSION;
@@ -35,7 +43,7 @@ sub ERROR (){ -1 }
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -203,7 +211,7 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
 }
 
-=head2 function1
+=head2 Successful
 
 =cut
 
@@ -211,7 +219,7 @@ sub Successful {
     $_[0]->{status} == OK;
 }
 
-=head2 function1
+=head2 Error
 
 =cut
 
@@ -219,7 +227,7 @@ sub Error {
     $_[0]->{error};
 }
 
-=head2 function1
+=head2 ResetTimeout
 
 =cut
 

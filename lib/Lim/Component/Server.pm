@@ -30,7 +30,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -61,21 +61,21 @@ sub DESTROY {
     $self->Destroy;
 }
 
-=head2 function1
+=head2 Init
 
 =cut
 
 sub Init {
 }
 
-=head2 function1
+=head2 Destroy
 
 =cut
 
 sub Destroy {
 }
 
-=head2 function1
+=head2 Successful
 
 =cut
 
@@ -96,7 +96,7 @@ sub Successful {
     }
 }
 
-=head2 function1
+=head2 Error
 
 =cut
 

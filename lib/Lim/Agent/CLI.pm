@@ -29,7 +29,7 @@ our $VERSION = $Lim::VERSION;
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 version
 
 =cut
 
@@ -52,7 +52,7 @@ sub version {
     });
 }
 
-=head2 function1
+=head2 plugins
 
 =cut
 

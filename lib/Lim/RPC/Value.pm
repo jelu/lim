@@ -15,6 +15,22 @@ use Lim ();
 
 See L<Lim> for version.
 
+=over 4
+
+=item STRING
+
+=item INTEGER
+
+=item BOOL
+
+=item BASE64
+
+=item OPT_REQUIRED
+
+=item OPT_NOTEMPTY
+
+=back
+
 =cut
 
 our $VERSION = $Lim::VERSION;
@@ -62,7 +78,7 @@ our %NEGATIVE_OPTIONS = (
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -133,7 +149,7 @@ sub DESTROY {
     my ($self) = @_;
 }
 
-=head2 function1
+=head2 type
 
 =cut
 
@@ -141,7 +157,7 @@ sub type {
     $_[0]->{type};
 }
 
-=head2 function1
+=head2 xsd_type
 
 =cut
 
@@ -149,7 +165,7 @@ sub xsd_type {
     $XSD_TYPE{$_[0]->{type}};
 }
 
-=head2 function1
+=head2 xmlrpc_type
 
 =cut
 
@@ -157,7 +173,7 @@ sub xmlrpc_type {
     $XMLRPC_TYPE{$_[0]->{type}};
 }
 
-=head2 function1
+=head2 required
 
 =cut
 
@@ -165,7 +181,7 @@ sub required {
     $_[0]->{options} & OPT_REQUIRED ? 1 : 0;
 }
 
-=head2 function1
+=head2 comform
 
 =cut
 

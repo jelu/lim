@@ -13,11 +13,11 @@ Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.14
+Version 0.15
 
 =cut
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 our $CONFIG = {
     log => {
         obj_debug => 1,
@@ -64,13 +64,6 @@ our $CONFIG = {
     }
 };
 
-sub OBJ_DEBUG { 1 }
-sub RPC_DEBUG { 1 }
-sub DEBUG { 1 }
-sub INFO { 1 }
-sub WARN { 1 }
-sub ERR { 1 }
-
 =head1 SYNOPSIS
 
 =over 4
@@ -104,7 +97,66 @@ use their CLI part if available.
 
 =over 4
 
-=item Lim::Config->{}
+=item Lim::OBJ_DEBUG
+
+Semi constant sub that controls if object debugging information should sent to
+the log.
+
+=cut
+
+sub OBJ_DEBUG { 1 }
+
+=item Lim::RPC_DEBUG
+
+Semi constant sub that controls if RPC debugging information should sent to the
+log.
+
+=cut
+
+sub RPC_DEBUG { 1 }
+
+=item Lim::DEBUG
+
+Semi constant sub that controls if debugging information should sent to the log.
+
+Common usage:
+Lim::DEBUG and $self->{logger}->debug(...);
+
+=cut
+
+sub DEBUG { 1 }
+
+=item Lim::INFO
+
+Semi constant sub that controls if informational logs should sent to the log.
+
+Common usage:
+Lim::INFO and $self->{logger}->info(...);
+
+=cut
+
+sub INFO { 1 }
+
+=item Lim::WARN
+
+Semi constant sub that controls if warnings should sent to the log.
+
+Common usage:
+Lim::WARN and $self->{logger}->warn(...);
+
+=cut
+
+sub WARN { 1 }
+
+=item Lim::ERR
+
+Semi constant sub that controls if errors should sent to the log.
+
+=cut
+
+sub ERR { 1 }
+
+=item Lim::Config ->{}
 
 Return a hash reference to the configuration.
 

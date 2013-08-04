@@ -30,6 +30,16 @@ use Lim::RPC::TLS ();
 
 See L<Lim> for version.
 
+=over 4
+
+=item OK
+
+=item ERROR
+
+=item MAX_RESPONSE_LEN
+
+=back
+
 =cut
 
 our $VERSION = $Lim::VERSION;
@@ -46,7 +56,7 @@ sub MAX_RESPONSE_LEN (){ 8 * 1024 * 1024 }
 
 =head1 SUBROUTINES/METHODS
 
-=head2 function1
+=head2 new
 
 =cut
 
@@ -311,7 +321,7 @@ sub DESTROY {
     delete $self->{handle};
 }
 
-=head2 function1
+=head2 status
 
 =cut
 
@@ -319,7 +329,7 @@ sub status {
     $_[0]->{status};
 }
 
-=head2 function1
+=head2 error
 
 =cut
 
