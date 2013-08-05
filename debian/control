@@ -11,7 +11,7 @@ Build-Depends-Indep: libanyevent-perl (>= 5), libcommon-sense-perl (>= 3),
  liblog-dispatch-perl (>= 2.22)
 Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Standards-Version: 3.9.1
-Homepage: http://github.com/jelu/lim/wiki
+Homepage: https://github.com/jelu/lim/wiki
 
 Package: liblim-common-perl
 Architecture: all
