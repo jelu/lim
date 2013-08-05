@@ -104,7 +104,7 @@ sub Load {
         eval {
             eval "require $module;";
             die $@ if $@;
-            $name = $module->Module;
+            $name = $module->Name;
             $description = $module->Description;
         };
         
@@ -135,7 +135,7 @@ sub Load {
 
 =item @modules = $instance->LoadedModules
 
-Returns a list of loaded modules module name (eg Lim::Plugin::Example).
+Returns a list of loaded plugin's module name (eg Lim::Plugin::Example).
 
 =cut
 
@@ -154,15 +154,15 @@ sub LoadedModules {
 
 =item @modules = $instance->Loaded
 
-Returns a list of hash references of loaded modules.
+Returns a list of hash references of loaded plugins.
 
 =over 4
 
 {
-    name => Module short name (eg Example),
+    name => Short name (eg Example),
     module => Module name (Lim::Plugin::Example),
-    version => Module version (Lim::Plugin::Example->VERSION),
-    loaded => True or false if module is loaded (True)
+    version => Version (Lim::Plugin::Example->VERSION),
+    loaded => True or false if the plugin is loaded (True)
 }
 
 =back

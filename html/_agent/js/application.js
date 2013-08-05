@@ -1,6 +1,6 @@
 (function ($) {
 	$(function () {
-		window.lim.module.agent = {
+		window.lim.plugin.agent = {
 			init: function () {
 				var that = this;
 				
@@ -89,13 +89,13 @@
 			    		return;
 		    		}
 		    		
-		    		$('#agent-content table td i').text('No modules found, this is a bit strange ...');
+		    		$('#agent-content table td i').text('No plugins found, this is a bit strange ...');
 				})
 				.fail(function () {
 					$('#agent-content table td i').text('failed');
 				});
 			}
 		};
-		window.lim.module.agent.init();
+		window.lim.plugin.agent.init();
 	});
 })(window.jQuery);

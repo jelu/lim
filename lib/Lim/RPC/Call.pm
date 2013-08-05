@@ -58,7 +58,7 @@ sub new {
     my $real_self = $self;
     weaken($self);
 
-    $self->{module} = shift;
+    $self->{plugin} = shift;
     $self->{call} = shift;
     $self->{call_def} = shift;
     $self->{component} = shift;
@@ -148,7 +148,7 @@ sub new {
     
     ($method, $uri) = Lim::Util::URIize($self->{call});
     
-    $uri = '/'.lc($self->{module}).$uri;
+    $uri = '/'.lc($self->{plugin}).$uri;
 
     $self->{component}->_addCall($real_self);
     $self->{client} = Lim::RPC::Client->new(

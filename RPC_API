@@ -6,10 +6,10 @@ RESTful
 	DELETE = Delete object
 	
 	HTTP:
-	GET/POST/PUT/DELETE /<module>/<function>/<parameters ...>
+	GET/POST/PUT/DELETE /<plugin>/<function>/<parameters ...>
 	<data>
 
-	Module->(Create/Read/Update/Delete)<Function>(<data>, <parameters ...>)
+	Plugin->(Create/Read/Update/Delete)<Function>(<data>, <parameters ...>)
 	
 	JSON:
 	as Request: Content-Type: application/json
@@ -23,9 +23,9 @@ SOAP 1.1
 
 	- All WSDL's/Request/Response XML has been verified with SoapUI
 
-	WSDL: /<module>.wsdl
-	Endpoint: /<module>
-	Explicit endpoint: /<module>.soap
+	WSDL: /<plugin>.wsdl
+	Endpoint: /<plugin>
+	Explicit endpoint: /<plugin>.soap
 	Content-Type: application/soap+xml
 
 	RESTful to CRUD name conversion:
@@ -35,7 +35,7 @@ SOAP 1.1
 	DELETE => DELETE
 		
 	Function name conversion:
-	Module->(Create/Read/Update/Delete)<Function>(<data>)
+	Plugin->(Create/Read/Update/Delete)<Function>(<data>)
 
 	Example:
 	/lim/soap
@@ -43,14 +43,14 @@ SOAP 1.1
 
 XML-RPC
 
-	Endpoint: /<module>
-	Explicit endpoint: /<module>.xml-rpc
+	Endpoint: /<plugin>
+	Explicit endpoint: /<plugin>.xml-rpc
 	Content-Type: text/xml
 
 JSON-RPC v2
 	
-	Endpoint: /<module>
-	Explicit endpoint: /<module>.json-rpc
+	Endpoint: /<plugin>
+	Explicit endpoint: /<plugin>.json-rpc
 	Content-Type: application/json
 
 Limitations

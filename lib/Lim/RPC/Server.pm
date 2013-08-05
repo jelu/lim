@@ -127,15 +127,15 @@ sub serve {
         }
 
         if ($obj->isa('Lim::Component::Server')) {
-            my $name = lc($module->Module);
+            my $name = lc($module->Name);
             
             if (exists $self->{module}->{$name}) {
-                $self->{logger}->warn('Can not serve ', $name, ': module already served');
+                $self->{logger}->warn('Can not serve ', $name, ': plugin already served');
                 next;
             }
             
             unless ($module->VERSION) {
-                $self->{logger}->warn('Can not serve ', $name, ': no VERSION specified in module');
+                $self->{logger}->warn('Can not serve ', $name, ': no VERSION specified in plugin');
                 next;
             }
             

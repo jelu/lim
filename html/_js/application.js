@@ -3,7 +3,7 @@
 		window.lim = {
 			//
 			uri: '',
-			module: {},
+			plugin: {},
 			//
 			init: function () {
 				var that = this;
@@ -29,7 +29,7 @@
 				this.loadPage('/home.html')
 				.done(function (data) {
 					that.display(data);
-					that.getModules();
+					that.getPlugins();
 				});
 			},
 			//
@@ -149,17 +149,17 @@
 				return message;
 			},
 			//
-			getModulesRetryInterval: 10,
-			getModulesRetry: 0,
-			getModules: function () {
+			getPluginsRetryInterval: 10,
+			getPluginsRetry: 0,
+			getPlugins: function () {
 				var that = this;
 				
-				if (!this.getModulesRetry) {
-					$('#modules p').text('Unable to retrieve modules, retrying now please wait ...');
+				if (!this.getPluginsRetry) {
+					$('#plugins p').text('Unable to retrieve plugins, retrying now please wait ...');
 					this.getJSON('/agent/plugins')
 					.done(function (data) {
 			    		if (data.plugin && data.plugin.length) {
-				    		$('#modules').empty();
+				    		$('#plugins').empty();
 				    		
 				    		data.plugin.sort(function (a, b) {
 				    			return (a.name > b.name) ? 1 : ((a.name < b.name) ? -1 : 0);
@@ -168,9 +168,9 @@
 				    		$.each(data.plugin, function () {
 				    			var mod=this;
 				    			
-				    			$('#modules').append(
+				    			$('#plugins').append(
 						    		$('<div class="span3"></div>')
-						    		.attr('id', 'module-'+mod.name)
+						    		.attr('id', 'plugin-'+mod.name)
 						    		.append(
 						    			$('<h2></h2>').text(mod.name),
 						    			$('<p></p>').text(mod.description),
@@ -178,28 +178,28 @@
 					    			));
 				    			that.getHTML('/_'+mod.name.toLowerCase()+'/index.html')
 				    			.done(function () {
-				    				$('#module-'+mod.name+' .label-warning').remove();
-				    				$('#module-'+mod.name+' .label-important').remove();
-				    				$('#module-'+mod.name).append(
+				    				$('#plugin-'+mod.name+' .label-warning').remove();
+				    				$('#plugin-'+mod.name+' .label-important').remove();
+				    				$('#plugin-'+mod.name).append(
 							    		'<p><a class="btn" href="#">Manage &raquo;</a></p>'
 				    					);
-						    		$('#module-'+mod.name+' a.btn').click(function () {
-						    			that.loadModule(mod.name.toLowerCase());
+						    		$('#plugin-'+mod.name+' a.btn').click(function () {
+						    			that.loadPlugin(mod.name.toLowerCase());
 						    			return false;
 						    		});
 				    			})
 				    			.fail(function () {
-				    				$('#module-'+mod.name+' .label-warning').remove();
-				    				$('#module-'+mod.name+' .label-important').remove();
-				    				$('#module-'+mod.name).append(
+				    				$('#plugin-'+mod.name+' .label-warning').remove();
+				    				$('#plugin-'+mod.name+' .label-important').remove();
+				    				$('#plugin-'+mod.name).append(
 							    		'<p><span class="label label-important">Management Console not available!</span></p>'
 				    					);
 				    			});
 				    			window.setTimeout(function () {
-				    				if (!$('#module-'+mod.name+' .btn').length &&
-				    					!$('#module-'+mod.name+' .label').length)
+				    				if (!$('#plugin-'+mod.name+' .btn').length &&
+				    					!$('#plugin-'+mod.name+' .label').length)
 				    				{
-					    				$('#module-'+mod.name).append(
+					    				$('#plugin-'+mod.name).append(
 								    		'<p><span class="label label-warning">Checking availability ...</span></p>'
 					    					);
 				    				}
@@ -210,11 +210,11 @@
 			    		else if (data.plugin && data.plugin.name) {
 			    			var mod=data.plugin;
 			    			
-			    			$('#modules')
+			    			$('#plugins')
 			    			.empty()
 			    			.append(
 					    		$('<div class="span3"></div>')
-					    		.attr('id', 'module-'+mod.name)
+					    		.attr('id', 'plugin-'+mod.name)
 					    		.append(
 					    			$('<h2></h2>').text(mod.name),
 					    			$('<p></p>').text(mod.description),
@@ -222,26 +222,26 @@
 				    			));
 			    			that.getHTML('/_'+mod.name.toLowerCase()+'/index.html')
 			    			.done(function () {
-			    				$('#module-'+mod.name+' .label-warning').remove();
-			    				$('#module-'+mod.name).append(
+			    				$('#plugin-'+mod.name+' .label-warning').remove();
+			    				$('#plugin-'+mod.name).append(
 						    		'<p><a class="btn" href="#">Manage &raquo;</a></p>'
 			    					);
-					    		$('#module-'+mod.name+' a.btn').click(function () {
-					    			that.loadModule(mod.name.toLowerCase());
+					    		$('#plugin-'+mod.name+' a.btn').click(function () {
+					    			that.loadPlugin(mod.name.toLowerCase());
 					    			return false;
 					    		});
 			    			})
 			    			.fail(function () {
-			    				$('#module-'+mod.name+' .label-warning').remove();
-			    				$('#module-'+mod.name).append(
+			    				$('#plugin-'+mod.name+' .label-warning').remove();
+			    				$('#plugin-'+mod.name).append(
 						    		'<p><span class="label label-important">Management Console not available!</span></p>'
 			    					);
 			    			});
 			    			window.setTimeout(function () {
-			    				if (!$('#module-'+mod.name+' .btn').length &&
-			    					!$('#module-'+mod.name+' .label').length)
+			    				if (!$('#plugin-'+mod.name+' .btn').length &&
+			    					!$('#plugin-'+mod.name+' .label').length)
 			    				{
-				    				$('#module-'+mod.name).append(
+				    				$('#plugin-'+mod.name).append(
 							    		'<p><span class="label label-warning">Checking availability ...</span></p>'
 				    					);
 			    				}
@@ -249,31 +249,31 @@
 				    		return;
 			    		}
 			    		
-			    		$('#modules p').text('No modules found, this is a bit strange ...');
+			    		$('#plugins p').text('No plugins found, this is a bit strange ...');
 			    	})
 			    	.fail(function() {
-			    		that.getModulesRetry = that.getModulesRetryInterval;
+			    		that.getPluginsRetry = that.getPluginsRetryInterval;
 			    		window.setTimeout(function () {
-			    			that.getModules();
+			    			that.getPlugins();
 			    		}, 1000);
 			    	});
 					return;
 				}
 
-	    		$('#modules p').text('Unable to retrieve modules, retry in ' + this.getModulesRetry + ' seconds ...');
-	    		this.getModulesRetry--;
+	    		$('#plugins p').text('Unable to retrieve plugins, retry in ' + this.getPluginsRetry + ' seconds ...');
+	    		this.getPluginsRetry--;
 	    		window.setTimeout(function () {
-	    			that.getModules();
+	    			that.getPlugins();
 	    		}, 1000);
 			},
-			loadModule: function (module) {
+			loadPlugin: function (plugin) {
 				var that = this;
-				this.loadPage('/_'+module+'/index.html')
+				this.loadPage('/_'+plugin+'/index.html')
 				.done(function (data) {
 					that.display(data);
 				})
 				.fail(function () {
-					$('#content').text('Unable to load module '+module+'!');
+					$('#content').text('Unable to load plugin '+plugin+'!');
 				});
 			}
 		};

@@ -100,7 +100,7 @@ sub Prompt {
     }
     $self =~ s/::[^:]+$//o;
     
-    return '/'.lc($self->Module);
+    return '/'.lc($self->Name);
 }
 
 =head2 Successful
