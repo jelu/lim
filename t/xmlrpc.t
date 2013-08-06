@@ -7,6 +7,8 @@ eval {
 };
 BAIL_OUT($@) if ($@);
 
+exit unless pipe(READP, WRITEP);
+WRITEP->autoflush(1);
 my $pid = $$;
 my $child = fork();
 
@@ -46,7 +48,7 @@ unless ($child) {
     );
     $server->serve(qw(Lim::Agent));
     push(@watchers, $server, AnyEvent->timer(after => 0, cb => sub {
-        kill 14, $pid;
+        print WRITEP "run\n";
     }));
     $cv->recv;
     @watchers = ();
@@ -56,17 +58,16 @@ unless ($child) {
 use Lim ();
 use XMLRPC::Lite;
 
-$SIG{ALRM} = sub { return; };
-sleep(10);
+$SIG{ALRM} = sub { exit; };
+alarm(10);
+<READP>;
+alarm(0);
 
 my $res =
     XMLRPC::Lite
     -> proxy('http://127.0.0.1:5353/agent')
     -> call('ReadVersion')
     -> result;
-
-use Data::Dumper;
-print Dumper($res);
 
 if (ref($res) eq 'HASH') {
     $res = $res->{version};
