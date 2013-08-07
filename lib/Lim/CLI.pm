@@ -48,7 +48,7 @@ $cli = Lim::CLI->new(...);
 
 This is the CLI that takes the input from the user and sends it to the plugin in
 question. It uses L<AnyEvent::ReadLine::Gnu> if it is available and that enables
-command line completion and history functions. It will load all modules present
+command line completion and history functions. It will load all plugins present
 on the system and use their CLI part if it exists.
 
 Failing to have a supported readline module it will use a basic
@@ -107,7 +107,7 @@ sub new {
     $self->{on_quit} = $args{on_quit};
 
     foreach my $module (qw(Lim::Agent)) {
-        my $name = lc($module->Module);
+        my $name = lc($module->Name);
         
         if (exists $self->{cli}->{$name}) {
             $self->{logger}->warn('Can not load internal CLI module ', $module, ': name ', $name, ' already in use');
@@ -124,7 +124,7 @@ sub new {
     }
     
     foreach my $module (Lim::Plugins->instance->LoadedModules) {
-        my $name = lc($module->Module);
+        my $name = lc($module->Name);
         
         if (exists $self->{cli}->{$name}) {
             $self->{logger}->warn('Can not use CLI module ', $module, ': name ', $name, ' already in use');
@@ -514,7 +514,7 @@ sub println {
 
 =item $cli->print_command_help($module->Commands)
 
-Print the help for all commands from a module.
+Print the help for all commands from a plugin.
 
 =cut
 

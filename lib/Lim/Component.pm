@@ -67,26 +67,26 @@ want to communicate with the Server.
 
 =over 4
 
-=item $module_name = Lim::Plugin::MyPlugin->Module
+=item $plugin_name = Lim::Plugin::MyPlugin->Name
 
-Returns module name.
+Returns the plugin's name.
 
 This function must be overloaded or it will L<confess>.
 
 =cut
 
-sub Module {
-    confess 'Module not overloaded';
+sub Name {
+    confess 'Name not overloaded';
 }
 
-=item $module_name = Lim::Plugin::MyPlugin->Description
+=item $plugin_description = Lim::Plugin::MyPlugin->Description
 
-Returns module description.
+Returns the plugin's description.
 
 =cut
 
 sub Description {
-    'No description for this module';
+    'No description for this plugin';
 }
 
 =item $call_hash_ref = Lim::Plugin::MyPlugin->Calls
@@ -150,7 +150,7 @@ sub Client {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
     }
     my $calls = $self->Calls;
-    my $module = $self->Module;
+    my $plugin = $self->Name;
     $self .= '::Client';
     
     eval 'use '.$self.' ();';
@@ -255,7 +255,7 @@ sub Client {
             }
             
             *$sub = sub {
-                unless (Lim::RPC::Call->new($module, $call, $call_def, @_)) {
+                unless (Lim::RPC::Call->new($plugin, $call, $call_def, @_)) {
                     confess __PACKAGE__, ': Unable to create Lim::RPC::Call for ', $sub;
                 }
             };

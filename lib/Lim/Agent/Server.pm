@@ -45,7 +45,7 @@ sub ReadPlugins {
     my ($self, $cb) = @_;
     
     $self->Successful($cb, { plugin => [ {
-        name => Lim::Agent->Module,
+        name => Lim::Agent->Name,
         description => Lim::Agent->Description,
         module => 'Lim::Agent',
         version => $VERSION,
@@ -63,7 +63,7 @@ sub ReadPlugin {
     my @plugins = ( Lim::Plugins->instance->All );
     my $result = {
         plugin => [ {
-            name => Lim::Agent->Module,
+            name => Lim::Agent->Name,
             description => Lim::Agent->Description,
             module => 'Lim::Agent',
             version => $VERSION,
@@ -91,9 +91,9 @@ sub ReadPluginVersion {
     my $result = {};
 
     foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
-        if ($plugin->{name} eq Lim::Agent->Module) {
+        if ($plugin->{name} eq Lim::Agent->Name) {
             push(@{$result->{plugin}}, {
-                name => Lim::Agent->Module,
+                name => Lim::Agent->Name,
                 version => $VERSION
             });
             next;
@@ -120,9 +120,9 @@ sub ReadPluginLoaded {
     my $result = {};
 
     foreach my $plugin (ref($q->{plugin}) eq 'ARRAY' ? @{$q->{plugin}} : $q->{plugin}) {
-        if ($plugin->{name} eq Lim::Agent->Module) {
+        if ($plugin->{name} eq Lim::Agent->Name) {
             push(@{$result->{plugin}}, {
-                name => Lim::Agent->Module,
+                name => Lim::Agent->Name,
                 loaded => 1
             });
             next;

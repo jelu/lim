@@ -2,6 +2,8 @@
 
 use Test::More tests => 1;
 
+exit unless pipe(READP, WRITEP);
+WRITEP->autoflush(1);
 my $pid = $$;
 my $child = fork();
 
@@ -41,7 +43,7 @@ unless ($child) {
     );
     $server->serve(qw(Lim::Agent));
     push(@watchers, $server, AnyEvent->timer(after => 0, cb => sub {
-        kill 14, $pid;
+        print WRITEP "run\n";
     }));
     $cv->recv;
     @watchers = ();
@@ -51,8 +53,10 @@ unless ($child) {
 use JSON::XS;
 use LWP::UserAgent;
 
-$SIG{ALRM} = sub { return; };
-sleep(10);
+$SIG{ALRM} = sub { exit; };
+alarm(10);
+<READP>;
+alarm(0);
 
 my $req = HTTP::Request->new(GET => 'http://127.0.0.1:5353/agent');
 $req->content_type('application/json');
