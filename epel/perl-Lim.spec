@@ -449,7 +449,7 @@ fi
 
 
 %changelog
-* Wen Aug 07 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.16-1
+* Wed Aug 07 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.16-1
 - Release 0.16
 * Sun Aug 04 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.15-1
 - Release 0.15
