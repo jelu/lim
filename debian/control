@@ -17,11 +17,9 @@ Package: liblim-common-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, libanyevent-perl (>= 5),
  libcommon-sense-perl (>= 3), libjson-xs-perl (>= 2),
- liblog-log4perl-perl (>= 1), libmodule-find-perl, libsoap-lite-perl (>= 0.71),
+ liblog-log4perl-perl (>= 1), libmodule-find-perl,
  liburi-perl (>= 1), libwww-perl (>= 5), libyaml-perl (>= 0.70),
- perl (>= 5.10.1), libnet-ssleay-perl (>= 1.35),
- libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
- liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1)
+ perl (>= 5.10.1), libnet-ssleay-perl (>= 1.35)
 Description: Common perl libraries for Lim
  Common Lim perl libraries depended by all Lim packages.
 
@@ -42,28 +40,29 @@ Description: Lim HTTP/HTTPS transport perl libraries
 
 Package: liblim-protocol-rest-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends},
+Depends: ${misc:Depends}, ${perl:Depends}, libjson-xs-perl (>= 2),
  liblim-server-perl (= 0.16-1~unstable+1)
 Description: Lim REST protocol perl libraries
  Lim perl libraries for REST protocol.
 
 Package: liblim-protocol-soap-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends},
+Depends: ${misc:Depends}, ${perl:Depends}, libsoap-lite-perl (>= 0.71),
  liblim-server-perl (= 0.16-1~unstable+1)
 Description: Lim SOAP protocol perl libraries
  Lim perl libraries for SOAP protocol.
 
 Package: liblim-protocol-xmlrpc-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends},
+Depends: ${misc:Depends}, ${perl:Depends}, libsoap-lite-perl (>= 0.71),
+ libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
  liblim-server-perl (= 0.16-1~unstable+1)
 Description: Lim XMLRPC protocol perl libraries
  Lim perl libraries for XMLRPC protocol.
 
 Package: liblim-protocol-jsonrpc-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends},
+Depends: ${misc:Depends}, ${perl:Depends}, libjson-xs-perl (>= 2),
  liblim-server-perl (= 0.16-1~unstable+1)
 Description: Lim JSONRPC 1.0/2.0 protocol perl libraries
  Lim perl libraries for JSONRPC 1.0/2.0 protocol.
@@ -124,7 +123,8 @@ Package: lim-cli
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
  liblim-agent-cli-perl (= 0.16-1~unstable+1), openssl (>= 0.9.8),
- lim-common (= 0.16-1~unstable+1), hostname (>= 3.03)
+ lim-common (= 0.16-1~unstable+1), hostname (>= 3.03),
+ liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1)
 Description: Lim command line interface
  The Lim CLI used to control a local or remote Lim agent.
 
