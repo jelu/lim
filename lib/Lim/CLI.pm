@@ -110,7 +110,7 @@ sub new {
         my $name = lc($module->Name);
         
         if (exists $self->{cli}->{$name}) {
-            $self->{logger}->warn('Can not load internal CLI module ', $module, ': name ', $name, ' already in use');
+            Lim::WARN and $self->{logger}->warn('Can not load internal CLI module ', $module, ': name ', $name, ' already in use');
             next;
         }
 
@@ -127,7 +127,7 @@ sub new {
         my $name = lc($module->Name);
         
         if (exists $self->{cli}->{$name}) {
-            $self->{logger}->warn('Can not use CLI module ', $module, ': name ', $name, ' already in use');
+            Lim::WARN and $self->{logger}->warn('Can not use CLI module ', $module, ': name ', $name, ' already in use');
             next;
         }
         

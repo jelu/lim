@@ -374,7 +374,7 @@ sub handle {
                 $soap->handle;
             };
             if ($@) {
-                $self->{logger}->warn('SOAP action failed: ', $@);
+                Lim::WARN and $self->{logger}->warn('SOAP action failed: ', $@);
                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
             }
             else {

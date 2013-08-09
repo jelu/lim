@@ -51,7 +51,7 @@ sub new {
         $self->Init(%args);
     };
     if ($@) {
-        $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
         return;
     }
     
@@ -126,7 +126,7 @@ sub Error {
         $self->{cli}->Error(@_);
     }
     else {
-        $self->{logger}->error('Command returned error but CLI is gone [', $self, ']');
+        Lim::ERR and $self->{logger}->error('Command returned error but CLI is gone [', $self, ']');
     }
 }
 

@@ -152,6 +152,9 @@ sub WARN { 1 }
 
 Semi constant sub that controls if errors should sent to the log.
 
+Common usage:
+Lim::ERR and $self->{logger}->error(...);
+
 =cut
 
 sub ERR { 1 }

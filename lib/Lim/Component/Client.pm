@@ -45,7 +45,7 @@ sub new {
         $self->Init(@_);
     };
     if ($@) {
-        $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
         return;
     }
     

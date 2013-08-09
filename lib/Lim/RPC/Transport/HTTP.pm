@@ -91,7 +91,7 @@ sub Init {
                     return;
                 }
 
-                $self->{logger}->warn($handle, ' Error: ', $message);
+                Lim::WARN and $self->{logger}->warn($handle, ' Error: ', $message);
     
                 delete $self->{client}->{$handle};
                 $handle->destroy;
@@ -103,7 +103,7 @@ sub Init {
                     return;
                 }
 
-                $self->{logger}->warn($handle, ' TIMEOUT');
+                Lim::WARN and $self->{logger}->warn($handle, ' TIMEOUT');
                 
 #                my $client = $self->{client}->{$handle};
 #                
@@ -149,21 +149,21 @@ sub Init {
                 my $client = $self->{client}->{$handle};
                 
                 unless (defined $client) {
-                    $self->{logger}->warn($handle, ' unknown client');
+                    Lim::WARN and $self->{logger}->warn($handle, ' unknown client');
                     $handle->push_shutdown;
                     $handle->destroy;
                     return;
                 }
                 
                 if (exists $client->{process_watcher}) {
-                    $self->{logger}->warn($handle, ' Request received while processing other request');
+                    Lim::WARN and $self->{logger}->warn($handle, ' Request received while processing other request');
                     $handle->push_shutdown;
                     $handle->destroy;
                     return;
                 }
                 
                 if ((length($client->{headers}) + (exists $client->{content} ? length($client->{content}) : 0) + length($client->{rbuf})) > MAX_REQUEST_LEN) {
-                    $self->{logger}->warn($handle, ' Request too long');
+                    Lim::WARN and $self->{logger}->warn($handle, ' Request too long');
                     $handle->push_shutdown;
                     $handle->destroy;
                     return;

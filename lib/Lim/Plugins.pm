@@ -89,7 +89,7 @@ sub Load {
     
     foreach my $module (findsubmod Lim::Plugin) {
         if (exists $self->{plugin}->{$module}) {
-            $self->{logger}->warn('Plugin ', $module, ' already loaded');
+            Lim::WARN and $self->{logger}->warn('Plugin ', $module, ' already loaded');
             next;
         }
 
@@ -109,7 +109,7 @@ sub Load {
         };
         
         if ($@) {
-            $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
+            Lim::WARN and $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
             $self->{plugin}->{$module} = {
                 name => $name,
                 description => $description,

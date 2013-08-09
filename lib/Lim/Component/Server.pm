@@ -46,7 +46,7 @@ sub new {
         $self->Init(@_);
     };
     if ($@) {
-        $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
         return;
     }
     
@@ -86,7 +86,7 @@ sub Successful {
         Lim::RPC::R($cb, $data);
     };
     if ($@) {
-        $self->{logger}->warn('data validation failed: ', $@);
+        Lim::WARN and $self->{logger}->warn('data validation failed: ', $@);
         Lim::DEBUG and eval {
             use Data::Dumper;
             $self->{logger}->debug(Dumper($data));
