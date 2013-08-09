@@ -17,3 +17,4 @@ pm_to_blib
 pod2htm*.tmp
 .DS_Store
 *.pem
+MYMETA.json
