@@ -5,9 +5,6 @@ use Carp;
 
 use Scalar::Util qw(blessed);
 
-use SOAP::Lite ();
-use XMLRPC::Lite ();
-
 use Lim ();
 use Lim::Error ();
 
