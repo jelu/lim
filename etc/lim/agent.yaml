@@ -22,3 +22,6 @@ agent:
 #  srv_listen: 10
 #  call_timeout: 300
 #  timeout: 30
+#plugin:
+#  load:
+#    moduleName: 0|1

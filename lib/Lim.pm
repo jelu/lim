@@ -61,6 +61,9 @@ our $CONFIG = {
         editor => $ENV{EDITOR},
         host => 'localhost',
         port => 5353
+    },
+    plugin => {
+        load => {}
     }
 };
 
