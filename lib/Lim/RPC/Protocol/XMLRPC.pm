@@ -180,7 +180,7 @@ sub handle {
                 $xmlrpc->handle;
             };
             if ($@) {
-                $self->{logger}->warn('XMLRPC action failed: ', $@);
+                Lim::WARN and $self->{logger}->warn('XMLRPC action failed: ', $@);
                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
             }
             else {

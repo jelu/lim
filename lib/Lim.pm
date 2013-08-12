@@ -13,11 +13,11 @@ Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.16
+Version 0.17
 
 =cut
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 our $CONFIG = {
     log => {
         obj_debug => 1,
@@ -61,6 +61,9 @@ our $CONFIG = {
         editor => $ENV{EDITOR},
         host => 'localhost',
         port => 5353
+    },
+    plugin => {
+        load => {}
     }
 };
 
@@ -151,6 +154,9 @@ sub WARN { 1 }
 =item Lim::ERR
 
 Semi constant sub that controls if errors should sent to the log.
+
+Common usage:
+Lim::ERR and $self->{logger}->error(...);
 
 =cut
 

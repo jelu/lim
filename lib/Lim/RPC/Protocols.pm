@@ -85,7 +85,7 @@ sub load {
     
     foreach my $module (findsubmod Lim::RPC::Protocol) {
         if (exists $self->{protocol}->{$module}) {
-            $self->{logger}->warn('Protocol ', $module, ' already loaded');
+            Lim::WARN and $self->{logger}->warn('Protocol ', $module, ' already loaded');
             next;
         }
         
@@ -104,7 +104,7 @@ sub load {
         };
         
         if ($@) {
-            $self->{logger}->warn('Unable to load protocol ', $module, ': ', $@);
+            Lim::WARN and $self->{logger}->warn('Unable to load protocol ', $module, ': ', $@);
             $self->{protocol}->{$module} = {
                 module => $module,
                 loaded => 0,
@@ -114,7 +114,7 @@ sub load {
         }
         
         unless ($name =~ /^[a-z0-9_\-\.]+$/o) {
-            $self->{logger}->warn('Unable to load protocol ', $module, ': Illegal characters in protocol name');
+            Lim::WARN and $self->{logger}->warn('Unable to load protocol ', $module, ': Illegal characters in protocol name');
             $self->{protocol}->{$module} = {
                 module => $module,
                 loaded => 0,
@@ -124,7 +124,7 @@ sub load {
         }
 
         if (exists $self->{protocol_name}->{$name}) {
-            $self->{logger}->warn('Protocol name ', $name, ' already loaded by module ', $self->{protocol_name}->{$name});
+            Lim::WARN and $self->{logger}->warn('Protocol name ', $name, ' already loaded by module ', $self->{protocol_name}->{$name});
             next;
         }
         
@@ -164,7 +164,7 @@ sub protocol {
                 $protocol = $module->new(@_);
             };
             if ($@) {
-                $self->{logger}->warn('Unable to create new instance of protocol ', $name, '(', $module, '): ', $@);
+                Lim::WARN and $self->{logger}->warn('Unable to create new instance of protocol ', $name, '(', $module, '): ', $@);
             }
             else {
                 return $protocol;

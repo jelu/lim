@@ -161,7 +161,7 @@ sub handle {
                             };
                             if ($@) {
                                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                                $self->{logger}->warn('JSON encode error: ', $@);
+                                Lim::WARN and $self->{logger}->warn('JSON encode error: ', $@);
                             }
                             else {
                                 $response->header(
@@ -182,7 +182,7 @@ sub handle {
                             };
                             if ($@) {
                                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                                $self->{logger}->warn('JSON encode error: ', $@);
+                                Lim::WARN and $self->{logger}->warn('JSON encode error: ', $@);
                             }
                             else {
                                 $response->header(

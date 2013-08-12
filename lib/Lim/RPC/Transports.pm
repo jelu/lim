@@ -85,7 +85,7 @@ sub load {
     
     foreach my $module (findsubmod Lim::RPC::Transport) {
         if (exists $self->{transport}->{$module}) {
-            $self->{logger}->warn('Transport ', $module, ' already loaded');
+            Lim::WARN and $self->{logger}->warn('Transport ', $module, ' already loaded');
             next;
         }
 
@@ -104,7 +104,7 @@ sub load {
         };
         
         if ($@) {
-            $self->{logger}->warn('Unable to load transport ', $module, ': ', $@);
+            Lim::WARN and $self->{logger}->warn('Unable to load transport ', $module, ': ', $@);
             $self->{transport}->{$module} = {
                 name => $name,
                 module => $module,
@@ -115,7 +115,7 @@ sub load {
         }
         
         unless ($name =~ /^[a-z0-9_\-\.]+$/o) {
-            $self->{logger}->warn('Unable to load transport ', $module, ': Illegal characters in transport name');
+            Lim::WARN and $self->{logger}->warn('Unable to load transport ', $module, ': Illegal characters in transport name');
             $self->{transport}->{$module} = {
                 module => $module,
                 loaded => 0,
@@ -125,7 +125,7 @@ sub load {
         }
 
         if (exists $self->{transport_name}->{$name}) {
-            $self->{logger}->warn('Transport name ', $name, ' already loaded by module ', $self->{transport_name}->{$name});
+            Lim::WARN and $self->{logger}->warn('Transport name ', $name, ' already loaded by module ', $self->{transport_name}->{$name});
             next;
         }
 
@@ -165,7 +165,7 @@ sub transport {
                 $transport = $module->new(@_);
             };
             if ($@) {
-                $self->{logger}->warn('Unable to create new instance of transport ', $name, '(', $module, '): ', $@);
+                Lim::WARN and $self->{logger}->warn('Unable to create new instance of transport ', $name, '(', $module, '): ', $@);
             }
             else {
                 return $transport;

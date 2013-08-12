@@ -1,0 +1,4 @@
+#---
+#protocol:
+#  http:
+#    webroot: /usr/share/lim/html

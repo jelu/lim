@@ -133,7 +133,7 @@ sub new {
         }
         
         unless (defined $fh) {
-            $self->{logger}->warn('Error: ', $!);
+            Lim::WARN and $self->{logger}->warn('Error: ', $!);
             $self->{status} = ERROR;
             $self->{error} = $!;
         
@@ -157,7 +157,7 @@ sub new {
                     return;
                 }
                 
-                $self->{logger}->warn($handle, ' Error: ', $message);
+                Lim::WARN and $self->{logger}->warn($handle, ' Error: ', $message);
                 $self->{status} = ERROR;
                 $self->{error} = $message;
                 
@@ -177,7 +177,7 @@ sub new {
                     return;
                 }
 
-                $self->{logger}->warn($handle, ' TIMEOUT');
+                Lim::WARN and $self->{logger}->warn($handle, ' TIMEOUT');
                 $self->{status} = ERROR;
                 $self->{error} = 'Connection/Request/Response Timeout';
                 
@@ -198,7 +198,7 @@ sub new {
                     return;
                 }
 
-                $self->{logger}->warn($handle, ' EOF');
+                Lim::WARN and $self->{logger}->warn($handle, ' EOF');
                 
                 if (exists $self->{cb}) {
                     $self->{cb}->($self);

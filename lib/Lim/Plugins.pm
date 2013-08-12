@@ -88,8 +88,22 @@ sub Load {
     my ($self) = @_;
     
     foreach my $module (findsubmod Lim::Plugin) {
+        if (exists Lim::Config->{plugin} and exists Lim::Config->{plugin}->{load}) {
+            if (exists Lim::Config->{plugin}->{load}->{$module} and !Lim::Config->{plugin}->{load}->{$module}) {
+                Lim::WARN and $self->{logger}->warn('Skipping ', $module, ' configured not to load.');
+                next;
+            }
+            
+            my $name = $module;
+            $name =~ s/.*:://o;
+            if (exists Lim::Config->{plugin}->{load}->{$name} and !Lim::Config->{plugin}->{load}->{$name}) {
+                Lim::WARN and $self->{logger}->warn('Skipping ', $module, ' configured not to load.');
+                next;
+            }
+        }
+            
         if (exists $self->{plugin}->{$module}) {
-            $self->{logger}->warn('Plugin ', $module, ' already loaded');
+            Lim::WARN and $self->{logger}->warn('Plugin ', $module, ' already loaded');
             next;
         }
 
@@ -109,7 +123,7 @@ sub Load {
         };
         
         if ($@) {
-            $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
+            Lim::WARN and $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
             $self->{plugin}->{$module} = {
                 name => $name,
                 description => $description,
@@ -129,7 +143,20 @@ sub Load {
             loaded => 1
         };
     }
-
+    
+    if (exists Lim::Config->{plugin} and exists Lim::Config->{plugin}->{load}) {
+        foreach my $module (keys %{Lim::Config->{plugin}->{load}}) {
+            unless (Lim::Config->{plugin}->{load}->{$module}) {
+                next;
+            }
+            
+            unless (exists $self->{plugin}->{$module} or exists $self->{plugin}->{'Lim::Plugin::'.$module}) {
+                Lim::ERR and $self->{logger}->error('Required module ', $module, ' not found');
+                # TODO Should we die here?
+            }
+        }
+    }
+    
     $self;
 }
 

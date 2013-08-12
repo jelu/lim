@@ -122,7 +122,7 @@ sub serve {
             $obj = $module->Server;
         };
         if (!defined $obj or $@) {
-            $self->{logger}->warn('Can not serve ', $module, (defined $@ ? ': '.$@ : ''));
+            Lim::WARN and $self->{logger}->warn('Can not serve ', $module, (defined $@ ? ': '.$@ : ''));
             next;
         }
 
@@ -130,26 +130,26 @@ sub serve {
             my $name = lc($module->Name);
             
             if (exists $self->{module}->{$name}) {
-                $self->{logger}->warn('Can not serve ', $name, ': plugin already served');
+                Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': plugin already served');
                 next;
             }
             
             unless ($module->VERSION) {
-                $self->{logger}->warn('Can not serve ', $name, ': no VERSION specified in plugin');
+                Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': no VERSION specified in plugin');
                 next;
             }
             
             my $calls = $module->Calls;
             unless ($calls) {
-                $self->{logger}->info('Not serving ', $name, ', nothing to serve');
+                Lim::INFO and $self->{logger}->info('Not serving ', $name, ', nothing to serve');
                 next;
             }
             unless (ref($calls) eq 'HASH') {
-                $self->{logger}->warn('Can not serve ', $name, ': Calls() return was invalid');
+                Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': Calls() return was invalid');
                 next;
             }
             unless (%$calls) {
-                $self->{logger}->info('Not serving ', $name, ', nothing to serve');
+                Lim::INFO and $self->{logger}->info('Not serving ', $name, ', nothing to serve');
                 next;
             }
             
@@ -157,7 +157,7 @@ sub serve {
             
             foreach my $call (keys %$calls) {
                 unless ($obj->can($call)) {
-                    $self->{logger}->warn('Can not serve ', $name, ': Missing specified call ', $call, ' function');
+                    Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': Missing specified call ', $call, ' function');
                     undef($calls);
                     last;
                 }
@@ -178,14 +178,14 @@ sub serve {
                     my $call_def = $calls->{$call};
                     
                     unless (ref($call_def) eq 'HASH') {
-                        $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid definition');
+                        Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid definition');
                         undef($calls);
                         last;
                     }
                     
                     if (exists $call_def->{uri_map}) {
                         unless (ref($call_def->{uri_map}) eq 'ARRAY') {
-                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map parameter definition');
+                            Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map parameter definition');
                             undef($calls);
                             last;
                         }
@@ -196,14 +196,14 @@ sub serve {
                             if (defined (my $redirect_call = $uri_map->add($map))) {
                                 if ($redirect_call) {
                                     unless (exists $calls->{$redirect_call}) {
-                                        $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: redirected to non-existing call ', $redirect_call);
+                                        Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: redirected to non-existing call ', $redirect_call);
                                         undef($calls);
                                         last;
                                     }
                                 }
                             }
                             else {
-                                $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: ', $@);
+                                Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map: ', $@);
                                 undef($calls);
                                 last;
                             }
@@ -217,14 +217,14 @@ sub serve {
                     
                     if (exists $call_def->{in}) {
                         unless (ref($call_def->{in}) eq 'HASH') {
-                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
+                            Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
                         
                         my @keys = keys %{$call_def->{in}};
                         unless (scalar @keys) {
-                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
+                            Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
@@ -243,7 +243,7 @@ sub serve {
                                             push(@values, $value->{$key}->children);
                                             next;
                                         }
-                                        $self->{logger}->warn('Unable to create Lim::RPC::Value::Collection: ', $@);
+                                        Lim::WARN and $self->{logger}->warn('Unable to create Lim::RPC::Value::Collection: ', $@);
                                     }
                                     else {
                                         push(@values, $value->{$key});
@@ -266,10 +266,10 @@ sub serve {
                                     unless ($@) {
                                         next;
                                     }
-                                    $self->{logger}->warn('Unable to create Lim::RPC::Value: ', $@);
+                                    Lim::WARN and $self->{logger}->warn('Unable to create Lim::RPC::Value: ', $@);
                                 }
 
-                                $self->{logger}->warn('Can not server ', $name, ': call ', $call, ' has invalid in parameter definition');
+                                Lim::WARN and $self->{logger}->warn('Can not server ', $name, ': call ', $call, ' has invalid in parameter definition');
                                 undef($calls);
                             }
                         }
@@ -281,14 +281,14 @@ sub serve {
                     
                     if (exists $call_def->{out}) {
                         unless (ref($call_def->{out}) eq 'HASH') {
-                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
+                            Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
                             undef($calls);
                             last;
                         }
                         
                         my @keys = keys %{$call_def->{out}};
                         unless (scalar @keys) {
-                            $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
+                            Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
                             undef($calls);
                             last;
                         }
@@ -307,7 +307,7 @@ sub serve {
                                             push(@values, $value->{$key}->children);
                                             next;
                                         }
-                                        $self->{logger}->warn('Unable to create Lim::RPC::Value::Collection: ', $@);
+                                        Lim::WARN and $self->{logger}->warn('Unable to create Lim::RPC::Value::Collection: ', $@);
                                     }
                                     else {
                                         push(@values, $value->{$key});
@@ -330,10 +330,10 @@ sub serve {
                                     unless ($@) {
                                         next;
                                     }
-                                    $self->{logger}->warn('Unable to create Lim::RPC::Value: ', $@);
+                                    Lim::WARN and $self->{logger}->warn('Unable to create Lim::RPC::Value: ', $@);
                                 }
 
-                                $self->{logger}->warn('Can not server ', $name, ': call ', $call, ' has invalid out parameter definition');
+                                Lim::WARN and $self->{logger}->warn('Can not server ', $name, ': call ', $call, ' has invalid out parameter definition');
                                 undef($calls);
                             }
                         }
@@ -369,7 +369,7 @@ sub serve {
                                ($self, $cb, $q, @args) = $protocol->precall($call, @_);
                             };
                             if ($@) {
-                                defined $logger and $logger->warn($weak_obj, '->', $call, '() precall failed: ', $@);
+                                Lim::WARN and defined $logger and $logger->warn($weak_obj, '->', $call, '() precall failed: ', $@);
                                 $weak_obj->Error($cb);
                                 return;
                             }
@@ -380,7 +380,7 @@ sub serve {
                                 $q = {};
                             }
                             if (ref($q) ne 'HASH') {
-                                defined $logger and $logger->warn($weak_obj, '->', $call, '() called without data as hash');
+                                Lim::WARN and defined $logger and $logger->warn($weak_obj, '->', $call, '() called without data as hash');
                                 $weak_obj->Error($cb);
                                 return;
                             }
@@ -390,7 +390,7 @@ sub serve {
                                     Lim::RPC::V($q, $call_def->{in});
                                 };
                                 if ($@) {
-                                    defined $logger and $logger->warn($weak_obj, '->', $call, '() data validation failed: ', $@);
+                                    Lim::WARN and defined $logger and $logger->warn($weak_obj, '->', $call, '() data validation failed: ', $@);
                                     Lim::DEBUG and defined $logger and eval {
                                         use Data::Dumper;
                                         $logger->debug(Dumper($q));
@@ -401,7 +401,7 @@ sub serve {
                                 }
                             }
                             elsif (%$q) {
-                                defined $logger and $logger->warn($weak_obj, '->', $call, '() have data but no definition');
+                                Lim::WARN and defined $logger and $logger->warn($weak_obj, '->', $call, '() have data but no definition');
                                 $weak_obj->Error($cb);
                                 return;
                             }
@@ -411,7 +411,7 @@ sub serve {
                                 $weak_obj->$call($cb, $q, @args);
                             };
                             if ($@) {
-                                defined $logger and $logger->warn($weak_obj, '->', $call, '() failed: ', $@);
+                                Lim::WARN and defined $logger and $logger->warn($weak_obj, '->', $call, '() failed: ', $@);
                                 $weak_obj->Error($cb);
                             }
                             return;
