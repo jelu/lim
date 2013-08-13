@@ -2,3 +2,4 @@
 - Agent reload, restart and unload plugins API/CLI
 - Lim::CLI Ask(text, cb)/Confirm(text, cb)
 - Schema cache settings
+- Fix debian lim-agentd package (init/services)
