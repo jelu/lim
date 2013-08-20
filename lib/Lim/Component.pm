@@ -156,6 +156,10 @@ sub Client {
     eval 'use '.$self.' ();';
     die $self.' : '.$@ if $@;
 
+    if ($self->can('__lim_bootstrapped')) {
+        return $self->new(@_);
+    }
+    
     no strict 'refs';    
     foreach my $call (keys %$calls) {
         unless ($self->can($call)) {
@@ -261,6 +265,11 @@ sub Client {
             };
         }
     }
+    
+    my $sub = $self.'::__lim_bootstrapped';
+    *$sub = sub {
+        1;
+    };
     
     $self->new(@_);
 }
