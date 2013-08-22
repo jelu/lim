@@ -1,0 +1,6 @@
+# Change the user/group for the process
+#
+LIM_USER=lim-agentd
+LIM_GROUP=lim
+# LIM_UID=
+# LIM_GID=

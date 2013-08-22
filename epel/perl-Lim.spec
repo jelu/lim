@@ -187,7 +187,8 @@ rm -rf $RPM_BUILD_ROOT
 make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
-install -m 755 %{_builddir}/lim/epel/lim-agentd %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
+install -m 755 %{_builddir}/lim/epel/lim-agentd.init %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
+install -m 640 %{_builddir}/lim/epel/lim-agentd.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/lim-agentd
 mkdir -p %{buildroot}%{_sysconfdir}/lim
 mkdir -p %{buildroot}%{_sysconfdir}/lim/agent.d
 mkdir -p %{buildroot}%{_sysconfdir}/lim/cli.d
@@ -313,6 +314,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/lim-agentd.1*
 %{_bindir}/lim-agentd
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/lim-agentd
+%attr(0640,root,root) %{_sysconfdir}/sysconfig/lim-agentd
 %config %{_sysconfdir}/lim/agent.yaml
 %config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
 %config %{_sysconfdir}/lim/agent.d/lim-rpc-tls.yaml
@@ -386,17 +388,25 @@ rm -rf $RPM_BUILD_ROOT
 %{_datadir}/lim/html/_agent/js/application.js
 
 
-%pre -n lim-agentd
+%pre -n lim-common
 getent group lim >/dev/null || groupadd -r lim
+exit 0
+
+%pre -n lim-agentd
 getent passwd lim >/dev/null || \
     useradd -r -g lim -d / -s /sbin/nologin \
-    -c "lim-agentd" lim
+    -c "lim-agentd" lim-agentd
 exit 0
+
+%post -n lim-common
+chgrp lim /etc/lim -R &&
+chmod 750 /etc/lim/ssl/private
 
 %post -n lim-agentd
 /sbin/chkconfig --add lim-agentd
 if [ ! -f /etc/lim/ssl/private/lim-agentd.key ]; then
-    openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096 >/dev/null 2>&1
+    openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096 >/dev/null 2>&1 &&
+    chmod 400 /etc/lim/ssl/private/lim-agentd.key
 fi &&
 if [ ! -f /etc/lim/ssl/private/lim-agentd.csr ]; then
     openssl req -new -batch \
@@ -411,13 +421,15 @@ if [ ! -f /etc/lim/ssl/private/lim-agentd.crt ]; then
 fi &&
 if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
     cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem \
-      >/dev/null 2>&1
-fi &&
-c_rehash /etc/lim/ssl/certs >/dev/null 2>&1
+      >/dev/null 2>&1 &&
+    c_rehash /etc/lim/ssl/certs >/dev/null 2>&1
+fi
 
 %post -n lim-cli
 if [ ! -f /etc/lim/ssl/private/lim-cli.key ]; then
-    openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096 >/dev/null 2>&1
+    openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096 >/dev/null 2>&1 &&
+    chmod 440 /etc/lim/ssl/private/lim-cli.key &&
+    chgrp lim /etc/lim/ssl/private/lim-cli.key
 fi &&
 if [ ! -f /etc/lim/ssl/private/lim-cli.csr ]; then
     openssl req -new -batch \
@@ -432,9 +444,9 @@ if [ ! -f /etc/lim/ssl/private/lim-cli.crt ]; then
 fi &&
 if [ ! -f /etc/lim/ssl/certs/lim-cli.crt ]; then
     cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.pem \
-      >/dev/null 2>&1
-fi &&
-c_rehash /etc/lim/ssl/certs >/dev/null 2>&1
+      >/dev/null 2>&1 &&
+    c_rehash /etc/lim/ssl/certs >/dev/null 2>&1
+fi
 
 %preun -n lim-agentd
 if [ $1 -eq 0 ] ; then

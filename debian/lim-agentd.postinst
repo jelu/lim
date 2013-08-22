@@ -3,16 +3,17 @@
 set -e
 
 if [ "$1" = configure ]; then
-	adduser --system \
-		--quiet \
-		--group \
-		--home /nonexistent \
-		--no-create-home \
-		--disabled-password \
-		lim &&
+    adduser --system \
+        --quiet \
+        --ingroup lim \
+        --home /nonexistent \
+        --no-create-home \
+        --disabled-password \
+        lim-agentd &&
 
     if [ ! -f /etc/lim/ssl/private/lim-agentd.key ]; then
-        openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096
+        openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096 &&
+        chmod 400 /etc/lim/ssl/private/lim-agentd.key
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-agentd.csr ]; then
         openssl req -new -batch \
@@ -26,9 +27,9 @@ if [ "$1" = configure ]; then
           -out /etc/lim/ssl/private/lim-agentd.crt
     fi &&
     if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
-        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem
-    fi &&
-    c_rehash /etc/lim/ssl/certs
+        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem &&
+        c_rehash /etc/lim/ssl/certs
+    fi
 fi
 
 update-rc.d lim-agentd defaults 95 5 >/dev/null

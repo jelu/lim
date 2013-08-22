@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = configure ]; then
+    addgroup --system \
+        --quiet \
+        lim &&
+
+    chgrp lim /etc/lim -R &&
+    chmod 750 /etc/lim/ssl/private
+fi

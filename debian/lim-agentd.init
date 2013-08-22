@@ -36,6 +36,17 @@ SCRIPTNAME=/etc/init.d/lim-agentd
 # and status_of_proc is working.
 . /lib/lsb/init-functions
 
+if [ -n "$LIM_USER" ]; then
+    DAEMON_ARGS="$DAEMON_ARGS --user $LIM_USER"
+elif [ -n "$LIM_UID" ]; then
+    DAEMON_ARGS="$DAEMON_ARGS --uid $LIM_UID"
+fi
+if [ -n "$LIM_GROUP" ]; then
+    DAEMON_ARGS="$DAEMON_ARGS --group $LIM_GROUP"
+elif [ -n "$LIM_GID" ]; then
+    DAEMON_ARGS="$DAEMON_ARGS --gid $LIM_GID"
+fi
+
 #
 # Function that starts the daemon/service
 #
