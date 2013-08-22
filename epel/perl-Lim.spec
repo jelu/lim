@@ -188,14 +188,17 @@ make pure_install PERL_INSTALL_ROOT=$RPM_BUILD_ROOT
 find $RPM_BUILD_ROOT -type f -name .packlist -exec rm -f {} ';'
 mkdir -p %{buildroot}%{_sysconfdir}/rc.d/init.d
 install -m 755 %{_builddir}/lim/epel/lim-agentd.init %{buildroot}%{_sysconfdir}/rc.d/init.d/lim-agentd
+mkdir -p %{buildroot}%{_sysconfdir}/sysconfig
 install -m 640 %{_builddir}/lim/epel/lim-agentd.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/lim-agentd
 mkdir -p %{buildroot}%{_sysconfdir}/lim
 mkdir -p %{buildroot}%{_sysconfdir}/lim/agent.d
 mkdir -p %{buildroot}%{_sysconfdir}/lim/cli.d
 install -m 644 %{_builddir}/lim/etc/lim/agent.yaml %{buildroot}%{_sysconfdir}/lim/
 install -m 644 %{_builddir}/lim/etc/lim/agent.d/README %{buildroot}%{_sysconfdir}/lim/agent.d/
-install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-transport-http.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
+install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-protocol-http.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
 install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-tls.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
+install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc-transport-http.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
+install -m 644 %{_builddir}/lim/etc/lim/agent.d/lim-rpc.yaml %{buildroot}%{_sysconfdir}/lim/agent.d/
 install -m 644 %{_builddir}/lim/etc/lim/cli.yaml %{buildroot}%{_sysconfdir}/lim/
 install -m 644 %{_builddir}/lim/etc/lim/cli.d/README %{buildroot}%{_sysconfdir}/lim/cli.d/
 mkdir -p %{buildroot}%{_sysconfdir}/lim/ssl/certs
@@ -315,9 +318,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_bindir}/lim-agentd
 %attr(0755,root,root) %{_sysconfdir}/rc.d/init.d/lim-agentd
 %attr(0640,root,root) %{_sysconfdir}/sysconfig/lim-agentd
-%config %{_sysconfdir}/lim/agent.yaml
-%config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
-%config %{_sysconfdir}/lim/agent.d/lim-rpc-tls.yaml
+%attr(0640,root,lim) %config %{_sysconfdir}/lim/agent.yaml
+%attr(0750,root,lim) %{_sysconfdir}/lim/agent.d
+%attr(0640,root,lim) %config %{_sysconfdir}/lim/agent.d/lim-rpc-protocol-http.yaml
+%attr(0640,root,lim) %config %{_sysconfdir}/lim/agent.d/lim-rpc-tls.yaml
+%attr(0640,root,lim) %config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
+%attr(0640,root,lim) %config %{_sysconfdir}/lim/agent.d/lim-rpc.yaml
 %{_sysconfdir}/lim/agent.d/README
 
 %files -n lim-cli
@@ -328,6 +334,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_sysconfdir}/lim/cli.d/README
 
 %files -n lim-common
+%defattr(-,root,root,-)
 %{_sysconfdir}/lim/ssl
 
 %files -n perl-Lim-Transport-HTTP
@@ -393,7 +400,7 @@ getent group lim >/dev/null || groupadd -r lim
 exit 0
 
 %pre -n lim-agentd
-getent passwd lim >/dev/null || \
+getent passwd lim-agentd >/dev/null || \
     useradd -r -g lim -d / -s /sbin/nologin \
     -c "lim-agentd" lim-agentd
 exit 0

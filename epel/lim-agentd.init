@@ -31,12 +31,12 @@ pidfile=/var/run/$prog.pid
 
 if [ -n "$LIM_USER" ]; then
     options="$options --user $LIM_USER"
-elsif [ -n "$LIM_UID" ]; then
+elif [ -n "$LIM_UID" ]; then
     options="$options --uid $LIM_UID"
 fi
 if [ -n "$LIM_GROUP" ]; then
     options="$options --group $LIM_GROUP"
-elsif [ -n "$LIM_GID" ]; then
+elif [ -n "$LIM_GID" ]; then
     options="$options --gid $LIM_GID"
 fi
 
