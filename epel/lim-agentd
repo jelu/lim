@@ -22,7 +22,7 @@
 
 exec="/usr/bin/lim-agentd"
 prog="lim-agentd"
-options="--key /etc/lim/lim-agentd.pem"
+options=""
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 

@@ -10,9 +10,6 @@
 ### END INIT INFO
 
 # Author: Jerry Lundström <lundstrom.jerry@gmail.com>
-#
-# Please remove the "Author" lines above and replace them
-# with your own name if you copy and modify this script.
 
 # Do NOT "set -e"
 
@@ -21,7 +18,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="Lim Agent Daemon"
 NAME=lim-agentd
 DAEMON=/usr/bin/lim-agentd
-DAEMON_ARGS="--key /etc/lim/lim-agentd.pem"
+DAEMON_ARGS=""
 PIDFILE=/var/run/lim-agentd.pid
 SCRIPTNAME=/etc/init.d/lim-agentd
 
