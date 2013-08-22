@@ -31,4 +31,11 @@ if [ "$1" = configure ]; then
     c_rehash /etc/lim/ssl/certs
 fi
 
-update-rc.d lim-agentd defaults
+update-rc.d lim-agentd defaults 80 20 >/dev/null
+if [ -x /usr/sbin/service ]; then
+    service lim-agentd restart
+elif [ -x /usr/sbin/invoke-rc.d ]; then
+    invoke-rc.d lim-agentd restart
+else
+    /etc/init.d/lim-agentd restart
+fi
