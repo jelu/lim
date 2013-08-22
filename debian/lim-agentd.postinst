@@ -30,3 +30,5 @@ if [ "$1" = configure ]; then
     fi &&
     c_rehash /etc/lim/ssl/certs
 fi
+
+update-rc.d lim-agentd defaults
