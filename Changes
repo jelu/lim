@@ -1,5 +1,15 @@
 Revision history for Lim
 
+0.18    2013-08-23
+        - Release 0.18
+        - Make a bootstrap sub in the Client class of Lim::Component's to detect
+        if they are already bootstrapped so we don't do it for each new Client
+        object.
+        - Add runtime options to lim-agentd to start as another user/group
+        - Add API to Lim::RPC::Server so you can get the transports and to the
+        Lim::RPC::Transport so you can get the host/port listened to.
+        - Change test to use dynamic ports
+
 0.17    2013-08-12
         - Release 0.17
 

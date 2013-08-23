@@ -1,3 +1,14 @@
+lim (0.18-1~unstable+1) unstable; urgency=low
+
+  * New release v0.18.
+    - Added default for lim-agentd
+    - Fixed permissions for /etc/lim
+    - Changed user from lim to lim-agentd
+    - Fixed init script to start as user/group from default
+    - Removed obsolete --key from init script
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Fri, 23 Aug 2013 13:08:30 +0200
+
 lim (0.17-1~unstable+1) unstable; urgency=low
 
   * New release v0.17.
