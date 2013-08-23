@@ -4,7 +4,9 @@ set -e
 
 if [ "$1" = configure ]; then
     if [ ! -f /etc/lim/ssl/private/lim-cli.key ]; then
-        openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096
+        openssl genrsa -out /etc/lim/ssl/private/lim-cli.key 4096 &&
+        chmod 440 /etc/lim/ssl/private/lim-cli.key &&
+        chgrp lim /etc/lim/ssl/private/lim-cli.key
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-cli.csr ]; then
         openssl req -new -batch \
@@ -18,7 +20,7 @@ if [ "$1" = configure ]; then
           -out /etc/lim/ssl/private/lim-cli.crt
     fi &&
     if [ ! -f /etc/lim/ssl/certs/lim-cli.crt ]; then
-        cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.pem
-    fi &&
-    c_rehash /etc/lim/ssl/certs
+        cp /etc/lim/ssl/private/lim-cli.crt /etc/lim/ssl/certs/lim-cli.pem &&
+        c_rehash /etc/lim/ssl/certs
+    fi
 fi

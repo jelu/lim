@@ -22,6 +22,10 @@ my $foreground = 0;
 my $pidfile = '/var/run/lim-agentd.pid';
 my @options;
 my @uris;
+my $uid;
+my $gid;
+my $user;
+my $group;
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
@@ -30,7 +34,11 @@ Getopt::Long::GetOptions(
     'foreground' => \$foreground,
     'pidfile:s' => \$pidfile,
     'option:s' => \@options,
-    'uri:s' => \@uris
+    'uri:s' => \@uris,
+    'uid:i' => \$uid,
+    'gid:i' => \$gid,
+    'user:s' => \$user,
+    'group:s' => \$group
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -120,6 +128,37 @@ unless ($foreground) {
     open(STDERR, '>', '/dev/null');
 }
 
+# Initiate TLS/SSL context if configured
+Lim::RPC::TLS->instance;
+
+# Change the gid and/or uid if set
+if (defined $group and !defined $gid) {
+    unless (defined ($gid = getgrnam($group))) {
+        print STDERR 'Unable to get group id for ', $group, ': ', $!;
+        exit(3);
+    }
+}
+if (defined $gid) {
+    unless (POSIX::setgid($gid)) {
+        print STDERR 'Unable to set group id to ', $gid, ': ', $!;
+        exit(3);
+    }
+}
+
+if (defined $user and !defined $uid) {
+    unless (defined ($uid = getpwnam($user))) {
+        print STDERR 'Unable to get user id for ', $user, ': ', $!;
+        exit(3);
+    }
+}
+if (defined $uid) {
+    unless (POSIX::setuid($uid)) {
+        print STDERR 'Unable to set user id to ', $uid, ': ', $!;
+        exit(3);
+    }
+}
+
+# Initiate the signals
 my $cv = AnyEvent->condvar;
 my @watchers;
 
@@ -139,6 +178,7 @@ push(@watchers,
     }),
 );
 
+# Initiate the server and serve
 unless (scalar @uris) {
     @uris = @{Lim::Config->{agent}->{uri}};
 }

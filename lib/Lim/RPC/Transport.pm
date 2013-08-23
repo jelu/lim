@@ -126,6 +126,22 @@ sub server {
     $_[0]->{__server};
 }
 
+=head2 host
+
+=cut
+
+sub host {
+    confess 'function host not overloaded';
+}
+
+=head2 port
+
+=cut
+
+sub port {
+    confess 'function port not overloaded';
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

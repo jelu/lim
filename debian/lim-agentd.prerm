@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    remove|deconfigure)
+        if [ -x /etc/init.d/lim-agentd ]; then
+            if [ -x /usr/sbin/service ]; then
+                service lim-agentd stop
+            elif [ -x /usr/sbin/invoke-rc.d ]; then
+                invoke-rc.d lim-agentd stop
+            else
+                /etc/init.d/lim-agentd stop
+            fi
+        fi
+        ;;
+esac

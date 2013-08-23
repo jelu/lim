@@ -3,16 +3,17 @@
 set -e
 
 if [ "$1" = configure ]; then
-	adduser --system \
-		--quiet \
-		--group \
-		--home /nonexistent \
-		--no-create-home \
-		--disabled-password \
-		lim &&
+    adduser --system \
+        --quiet \
+        --ingroup lim \
+        --home /nonexistent \
+        --no-create-home \
+        --disabled-password \
+        lim-agentd &&
 
     if [ ! -f /etc/lim/ssl/private/lim-agentd.key ]; then
-        openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096
+        openssl genrsa -out /etc/lim/ssl/private/lim-agentd.key 4096 &&
+        chmod 400 /etc/lim/ssl/private/lim-agentd.key
     fi &&
     if [ ! -f /etc/lim/ssl/private/lim-agentd.csr ]; then
         openssl req -new -batch \
@@ -26,7 +27,19 @@ if [ "$1" = configure ]; then
           -out /etc/lim/ssl/private/lim-agentd.crt
     fi &&
     if [ ! -f /etc/lim/ssl/certs/lim-agentd.crt ]; then
-        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem
+        cp /etc/lim/ssl/private/lim-agentd.crt /etc/lim/ssl/certs/lim-agentd.pem &&
+        c_rehash /etc/lim/ssl/certs
     fi &&
-    c_rehash /etc/lim/ssl/certs
+    
+    chgrp lim /etc/lim/agent* -R &&
+    chmod o-rwx /etc/lim/agent* -R
+fi
+
+update-rc.d lim-agentd defaults 95 5 >/dev/null
+if [ -x /usr/sbin/service ]; then
+    service lim-agentd restart
+elif [ -x /usr/sbin/invoke-rc.d ]; then
+    invoke-rc.d lim-agentd restart
+else
+    /etc/init.d/lim-agentd restart
 fi

@@ -22,12 +22,23 @@
 
 exec="/usr/bin/lim-agentd"
 prog="lim-agentd"
-options="--key /etc/lim/lim-agentd.pem"
+options=""
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
 lockfile=/var/lock/subsys/$prog
 pidfile=/var/run/$prog.pid
+
+if [ -n "$LIM_USER" ]; then
+    options="$options --user $LIM_USER"
+elif [ -n "$LIM_UID" ]; then
+    options="$options --uid $LIM_UID"
+fi
+if [ -n "$LIM_GROUP" ]; then
+    options="$options --group $LIM_GROUP"
+elif [ -n "$LIM_GID" ]; then
+    options="$options --gid $LIM_GID"
+fi
 
 start() {
     [ -x $exec ] || exit 5
