@@ -44,11 +44,16 @@ unless ($child) {
     );
     
     my $server = Lim::RPC::Server->new(
-        uri => 'http+xmlrpc://127.0.0.1:5353'
+        uri => 'http+xmlrpc://127.0.0.1:0'
     );
     $server->serve(qw(Lim::Agent));
     push(@watchers, $server, AnyEvent->timer(after => 0, cb => sub {
-        print WRITEP "run\n";
+        my $port = '';
+        foreach ($server->transports) {
+            $port = $_->port;
+            last;
+        }
+        print WRITEP $port,"\n";
     }));
     $cv->recv;
     @watchers = ();
@@ -60,19 +65,22 @@ use XMLRPC::Lite;
 
 $SIG{ALRM} = sub { exit; };
 alarm(10);
-<READP>;
+my $port = <READP>;
 alarm(0);
+chomp($port);
 
-my $res =
-    XMLRPC::Lite
-    -> proxy('http://127.0.0.1:5353/agent')
-    -> call('ReadVersion')
-    -> result;
+if ($port =~ /^\d+$/o) {
+    my $res =
+        XMLRPC::Lite
+        -> proxy('http://127.0.0.1:'.$port.'/agent')
+        -> call('ReadVersion')
+        -> result;
+    
+    if (ref($res) eq 'HASH') {
+        $res = $res->{version};
+    }
 
-if (ref($res) eq 'HASH') {
-    $res = $res->{version};
+    ok($res eq $Lim::VERSION);
 }
-
-ok($res eq $Lim::VERSION);
 
 kill 15, $child;

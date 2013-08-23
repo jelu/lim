@@ -39,11 +39,16 @@ unless ($child) {
     );
     
     my $server = Lim::RPC::Server->new(
-        uri => 'http+jsonrpc2://127.0.0.1:5353'
+        uri => 'http+jsonrpc2://127.0.0.1:0'
     );
     $server->serve(qw(Lim::Agent));
     push(@watchers, $server, AnyEvent->timer(after => 0, cb => sub {
-        print WRITEP "run\n";
+        my $port = '';
+        foreach ($server->transports) {
+            $port = $_->port;
+            last;
+        }
+        print WRITEP $port,"\n";
     }));
     $cv->recv;
     @watchers = ();
@@ -55,24 +60,27 @@ use LWP::UserAgent;
 
 $SIG{ALRM} = sub { exit; };
 alarm(10);
-<READP>;
+my $port = <READP>;
 alarm(0);
+chomp($port);
 
-my $req = HTTP::Request->new(GET => 'http://127.0.0.1:5353/agent');
-$req->content_type('application/json');
-$req->content(JSON::XS->new->ascii->encode({
-    jsonrpc => '2.0',
-    method => 'ReadVersion',
-    id => 1
-}));
-
-my $res = LWP::UserAgent->new->request($req);
-my $json;
-
-if ($res->is_success) {
-    $json = JSON::XS->new->ascii->decode($res->content)
+if ($port =~ /^\d+$/o) {
+    my $req = HTTP::Request->new(GET => 'http://127.0.0.1:'.$port.'/agent');
+    $req->content_type('application/json');
+    $req->content(JSON::XS->new->ascii->encode({
+        jsonrpc => '2.0',
+        method => 'ReadVersion',
+        id => 1
+    }));
+    
+    my $res = LWP::UserAgent->new->request($req);
+    my $json;
+    
+    if ($res->is_success) {
+        $json = JSON::XS->new->ascii->decode($res->content)
+    }
+    
+    is_deeply($json, {jsonrpc => '2.0', id => 1, result => {version => $Lim::VERSION}});
 }
-
-is_deeply($json, {jsonrpc => '2.0', id => 1, result => {version => $Lim::VERSION}});
 
 kill 15, $child;
