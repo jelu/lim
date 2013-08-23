@@ -39,11 +39,16 @@ unless ($child) {
     );
     
     my $server = Lim::RPC::Server->new(
-        uri => 'http+soap://127.0.0.1:5353'
+        uri => 'http+soap://127.0.0.1:0'
     );
     $server->serve(qw(Lim::Agent));
     push(@watchers, $server, AnyEvent->timer(after => 0, cb => sub {
-        print WRITEP "run\n";
+        my $port = '';
+        foreach ($server->transports) {
+            $port = $_->port;
+            last;
+        }
+        print WRITEP $port,"\n";
     }));
     $cv->recv;
     @watchers = ();
@@ -55,16 +60,19 @@ use SOAP::Lite;
 
 $SIG{ALRM} = sub { exit; };
 alarm(10);
-<READP>;
+my $port = <READP>;
 alarm(0);
+chomp($port);
 
-my $res =
-    SOAP::Lite
-    -> proxy('http://127.0.0.1:5353/agent')
-    -> default_ns('urn:Lim::Agent::Server')
-    -> call('ReadVersion')
-    -> result;
-
-ok($res eq $Lim::VERSION);
+if ($port =~ /^\d+$/o) {
+    my $res =
+        SOAP::Lite
+        -> proxy('http://127.0.0.1:'.$port.'/agent')
+        -> default_ns('urn:Lim::Agent::Server')
+        -> call('ReadVersion')
+        -> result;
+    
+    ok($res eq $Lim::VERSION);
+}
 
 kill 15, $child;

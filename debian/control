@@ -26,7 +26,7 @@ Description: Common perl libraries for Lim
 Package: liblim-server-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-common-perl (= 0.17-1~unstable+1)
+ liblim-common-perl (= 0.18-1~unstable+1)
 Description: Lim server perl libraries
  Lim server perl libraries for communicating with Lim via many different
  protocols.
@@ -34,21 +34,21 @@ Description: Lim server perl libraries
 Package: liblim-transport-http-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Lim HTTP/HTTPS transport perl libraries
  Lim perl libraries for HTTP/HTTPS transport.
 
 Package: liblim-protocol-rest-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, libjson-xs-perl (>= 2),
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Lim REST protocol perl libraries
  Lim perl libraries for REST protocol.
 
 Package: liblim-protocol-soap-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, libsoap-lite-perl (>= 0.71),
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Lim SOAP protocol perl libraries
  Lim perl libraries for SOAP protocol.
 
@@ -56,74 +56,74 @@ Package: liblim-protocol-xmlrpc-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, libsoap-lite-perl (>= 0.71),
  libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Lim XMLRPC protocol perl libraries
  Lim perl libraries for XMLRPC protocol.
 
 Package: liblim-protocol-jsonrpc-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends}, libjson-xs-perl (>= 2),
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Lim JSONRPC 1.0/2.0 protocol perl libraries
  Lim perl libraries for JSONRPC 1.0/2.0 protocol.
 
 Package: liblim-protocol-http-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Lim HTTP protocol perl libraries
  Lim perl libraries for HTTP protocol.
 
 Package: liblim-cli-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-common-perl (= 0.17-1~unstable+1)
+ liblim-common-perl (= 0.18-1~unstable+1)
 Description: Lim CLI perl libraries
  Lim CLI perl libraries for controlling a local or remote Lim server.
 
 Package: liblim-agent-common-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-common-perl (= 0.17-1~unstable+1)
+ liblim-common-perl (= 0.18-1~unstable+1)
 Description: Common perl libraries for lim-agentd
  Common lim-agentd perl libraries.
 
 Package: liblim-agent-server-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-agent-common-perl (= 0.17-1~unstable+1),
- liblim-server-perl (= 0.17-1~unstable+1)
+ liblim-agent-common-perl (= 0.18-1~unstable+1),
+ liblim-server-perl (= 0.18-1~unstable+1)
 Description: Server perl libraries for lim-agentd
  Server perl libraries for lim-agentd.
 
 Package: liblim-agent-client-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-agent-common-perl (= 0.17-1~unstable+1)
+ liblim-agent-common-perl (= 0.18-1~unstable+1)
 Description: Client perl libraries for lim-agentd
  Client perl libraries for communicating with lim-agentd.
 
 Package: liblim-agent-cli-perl
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-cli-perl (= 0.17-1~unstable+1),
- liblim-agent-client-perl (= 0.17-1~unstable+1)
+ liblim-cli-perl (= 0.18-1~unstable+1),
+ liblim-agent-client-perl (= 0.18-1~unstable+1)
 Description: CLI perl libraries for lim-agentd
  CLI perl libraries for controlling lim-agentd via lim-cli.
 
 Package: lim-agentd
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-agent-server-perl (= 0.17-1~unstable+1), liblog-dispatch-perl (>= 2.22),
- openssl (>= 0.9.8), lim-common (= 0.17-1~unstable+1), hostname (>= 3.03)
+ liblim-agent-server-perl (= 0.18-1~unstable+1), liblog-dispatch-perl (>= 2.22),
+ openssl (>= 0.9.8), lim-common (= 0.18-1~unstable+1), hostname (>= 3.03)
 Description: Lim agent daemon
  The Lim agent daemon that serves all plugins.
 
 Package: lim-cli
 Architecture: all
 Depends: ${misc:Depends}, ${perl:Depends},
- liblim-agent-cli-perl (= 0.17-1~unstable+1), openssl (>= 0.9.8),
- lim-common (= 0.17-1~unstable+1), hostname (>= 3.03),
+ liblim-agent-cli-perl (= 0.18-1~unstable+1), openssl (>= 0.9.8),
+ lim-common (= 0.18-1~unstable+1), hostname (>= 3.03),
  liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1)
 Description: Lim command line interface
  The Lim CLI used to control a local or remote Lim agent.
@@ -136,12 +136,12 @@ Description: Lim common files
 
 Package: lim-management-console-common
 Architecture: all
-Depends: ${misc:Depends}, lim-agentd (= 0.17-1~unstable+1)
+Depends: ${misc:Depends}, lim-agentd (= 0.18-1~unstable+1)
 Description: Lim Management Console common files
  Common Lim Management Console files and directories.
 
 Package: lim-management-console-agent
 Architecture: all
-Depends: ${misc:Depends}, lim-management-console-common (= 0.17-1~unstable+1)
+Depends: ${misc:Depends}, lim-management-console-common (= 0.18-1~unstable+1)
 Description: Lim Agent Daemon's Management Console files
  Lim Agent Daemon's Management Console files.

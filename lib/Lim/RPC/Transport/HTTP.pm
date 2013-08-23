@@ -289,6 +289,9 @@ sub Init {
         
         Lim::RPC_DEBUG and $self->{logger}->debug(__PACKAGE__, ' ', $self, ' ready at ', $host, ':', $port);
         
+        $self->{real_host} = $host;
+        $self->{real_port} = $port;
+        
         $self->{uri} = URI->new(
             ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https://' : 'http://').
             $host.':'.$port);
@@ -321,6 +324,22 @@ sub name {
 
 sub uri {
     $_[0]->{uri};
+}
+
+=head2 host
+
+=cut
+
+sub host {
+    $_[0]->{real_host};
+}
+
+=head2 port
+
+=cut
+
+sub port {
+    $_[0]->{real_port};
 }
 
 =head1 AUTHOR

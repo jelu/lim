@@ -542,6 +542,14 @@ sub process_module_call_uri_map {
     return $self->{module}->{$module}->{uri_maps}->{$call}->process($uri, $data);
 }
 
+=head2 transports
+
+=cut
+
+sub transports {
+    @{$_[0]->{transports}};
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
