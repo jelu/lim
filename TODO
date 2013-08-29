@@ -2,3 +2,5 @@
 - Agent reload, restart and unload plugins API/CLI
 - Lim::CLI Ask(text, cb)/Confirm(text, cb)
 - Schema cache settings
+- Lim::Util::DBI on_error
+- Lim::Util::DBI pod
