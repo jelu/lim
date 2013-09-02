@@ -4,3 +4,7 @@ LIM_USER=lim-agentd
 LIM_GROUP=lim
 # LIM_UID=
 # LIM_GID=
+#
+# Comment out to disable Lim init script
+#
+#LIM_DISABLED=1
