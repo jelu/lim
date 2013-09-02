@@ -1,5 +1,10 @@
 Revision history for Lim
 
+0.19    2013-09-02
+        - Release 0.19
+        - New module Lim::Util::DBI - Create a DBH that is executed in a forked
+          process.
+
 0.18    2013-08-23
         - Release 0.18
         - Make a bootstrap sub in the Client class of Lim::Component's to detect
