@@ -7,6 +7,7 @@ usr/share/man/man3/Lim::Plugins.3pm
 usr/share/man/man3/Lim::Component::Client.3pm
 usr/share/man/man3/Lim::RPC::Client.3pm
 usr/share/man/man3/Lim::Util.3pm
+usr/share/man/man3/Lim::Util::DBI.3pm
 usr/share/man/man3/Lim.3pm
 usr/share/man/man3/Lim::Error.3pm
 usr/share/man/man3/Lim::RPC.3pm
@@ -15,6 +16,7 @@ usr/share/perl5/Lim/Plugins.pm
 usr/share/perl5/Lim/Error.pm
 usr/share/perl5/Lim/Component/Client.pm
 usr/share/perl5/Lim/Util.pm
+usr/share/perl5/Lim/Util/DBI.pm
 usr/share/perl5/Lim/RPC/Client.pm
 usr/share/perl5/Lim/RPC/TLS.pm
 usr/share/perl5/Lim/RPC/Value/Collection.pm

@@ -1,5 +1,5 @@
 Name:           perl-Lim
-Version:        0.18
+Version:        0.19
 Release:        1%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
@@ -33,14 +33,14 @@ for processing protocol messages.
 %package -n perl-Lim-Common
 Summary: Common perl libraries for Lim
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Common
 Common Lim perl libraries depended by all Lim packages.
 
 %package -n perl-Lim-Server
 Summary: Lim server perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Server
 Lim server perl libraries for communicating with Lim via many different
 protocols.
@@ -48,35 +48,35 @@ protocols.
 %package -n perl-Lim-CLI
 Summary: Lim CLI perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-CLI
 Lim CLI perl libraries for controlling a local or remote Lim server.
 
 %package -n perl-Lim-Agent-Common
 Summary: Common perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Agent-Common
 Common lim-agentd perl libraries.
 
 %package -n perl-Lim-Agent-Server
 Summary: Server perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Agent-Server
 Server perl libraries for lim-agentd.
 
 %package -n perl-Lim-Agent-Client
 Summary: Client perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Agent-Client
 Client perl libraries for communicating with lim-agentd.
 
 %package -n perl-Lim-Agent-CLI
 Summary: CLI perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Agent-CLI
 CLI perl libraries for controlling lim-agentd via lim-cli.
 
@@ -92,7 +92,7 @@ Requires(postun): initscripts
 Requires: lim-common
 Summary: Lim agent daemon
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n lim-agentd
 The Lim agent daemon that serves all plugins.
 
@@ -103,56 +103,56 @@ Requires(post): openssl-perl
 Requires: lim-common
 Summary: Lim command line interface
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n lim-cli
 The Lim CLI used to control a local or remote Lim agent.
 
 %package -n lim-common
 Summary: Lim common files
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n lim-common
 Common Lim files and directories.
 
 %package -n perl-Lim-Transport-HTTP
 Summary: Lim HTTP/HTTPS transport perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Transport-HTTP
 Lim perl libraries for HTTP/HTTPS transport.
 
 %package -n perl-Lim-Protocol-REST
 Summary: Lim REST protocol perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Protocol-REST
 Lim perl libraries for REST protocol.
 
 %package -n perl-Lim-Protocol-SOAP
 Summary: Lim SOAP protocol perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Protocol-SOAP
 Lim perl libraries for SOAP protocol.
 
 %package -n perl-Lim-Protocol-XMLRPC
 Summary: Lim XMLRPC protocol perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Protocol-XMLRPC
 Lim perl libraries for XMLRPC protocol.
 
 %package -n perl-Lim-Protocol-JSONRPC
 Summary: Lim JSONRPC protocol perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Protocol-JSONRPC
 Lim perl libraries for JSONRPC protocol.
 
 %package -n perl-Lim-Protocol-HTTP
 Summary: Lim HTTP protocol perl libraries
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n perl-Lim-Protocol-HTTP
 Lim perl libraries for HTTP protocol.
 
@@ -160,7 +160,7 @@ Lim perl libraries for HTTP protocol.
 Requires: lim-agentd
 Summary: Lim Management Console common files
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n lim-management-console-common
 Common Lim Management Console files and directories.
 
@@ -168,7 +168,7 @@ Common Lim Management Console files and directories.
 Requires: lim-management-console-common
 Summary: Lim Agent Daemon's Management Console files
 Group: Development/Libraries
-Version: 0.18
+Version: 0.19
 %description -n lim-management-console-agent
 Lim Agent Daemon's Management Console files.
 
@@ -249,6 +249,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::Component::Client.3*
 %{_mandir}/man3/Lim::RPC::Client.3*
 %{_mandir}/man3/Lim::Util.3*
+%{_mandir}/man3/Lim::Util::DBI.3*
 %{_mandir}/man3/Lim.3*
 %{_mandir}/man3/Lim::Error.3*
 %{_mandir}/man3/Lim::RPC.3*
@@ -257,6 +258,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/Error.pm
 %{perl_vendorlib}/Lim/Component/Client.pm
 %{perl_vendorlib}/Lim/Util.pm
+%{perl_vendorlib}/Lim/Util/DBI.pm
 %{perl_vendorlib}/Lim/RPC/Client.pm
 %{perl_vendorlib}/Lim/RPC/TLS.pm
 %{perl_vendorlib}/Lim/RPC/Value/Collection.pm
@@ -468,6 +470,11 @@ fi
 
 
 %changelog
+* Mon Sep 02 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.19-1
+- Release 0.19
+  - New module Lim::Util::DBI - Create a DBH that is executed in a forked
+    process.
+  - Added LIM_DISABLED option to default/sysconfig.
 * Fri Aug 23 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.18-1
 - Release 0.18
   - Added sysconfig for lim-agentd

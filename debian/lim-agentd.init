@@ -105,6 +105,11 @@ do_reload() {
 	return 0
 }
 
+if [ "$LIM_DISABLED" = 1 ]; then
+    [ "$VERBOSE" != no ] && log_daemon_msg "Lim is disabled" "$NAME"
+    exit 0
+fi
+
 case "$1" in
   start)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"

@@ -75,7 +75,8 @@ WriteMakefile(
             'URI' => 1,
             'URI::Escape' => 3.29,
             'URI::Split' => 0,
-            'YAML::Any' => 0.70
+            'YAML::Any' => 0.70,
+            'DBI' => 1.612
         }
     ) : (
         PREREQ_PM => {
@@ -108,7 +109,8 @@ WriteMakefile(
             'URI' => 1,
             'URI::Escape' => 3.29,
             'URI::Split' => 0,
-            'YAML::Any' => 0.70
+            'YAML::Any' => 0.70,
+            'DBI' => 1.612
         }
     )),
     META_MERGE => {
