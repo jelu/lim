@@ -27,6 +27,86 @@ my $gid;
 my $user;
 my $group;
 
+sub _set_user_group {
+    if (defined $group and !defined $gid) {
+        unless (defined ($gid = getgrnam($group))) {
+            print STDERR 'Unable to get group id for ', $group, ': ', $!;
+            exit(3);
+        }
+    }
+    my @gids;
+    if (defined $user or defined $uid) {
+        my $user = $user;
+        my $gid = $gid;
+        my $putback;
+        
+        unless (defined $user) {
+            unless (defined ($user = getpwuid($uid))) {
+                print STDERR 'Unable to get user name for id ', $uid, ': ', $!;
+                exit(3);
+            }
+        }
+        
+        unless (defined $gid) {
+            (undef, undef, undef, $gid) = getpwnam($user);
+            unless (defined $gid) {
+                print STDERR 'Unable to get group id for user ', $user, ': ', $!;
+                exit(3);
+            }
+            $putback=1;
+        }
+        
+        setgrent;
+        while (my ($gname,undef,$_gid,$members) = getgrent) {
+            foreach (split(/\s+/o, $members)) {
+                if (defined $gid and $_gid == $gid) {
+                    next;
+                }
+                if ($_ eq $user) {
+                    push(@gids, $_gid);
+                    last;
+                }
+            }
+        }
+        endgrent;
+        
+        if (defined $putback) {
+            unshift(@gids, $gid);
+        }
+    }
+    if (defined $gid) {
+        $) = join(' ', $gid, @gids);
+        if ($!) {
+            print STDERR 'Unable to set groups to ', join(' ', $gid, @gids), ': ', $!;
+            exit(3);
+        }
+        unless (POSIX::setgid($gid)) {
+            print STDERR 'Unable to set group id to ', $gid, ': ', $!;
+            exit(3);
+        }
+    }
+    elsif (scalar @gids > 0) {
+        $) = join(' ', $gid, @gids);
+        if ($!) {
+            print STDERR 'Unable to set groups to ', join(' ', $gid, @gids), ': ', $!;
+            exit(3);
+        }
+    }
+    
+    if (defined $user and !defined $uid) {
+        unless (defined ($uid = getpwnam($user))) {
+            print STDERR 'Unable to get user id for ', $user, ': ', $!;
+            exit(3);
+        }
+    }
+    if (defined $uid) {
+        unless (POSIX::setuid($uid)) {
+            print STDERR 'Unable to set user id to ', $uid, ': ', $!;
+            exit(3);
+        }
+    }
+}
+
 Getopt::Long::GetOptions(
     'help|?' => \$help,
     'conf:s' => \$conf,
@@ -116,8 +196,16 @@ unless ($foreground) {
             exit(2);
         }
     }
+
+    # Change the gid and/or uid if set
+    _set_user_group;
     
-    chdir('/');
+    # Daemonize the process
+    unless (chdir('/')) {
+        print STDERR 'Unable to chdir to / : ', $!;
+        exit(2);
+    }
+    POSIX::setsid();
     umask(0);
     foreach (0 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024)) {
         POSIX::close($_);
@@ -127,36 +215,13 @@ unless ($foreground) {
     open(STDOUT, '>', '/dev/null');
     open(STDERR, '>', '/dev/null');
 }
+else {
+    # Change the gid and/or uid if set
+    _set_user_group;
+}
 
 # Initiate TLS/SSL context if configured
 Lim::RPC::TLS->instance;
-
-# Change the gid and/or uid if set
-if (defined $group and !defined $gid) {
-    unless (defined ($gid = getgrnam($group))) {
-        print STDERR 'Unable to get group id for ', $group, ': ', $!;
-        exit(3);
-    }
-}
-if (defined $gid) {
-    unless (POSIX::setgid($gid)) {
-        print STDERR 'Unable to set group id to ', $gid, ': ', $!;
-        exit(3);
-    }
-}
-
-if (defined $user and !defined $uid) {
-    unless (defined ($uid = getpwnam($user))) {
-        print STDERR 'Unable to get user id for ', $user, ': ', $!;
-        exit(3);
-    }
-}
-if (defined $uid) {
-    unless (POSIX::setuid($uid)) {
-        print STDERR 'Unable to set user id to ', $uid, ': ', $!;
-        exit(3);
-    }
-}
 
 # Initiate the signals
 my $cv = AnyEvent->condvar;
