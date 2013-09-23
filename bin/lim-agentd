@@ -290,7 +290,7 @@ once.
 
 Specify the configuration file to use (default /etc/lim/agent.yaml).
 
-=item B<--option <name>=<value>>
+=item B<--option <name>>=<value>
 
 Specify configuration on the command line, these settings overrides settings in
 configuration files. Syntax <name>=<value> will set <name> to <value> and
@@ -309,6 +309,19 @@ configuration file is used.
 =item B<--pidfile <file>>
 
 Use the given file as pidfile (default /var/run/lim-agentd.pid).
+
+=item B<--group <group>> | --gid <gid>
+
+Specify a group to change to upon start.
+
+If used with --user, this will also specify the primary/effective group.
+
+=item B<--user <user>> | --uid <id>
+
+Specify a user to change to upon start.
+
+This will also add access to all the groups the user is a member for so it is
+unnessisary to specify the group with --group if the user is already a member.
 
 =item B<--help>
 
