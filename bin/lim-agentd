@@ -197,6 +197,9 @@ unless ($foreground) {
         }
     }
 
+    # Initiate TLS/SSL context if configured
+    Lim::RPC::TLS->instance;
+
     # Change the gid and/or uid if set
     _set_user_group;
     
@@ -216,12 +219,12 @@ unless ($foreground) {
     open(STDERR, '>', '/dev/null');
 }
 else {
+    # Initiate TLS/SSL context if configured
+    Lim::RPC::TLS->instance;
+
     # Change the gid and/or uid if set
     _set_user_group;
 }
-
-# Initiate TLS/SSL context if configured
-Lim::RPC::TLS->instance;
 
 # Initiate the signals
 my $cv = AnyEvent->condvar;
