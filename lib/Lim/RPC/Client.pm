@@ -125,7 +125,54 @@ sub new {
         $self->{request}->header('Content-Length' => 0);
     }
 
-    $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
+    if (AnyEvent::Socket->VERSION < 6.01) {
+        # No support for hosts file in AnyEvent::Socket below 6.01, try and
+        # resolve the address first the look in hosts if no answer
+        
+        AnyEvent::Socket::resolve_sockaddr $self->{host}, $self->{port}, 0, undef, undef, sub {
+            unless (defined $self) {
+                return;
+            }
+
+            unless (scalar @_) {
+                if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot}.'/system32/drivers/etc/hosts' : '/etc/hosts')) {
+                    while(<HOSTS>) {
+                        s/[\r\n]+$//o;
+                        s/#.*//o;
+                        s/^\s+//o;
+                        s/\s+$//o;
+                        
+                        my ($addr, @aliases) = split(/\s+/o);
+                        if (grep(/^$self->{host}$/, @aliases)) {
+                            $self->{addr} = $addr;
+                            last;
+                        }
+                    }
+                    close(HOSTS);
+                }
+            }
+            
+            $self->_connect;
+        };
+    }
+    else {
+        $self->_connect;
+    }
+
+    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
+    $real_self;
+}
+
+=head2 _connect
+
+=cut
+
+sub _connect {
+    my ($self) = @_;
+    my $real_self = $self;
+    weaken($self);
+    
+    $self->{socket} = AnyEvent::Socket::tcp_connect exists $self->{addr} ? $self->{addr} : $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
 
         unless (defined $self) {
@@ -307,9 +354,6 @@ sub new {
         $handle->push_write($self->{request}->as_string("\015\012"));
         delete $self->{request};
     };
-
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $real_self;
 }
 
 sub DESTROY {

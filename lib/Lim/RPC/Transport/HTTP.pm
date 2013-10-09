@@ -74,7 +74,51 @@ sub Init {
         confess 'using HTTPS but can not create TLS context';
     }
     
-    $self->{socket} = AnyEvent::Socket::tcp_server $self->{host}, $self->{port}, sub {
+    if (AnyEvent::Socket->VERSION < 6.01) {
+        # No support for hosts file in AnyEvent::Socket below 6.01, try and
+        # resolve the address first the look in hosts if no answer
+        
+        AnyEvent::Socket::resolve_sockaddr $self->{host}, $self->{port}, 0, undef, undef, sub {
+            unless (defined $self) {
+                return;
+            }
+
+            unless (scalar @_) {
+                if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot}.'/system32/drivers/etc/hosts' : '/etc/hosts')) {
+                    while(<HOSTS>) {
+                        s/[\r\n]+$//o;
+                        s/#.*//o;
+                        s/^\s+//o;
+                        s/\s+$//o;
+                        
+                        my ($addr, @aliases) = split(/\s+/o);
+                        if (grep(/^$self->{host}$/, @aliases)) {
+                            $self->{addr} = $addr;
+                            last;
+                        }
+                    }
+                    close(HOSTS);
+                }
+            }
+            
+            $self->_connect;
+        };
+    }
+    else {
+        $self->_connect;
+    }
+}
+
+=head2 _connect
+
+=cut
+
+sub _connect {
+    my ($self) = @_;
+    my $real_self = $self;
+    weaken($self);
+    
+    $self->{socket} = AnyEvent::Socket::tcp_server exists $self->{addr} ? $self->{addr} : $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
 
         Lim::RPC_DEBUG and $self->{logger}->debug('Connection from ', $host, ':', $port);
