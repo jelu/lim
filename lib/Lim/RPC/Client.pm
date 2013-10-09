@@ -19,6 +19,7 @@ use JSON::XS ();
 use Lim ();
 use Lim::Error ();
 use Lim::RPC::TLS ();
+use Lim::Util ();
 
 =encoding utf8
 
@@ -124,40 +125,23 @@ sub new {
     else {
         $self->{request}->header('Content-Length' => 0);
     }
+    
+    Lim::Util::resolve_host $self->{host}, $self->{port}, sub {
+        my ($host, $port) = @_;
 
-    if (AnyEvent::Socket->VERSION < 6.01) {
-        # No support for hosts file in AnyEvent::Socket below 6.01, try and
-        # resolve the address first the look in hosts if no answer
+        unless (defined $self) {
+            return;
+        }
         
-        AnyEvent::Socket::resolve_sockaddr $self->{host}, $self->{port}, 0, undef, undef, sub {
-            unless (defined $self) {
-                return;
-            }
-
-            unless (scalar @_) {
-                if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot}.'/system32/drivers/etc/hosts' : '/etc/hosts')) {
-                    while(<HOSTS>) {
-                        s/[\r\n]+$//o;
-                        s/#.*//o;
-                        s/^\s+//o;
-                        s/\s+$//o;
-                        
-                        my ($addr, @aliases) = split(/\s+/o);
-                        if (grep(/^$self->{host}$/, @aliases)) {
-                            $self->{addr} = $addr;
-                            last;
-                        }
-                    }
-                    close(HOSTS);
-                }
-            }
-            
-            $self->_connect;
-        };
-    }
-    else {
+        unless (defined $host and defined $port) {
+            Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
+            return;
+        }
+        
+        $self->{host} = $host;
+        $self->{port} = $port;
         $self->_connect;
-    }
+    };
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;

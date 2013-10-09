@@ -32,6 +32,7 @@ our $CONFIG = {
         srv_listen => 10,
         timeout => 30,
         call_timeout => 300,
+        skip_dns => 0,
         transport => {
             http => {
                 host => undef,

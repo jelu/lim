@@ -74,39 +74,22 @@ sub Init {
         confess 'using HTTPS but can not create TLS context';
     }
     
-    if (AnyEvent::Socket->VERSION < 6.01) {
-        # No support for hosts file in AnyEvent::Socket below 6.01, try and
-        # resolve the address first the look in hosts if no answer
-        
-        AnyEvent::Socket::resolve_sockaddr $self->{host}, $self->{port}, 0, undef, undef, sub {
-            unless (defined $self) {
-                return;
-            }
+    Lim::Util::resolve_host $self->{host}, $self->{port}, sub {
+        my ($host, $port) = @_;
 
-            unless (scalar @_) {
-                if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot}.'/system32/drivers/etc/hosts' : '/etc/hosts')) {
-                    while(<HOSTS>) {
-                        s/[\r\n]+$//o;
-                        s/#.*//o;
-                        s/^\s+//o;
-                        s/\s+$//o;
-                        
-                        my ($addr, @aliases) = split(/\s+/o);
-                        if (grep(/^$self->{host}$/, @aliases)) {
-                            $self->{addr} = $addr;
-                            last;
-                        }
-                    }
-                    close(HOSTS);
-                }
-            }
-            
-            $self->_connect;
-        };
-    }
-    else {
+        unless (defined $self) {
+            return;
+        }
+        
+        unless (defined $host and defined $port) {
+            Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
+            return;
+        }
+        
+        $self->{host} = $host;
+        $self->{port} = $port;
         $self->_connect;
-    }
+    };
 }
 
 =head2 _connect

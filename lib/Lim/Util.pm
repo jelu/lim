@@ -13,6 +13,7 @@ use URI::Escape ();
 
 use AnyEvent ();
 use AnyEvent::Util ();
+use AnyEvent::Socket ();
 
 use Lim ();
 
@@ -578,6 +579,82 @@ sub run_cmd {
     return AnyEvent::Util::run_cmd
         $cmd,
         %pass_args;
+}
+
+=item Lim::Util::resolve_host $host, $port, $cb->($ipAddress, $port);
+
+=cut
+
+sub resolve_host {
+    my ($host, $port, $cb) = @_;
+    
+    unless (defined $host) {
+        confess __PACKAGE__, ': Missing host';
+    }
+    unless (ref($cb) eq 'CODE') {
+        confess __PACKAGE__, ': Missing cb or is not CODE';
+    }
+    
+    if (AnyEvent::Socket::parse_address($host)) {
+        $cb->($host, $port);
+        return;
+    }
+    
+    if (Lim::Config->{rpc}->{skip_dns}) {
+        $cb->(Lim::Util::resolve_hosts($host), $port);
+        return;
+    }
+    
+    AnyEvent::Socket::resolve_sockaddr $host, $port, 0, undef, undef, sub {
+        unless (scalar @_) {
+            if (AnyEvent::Socket->VERSION < 6.01) {
+                $cb->(Lim::Util::resolve_hosts($host), $port);
+            }
+            else {
+                $cb->();
+            }
+            return;
+        }
+        
+        unless (ref($_[0]) eq 'ARRAY') {
+            # TODO: warn?
+            $cb->();
+            return;
+        }
+        
+        my ($service, $ipn) = AnyEvent::Socket::unpack_sockaddr($_[0]->[3]);
+        $cb->(AnyEvent::Socket::format_address($ipn), $service);
+    };
+}
+
+=item $ipAddress = Lim::Util::resolve_hosts $host
+
+=cut
+
+sub resolve_hosts {
+    my ($host, $cb) = @_;
+    
+    unless (defined $host) {
+        confess __PACKAGE__, ': Missing host';
+    }
+
+    if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot}.'/system32/drivers/etc/hosts' : '/etc/hosts')) {
+        while(<HOSTS>) {
+            s/[\r\n]+$//o;
+            s/#.*//o;
+            s/^\s+//o;
+            s/\s+$//o;
+            
+            my ($addr, @aliases) = split(/\s+/o);
+            if (grep(/^$host$/, @aliases)) {
+                close(HOSTS);
+                return $addr;
+            }
+        }
+        close(HOSTS);
+    }
+    
+    return;
 }
 
 =back
