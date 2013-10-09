@@ -4,3 +4,4 @@
 - Schema cache settings
 - Lim::Util::DBI on_error
 - Lim::Util::DBI pod
+- hosts cache in Lim::Util::resolve_hosts
