@@ -74,7 +74,7 @@ sub V {
                 # check required
                 foreach my $k (keys %$def) {
                     if (blessed($def->{$k}) and $def->{$k}->required and !exists $q->{$k}) {
-                        confess __PACKAGE__, ': required data missing, does not match definition';
+                        confess __PACKAGE__, ': required data (', $k, ') missing, does not match definition';
                     }
                 }
                 
