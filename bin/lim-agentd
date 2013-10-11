@@ -8,6 +8,16 @@ $Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
 use POSIX;
 
 use AnyEvent ();
+if (AnyEvent->VERSION < 6.01) {
+    # Try and force detection of modules for old AnyEvents
+    foreach (qw(EV Event Glib EventLib POE)) {
+        eval "use $_ ();";
+        unless ($@) {
+            last;
+        }
+    }
+    AnyEvent::detect;
+}
 
 use Lim ();
 use Lim::RPC::Server ();
