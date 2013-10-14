@@ -73,8 +73,9 @@ sub add {
         $call = '';
     }
     
-    if (exists $_MAP_CACHE_CODE{$map} and defined $_MAP_CACHE_CODE{$map}) {
-        push(@{$self->{maps}}, $_MAP_CACHE_CODE{$map});
+    my $map_key = $map.' '.$call;
+    if (exists $_MAP_CACHE_CODE{$map_key} and defined $_MAP_CACHE_CODE{$map_key}) {
+        push(@{$self->{maps}}, $_MAP_CACHE_CODE{$map_key});
         return $call;
     }
     
@@ -184,8 +185,8 @@ sub add {
     # Store the generated subroutine and return success
     #
 
-    $_MAP_CACHE_CODE{$map} = $code;
-    weaken($_MAP_CACHE_CODE{$map});
+    $_MAP_CACHE_CODE{$map_key} = $code;
+    weaken($_MAP_CACHE_CODE{$map_key});
     push(@{$self->{maps}}, $code);
     return $call;
 }
