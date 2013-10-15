@@ -552,10 +552,12 @@ sub run_cmd {
                 }
                 
                 if ($args{kill_try}--) {
+                    Lim::DEBUG and Log::Log4perl->get_logger->debug('trying to kill cmd ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
                     kill($args{kill_sig}, $pid);
                 }
                 else {
                     if ($args{kill_kill}) {
+                        Lim::DEBUG and Log::Log4perl->get_logger->debug('killing cmd ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
                         kill(9, $pid);
                     }
                     undef($timeout);
@@ -568,6 +570,7 @@ sub run_cmd {
             $cmd,
             %pass_args;
         $cv->cb(sub {
+            Lim::DEBUG and Log::Log4perl->get_logger->debug('cmd end ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
             undef($timeout);
             $args{cb}->(@_);
         });
