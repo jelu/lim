@@ -246,7 +246,9 @@ push(@watchers,
     AnyEvent->signal(signal => "PIPE", cb => sub {
     }),
     AnyEvent->signal(signal => "INT", cb => sub {
-        $cv->send;
+        if ($foreground) {
+            $cv->send;
+        }
     }),
     AnyEvent->signal(signal => "QUIT", cb => sub {
         $cv->send;
