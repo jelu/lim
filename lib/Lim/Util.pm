@@ -31,9 +31,9 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 our %CALL_METHOD = (
-    Create => 'PUT',
+    Create => 'POST',
     Read => 'GET',
-    Update => 'POST',
+    Update => 'PUT',
     Delete => 'DELETE'
 );
 

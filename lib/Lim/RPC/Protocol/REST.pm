@@ -31,8 +31,8 @@ our $VERSION = $Lim::VERSION;
 our $JSON = JSON::XS->new->ascii->convert_blessed;
 our %REST_CRUD = (
     GET => 'READ',
-    POST => 'UPDATE',
-    PUT => 'CREATE',
+    PUT => 'UPDATE',
+    POST => 'CREATE',
     DELETE => 'DELETE'
 );
 
