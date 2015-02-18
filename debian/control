@@ -8,7 +8,8 @@ Build-Depends-Indep: libanyevent-perl (>= 5), libcommon-sense-perl (>= 3),
  libyaml-perl (>= 0.70), perl (>= 5.10.1), libnet-ssleay-perl (>= 1.35),
  libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
  liblog-log4perl-appender-lim-cli-perl (>= 0.12~unstable+1),
- liblog-dispatch-perl (>= 2.22)
+ liblog-dispatch-perl (>= 2.22), libxmlrpc-lite-perl (>= 0.71) |
+ libsoap-lite-perl (>= 0.71)
 Maintainer: Jerry Lundström <lundstrom.jerry@gmail.com>
 Standards-Version: 3.9.1
 Homepage: https://github.com/jelu/lim/wiki
@@ -54,7 +55,8 @@ Description: Lim SOAP protocol perl libraries
 
 Package: liblim-protocol-xmlrpc-perl
 Architecture: all
-Depends: ${misc:Depends}, ${perl:Depends}, libsoap-lite-perl (>= 0.71),
+Depends: ${misc:Depends}, ${perl:Depends}, libxmlrpc-lite-perl (>= 0.71) |
+ libsoap-lite-perl (>= 0.71),
  libxmlrpc-transport-http-server-perl (>= 0.12~unstable+1),
  liblim-server-perl (= 0.19-1~unstable+1)
 Description: Lim XMLRPC protocol perl libraries
