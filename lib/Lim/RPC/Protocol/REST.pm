@@ -82,7 +82,7 @@ sub handle {
         return;
     }
 
-    if ($request->uri =~ /^\/([a-zA-Z]+)\/([a-zA-Z_]+)(?:\/([^\?]*)){0,1}/o) {
+    if ($request->uri =~ /^\/([a-zA-Z]+)\/(\w+)(?:\/([^\?]*)){0,1}/o) {
         my ($module, $function, $parameters) = ($1, $2, $3);
         my $response = HTTP::Response->new;
         $response->request($request);
