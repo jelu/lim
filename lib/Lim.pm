@@ -49,6 +49,9 @@ our $CONFIG = {
             verify => 1,
             verify_require_client_cert => 1,
             ca_path => '/etc/lim/ssl/certs'
+        },
+        json => {
+            pretty => 0
         }
     },
     agent => {

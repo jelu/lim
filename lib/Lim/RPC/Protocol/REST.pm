@@ -47,6 +47,9 @@ our %REST_CRUD = (
 =cut
 
 sub Init {
+    if (Lim::Config->{rpc}->{json}->{pretty}) {
+        $JSON->pretty(1);
+    }
 }
 
 =head2 Destroy

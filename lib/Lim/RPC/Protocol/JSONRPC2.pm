@@ -40,6 +40,9 @@ our $JSON = JSON::XS->new->ascii->convert_blessed;
 =cut
 
 sub Init {
+    if (Lim::Config->{rpc}->{json}->{pretty}) {
+        $JSON->pretty(1);
+    }
 }
 
 =head2 Destroy
