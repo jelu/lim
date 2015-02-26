@@ -72,7 +72,7 @@ sub add {
     else {
         $call = '';
     }
-    
+
     my $map_key = $map.' '.$call;
     if (exists $_MAP_CACHE_CODE{$map_key} and defined $_MAP_CACHE_CODE{$map_key}) {
         push(@{$self->{maps}}, $_MAP_CACHE_CODE{$map_key});
@@ -115,13 +115,15 @@ sub add {
     # Generate the code that checked given URI with generated regexp and adds
     # data gotten by the regexp to the data structure defined by the map
     #
-    
+
+    $code = '';
+
     if ($predata) {
         foreach my $predata_variable (split(/,/o, $predata)) {
             if ($predata_variable =~ /^([^=]+)=(.+)$/o) {
                 my ($variable, $value) = ($1, $2);
 
-                $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = \''.$value.'\'';
+                $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = \''.$value.'\';';
             }
             else {
                 Lim::DEBUG and $self->{logger}->debug('Predata of map "', $map, '" invalid');
@@ -132,7 +134,7 @@ sub add {
     }
 
     if (scalar @variables) {
-        $code = 'my (';
+        $code .= 'my (';
     
         $n = 1;
         while ($n <= scalar @variables) {
@@ -154,9 +156,6 @@ sub add {
         foreach my $variable (@variables) {
             $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = $v'.($n++).';';
         }
-    }
-    else {
-        $code = '';
     }
 
     #
