@@ -12,6 +12,7 @@ use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
 use URI ();
+use Socket;
 
 use Lim ();
 use Lim::RPC::TLS ();
@@ -103,6 +104,8 @@ sub _connect {
     
     $self->{socket} = AnyEvent::Socket::tcp_server exists $self->{addr} ? $self->{addr} : $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
+        my ($sockport, $sockaddr) = AnyEvent::Socket::unpack_sockaddr(getsockname($fh));
+        my $sockhost = AnyEvent::Socket::ntoa($sockaddr);
 
         Lim::RPC_DEBUG and $self->{logger}->debug('Connection from ', $host, ':', $port);
 
@@ -204,6 +207,7 @@ sub _connect {
                         $client->{headers} = $headers;
                         $client->{content} = $content;
                         $client->{request} = HTTP::Request->parse($client->{headers});
+                        $client->{request}->header('X-Lim-Base-URL' => ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https' : 'http').'://'.$sockhost.':'.$self->{port});
                     }
                 }
                 else {

@@ -103,6 +103,7 @@ sub handle {
                         weaken($self);
                         
                         $obj->$call(Lim::RPC::Callback->new(
+                            request => $request,
                             cb => sub {
                                 my ($result) = @_;
                                 

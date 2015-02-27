@@ -150,6 +150,7 @@ sub handle {
                 my $real_self = $self;
                 weaken($self);
                 $obj->$call(Lim::RPC::Callback->new(
+                    request => $request,
                     cb => sub {
                         my ($result) = @_;
                         

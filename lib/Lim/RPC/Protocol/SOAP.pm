@@ -297,6 +297,7 @@ sub handle {
     if ($request->header('SOAPAction') and $request->uri =~ /^\/([a-zA-Z]+)\s*$/o) {
         my ($module) = ($1);
         my $response = HTTP::Response->new;
+        my $http_request = $request;
         $response->request($request);
         $response->protocol($request->protocol);
         
@@ -319,6 +320,7 @@ sub handle {
                 }
                 
                 $request->{__lim_rpc_protocol_soap_cb} = Lim::RPC::Callback->new(
+                    request => $http_request,
                     cb => sub {
                         my ($data) = @_;
                         

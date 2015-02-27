@@ -2,6 +2,7 @@ package Lim::RPC::Callback;
 
 use common::sense;
 use Carp;
+use Scalar::Util qw(blessed);
 
 use Log::Log4perl ();
 
@@ -58,7 +59,8 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger,
+        request => undef
     };
     bless $self, $class;
 
@@ -68,9 +70,15 @@ sub new {
     unless (defined $args{reset_timeout} and ref($args{reset_timeout}) eq 'CODE') {
         confess __PACKAGE__, ': reset_timeout not given or invalid';
     }
+    if (exists $args{request} and (!blessed $args{request} or !$args{request}->isa('HTTP::Request'))) {
+        confess __PACKAGE__, ': request is not HTTP::Request';
+    }
     
     $self->{cb} = $args{cb};
     $self->{reset_timeout} = $args{reset_timeout};
+    if (exists $args{request}) {
+        $self->{request} = $args{request};
+    }
 
     $self->Init(@_);
 
@@ -152,6 +160,17 @@ Reset the timeout of the client related to this callback.
 
 sub reset_timeout {
     $_[0]->{reset_timeout}->();
+}
+
+=item $callback->request
+
+Return the HTTP::Request object associated with the callback, may return undef
+if there isnt any.
+
+=cut
+
+sub request {
+    $_[0]->{request};
 }
 
 =back
