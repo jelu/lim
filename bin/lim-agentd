@@ -136,6 +136,7 @@ if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
 }
 elsif ($foreground) {
+    STDOUT->autoflush(1);
     Log::Log4perl->init( \q(
     log4perl.logger                   = DEBUG, Screen
     log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
