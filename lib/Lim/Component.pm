@@ -33,7 +33,7 @@ package Lim::Plugin::MyPlugin;
 
 use base qw(Lim::Component);
 
-sub Module {
+sub Name {
     'MyPlugin';
 }
 
