@@ -142,6 +142,14 @@ sub port {
     confess 'function port not overloaded';
 }
 
+=head2 serve
+
+=cut
+
+sub serve {
+    confess 'function serve not overloaded';
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

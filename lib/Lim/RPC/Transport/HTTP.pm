@@ -373,6 +373,13 @@ sub port {
     $_[0]->{real_port};
 }
 
+=head2 serve
+
+=cut
+
+sub serve {
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

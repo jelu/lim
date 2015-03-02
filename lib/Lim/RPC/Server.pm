@@ -436,6 +436,9 @@ sub serve {
             foreach my $protocol (values %{$self->{protocol}}) {
                 $protocol->serve($module, $name);
             }
+            foreach my $transport (@{$self->{transports}}) {
+                $transport->serve($module, $name);
+            }
         }
     }
     
