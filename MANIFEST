@@ -32,6 +32,7 @@ lib/Lim/RPC/TLS.pm
 lib/Lim/RPC/Transport.pm
 lib/Lim/RPC/Transport/HTTP.pm
 lib/Lim/RPC/Transport/HTTPS.pm
+lib/Lim/RPC/Transport/RabbitMQ.pm
 lib/Lim/RPC/Transports.pm
 lib/Lim/RPC/URIMaps.pm
 lib/Lim/RPC/Value.pm
