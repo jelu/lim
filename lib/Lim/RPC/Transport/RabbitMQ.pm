@@ -11,8 +11,6 @@ use AnyEvent::RabbitMQ ();
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
 use HTTP::Response ();
-use URI ();
-use Socket;
 
 use Lim ();
 use Lim::RPC::Callback ();
@@ -128,7 +126,7 @@ sub _connect {
             Lim::DEBUG and $self->{logger}->debug('Server connected successfully');
 
             foreach my $channel (values %{$self->{channel}}) {
-                unless (defined $channel->{obj}) {
+                if (exists $channel->{obj}) {
                     next;
                 }
                 $self->_open($channel);
@@ -155,7 +153,7 @@ sub _connect {
                 return;
             }
 
-            my $message = 'Unkown';
+            my $message = 'Unknown';
             if (blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
@@ -236,8 +234,7 @@ sub serve {
     }
 
     $self->{channel}->{$module_shortname} = {
-        module => $module_shortname,
-        obj => undef
+        module => $module_shortname
     };
 
     if ($self->{rabbitmq}->is_open) {
@@ -319,7 +316,7 @@ sub _open {
                 return;
             }
 
-            my $message = 'Unkown';
+            my $message = 'Unknown';
             if (blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
@@ -335,7 +332,7 @@ sub _open {
         on_return => sub {
             my ($frame) = @_;
 
-            my $message = 'Unkown';
+            my $message = 'Unknown';
             if (blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
@@ -418,7 +415,7 @@ sub _consume {
         on_consume => sub {
             my ($frame) = @_;
 
-            unless (defined $self) {
+            unless (defined $self and defined $channel->{obj}) {
                 return;
             }
 
@@ -435,13 +432,57 @@ sub _consume {
                 return;
             }
 
-            if (blessed $frame->{header} and $frame->{header}->can('reply_to')) {
-                $channel->{obj}->publish(
-                    exchange    => '',
-                    routing_key => $frame->{header}->reply_to,
-                    body        => 'response'
-                );
+            my $headers = HTTP::Headers->new;
+            if (blessed $frame->{header} and $frame->{header}->can('headers') and ref($frame->{header}->headers) eq 'HASH') {
+                $headers->header(%{$frame->{header}->headers});
             }
+            my $request = HTTP::Request->new(
+                GET => '/'.$channel->{module},
+                $headers,
+                $frame->{body}->payload
+            );
+
+            Lim::RPC_DEBUG and $self->{logger}->debug('RabbitMQ Request: ', $request->as_string);
+
+            my $cb = Lim::RPC::Callback->new(
+                cb => sub {
+                    my ($response) = @_;
+
+                    unless (defined $self and defined $channel->{obj}) {
+                        return;
+                    }
+
+                    if (blessed $frame->{header}
+                        and $frame->{header}->can('reply_to')
+                        and blessed($response)
+                        and $response->isa('HTTP::Response'))
+                    {
+                        $channel->{obj}->publish(
+                            exchange    => '',
+                            routing_key => $frame->{header}->reply_to,
+                            body        => $response->content
+                        );
+                    }
+
+                    $channel->{obj}->ack(
+                        delivery_tag => $frame->{deliver}->method_frame->delivery_tag
+                    );
+                },
+                reset_timeout => sub {
+                }
+            );
+
+            foreach my $protocol ($self->protocols) {
+                Lim::RPC_DEBUG and $self->{logger}->debug('Trying protocol ', $protocol->name);
+                if ($protocol->handle($cb, $request, $self)) {
+                    Lim::RPC_DEBUG and $self->{logger}->debug('Request handled by protocol ', $protocol->name);
+                    return;
+                }
+            }
+
+            Lim::RPC_DEBUG and $self->{logger}->debug('Did not find any protocol handler for request');
+
+            # TODO: reject rabbitmq frame?
 
             $channel->{obj}->ack(
                 delivery_tag => $frame->{deliver}->method_frame->delivery_tag
