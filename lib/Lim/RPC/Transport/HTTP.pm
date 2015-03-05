@@ -198,7 +198,7 @@ sub _connect {
                     $handle->destroy;
                     return;
                 }
-                
+
                 unless (exists $client->{content}) {
                     $client->{headers} .= $handle->{rbuf};
                     
@@ -267,16 +267,18 @@ sub _connect {
                                         $response->protocol('HTTP/1.1');
                                     }
                                     
-                                    Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Response: ', $response->as_string);
-
-                                    if ($client->{request}->header('Connection') eq 'close') {
+                                    if ($client->{request}->protocol ne 'HTTP/1.1' and lc($client->{request}->header('Connection')) ne 'keep-alive') {
                                         Lim::RPC_DEBUG and $self->{logger}->debug('Connection requested to be closed');
 #                                        $client->{handle}->timeout(0);
+                                        $response->header('Connection' => 'close');
                                         $client->{close} = 1;
                                     }
                                     else {
 #                                        $client->{handle}->timeout(Lim::Config->{rpc}->{timeout});
+                                        $response->header('Connection' => 'keep-alive');
                                     }
+
+                                    Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Response: ', $response->as_string);
                                     $client->{handle}->push_write($response->as_string("\015\012"));
                                 
                                     delete $client->{processing};
