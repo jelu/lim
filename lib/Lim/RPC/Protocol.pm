@@ -125,6 +125,13 @@ sub precall {
     return @_;
 }
 
+=head2 request
+
+=cut
+
+sub request {
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

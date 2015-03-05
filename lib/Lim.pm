@@ -64,7 +64,9 @@ our $CONFIG = {
         config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
         editor => $ENV{EDITOR},
         host => 'localhost',
-        port => 5353
+        port => 5353,
+        transport => 'http',
+        protocol => 'rest'
     },
     plugin => {
         load => {}

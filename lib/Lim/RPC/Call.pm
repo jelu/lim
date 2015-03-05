@@ -94,6 +94,15 @@ sub new {
         $cb = $_[1];
         $args = $_[2];
     }
+    elsif (scalar @_ > 3) {
+        unless (ref($_[1]) eq 'CODE') {
+            confess __PACKAGE__, ': Given three argument but second its not a CODE callback';
+        }
+
+        $data = shift;
+        $cb = shift;
+        $args = { @_ };
+    }
     else {
         confess __PACKAGE__, ': Too many arguments';
     }
@@ -115,25 +124,37 @@ sub new {
         confess __PACKAGE__, ': No cb specified';
     }
 
-    if (defined $args->{host}) {
-        $self->{host} = $args->{host};
+    if (defined $args->{uri}) {
+        my ($scheme, $auth) = URI::Split::uri_split($uri);
+        my ($transport, $protocol);
+
+        if ($scheme =~ /^([a-z0-9_\-\.]+)\+([a-z0-9_\-\.\+]+)/o) {
+            ($transport, $protocol) = ($1, $2);
+        }
+        else {
+            confess __PACKAGE__, ': Invalid schema in uri';
+        }
+
+        $uri = URI->new('', 'http');
+        $uri->query($query);
+        $uri->host_port($auth);
+
+        $self->{host} = $uri->host;
+        $self->{port} = $uri->_port;
+        $self->{transport} = $transport;
+        $self->{protocol} = $protocol;
     }
     else {
-        $self->{host} = Lim::Config->{host};
-    }
-    if (defined $args->{port}) {
-        $self->{port} = $args->{port};
-    }
-    else {
-        $self->{port} = Lim::Config->{port};
+        foreach (qw(host port transport protocol)) {
+            $self->{$_} = defined $args->{$_} ? $args->{$_} : Lim::Config->{cli}->{$_};
+        }
     }
     $self->{cb} = $cb;
     
-    unless (defined $self->{host}) {
-        confess __PACKAGE__, ': No host specified';
-    }
-    unless (defined $self->{port}) {
-        confess __PACKAGE__, ': No port specified';
+    foreach (qw(host port transport protocol)) {
+        unless (defined $self->{$_}) {
+            confess __PACKAGE__, ': No '.$_.' specified';
+        }
     }
     
     if (defined $data and ref($data) ne 'HASH') {
