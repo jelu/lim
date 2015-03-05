@@ -62,8 +62,9 @@ sub Init {
     $self->{timeout} = 1;
     $self->{queue_prefix} = 'lim_';
     $self->{verbose} = 0;
+    $self->{prefetch_count} = 1;
 
-    foreach (qw(host port user pass vhost timeout verbose)) {
+    foreach (qw(host port user pass vhost timeout verbose prefetch_count)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
         }
@@ -297,7 +298,7 @@ sub _open {
 
             $channel->{obj} = $obj;
             Lim::DEBUG and $self->{logger}->debug('Channel opened successfully for '.$channel->{module});
-            $self->_declare($channel);
+            $self->_qos($channel);
         },
         on_failure => sub {
             my ($message) = @_;
@@ -343,6 +344,47 @@ sub _open {
             }
 
             Lim::WARN and $self->{logger}->warn('Frame returned: '.$message);
+        }
+    );
+}
+
+=head2 _qos
+
+=cut
+
+sub _qos {
+    my ($self, $channel) = @_;
+    my $real_self = $self;
+    weaken($self);
+
+    unless (ref($channel) eq 'HASH') {
+        confess '$channel is not HASH';
+    }
+    unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel')) {
+        confess '$channel->{obj} is not AnyEvent::RabbitMQ::Channel';
+    }
+
+    $channel->{obj}->qos(
+        prefetch_count => $self->{prefetch_count},
+        on_success => sub {
+            my ($obj) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::DEBUG and $self->{logger}->debug('Channel QoS setup successfully for '.$channel->{module});
+            $self->_declare($channel);
+        },
+        on_failure => sub {
+            my ($message) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::ERR and $self->{logger}->error('Channel QoS setup failure for '.$channel->{module}.': '.$message);
+            $self->_reopen($channel);
         }
     );
 }
