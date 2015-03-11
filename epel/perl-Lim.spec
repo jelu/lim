@@ -247,7 +247,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Value.3*
 %{_mandir}/man3/Lim::Plugins.3*
 %{_mandir}/man3/Lim::Component::Client.3*
-%{_mandir}/man3/Lim::RPC::Client.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client.3*
+%{_mandir}/man3/Lim::RPC::Transport::Clients.3*
+%{_mandir}/man3/Lim::RPC::Protocol.3*
+%{_mandir}/man3/Lim::RPC::Protocols.3*
 %{_mandir}/man3/Lim::Util.3*
 %{_mandir}/man3/Lim::Util::DBI.3*
 %{_mandir}/man3/Lim.3*
@@ -259,7 +262,10 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/Component/Client.pm
 %{perl_vendorlib}/Lim/Util.pm
 %{perl_vendorlib}/Lim/Util/DBI.pm
-%{perl_vendorlib}/Lim/RPC/Client.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Client.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Clients.pm
+%{perl_vendorlib}/Lim/RPC/Protocol.pm
+%{perl_vendorlib}/Lim/RPC/Protocols.pm
 %{perl_vendorlib}/Lim/RPC/TLS.pm
 %{perl_vendorlib}/Lim/RPC/Value/Collection.pm
 %{perl_vendorlib}/Lim/RPC/Call.pm
@@ -274,16 +280,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Server.3*
 %{_mandir}/man3/Lim::RPC::Transport.3*
 %{_mandir}/man3/Lim::RPC::Transports.3*
-%{_mandir}/man3/Lim::RPC::Protocol.3*
-%{_mandir}/man3/Lim::RPC::Protocols.3*
 %{_mandir}/man3/Lim::RPC::URIMaps.3*
 %{perl_vendorlib}/Lim/Component/Server.pm
 %{perl_vendorlib}/Lim/RPC/Callback.pm
 %{perl_vendorlib}/Lim/RPC/Server.pm
 %{perl_vendorlib}/Lim/RPC/Transport.pm
 %{perl_vendorlib}/Lim/RPC/Transports.pm
-%{perl_vendorlib}/Lim/RPC/Protocol.pm
-%{perl_vendorlib}/Lim/RPC/Protocols.pm
 %{perl_vendorlib}/Lim/RPC/URIMaps.pm
 %{_datadir}/lim/html
 
@@ -343,8 +345,12 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Transport::HTTP.3*
 %{_mandir}/man3/Lim::RPC::Transport::HTTPS.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client::HTTP.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client::HTTPS.3*
 %{perl_vendorlib}/Lim/RPC/Transport/HTTP.pm
 %{perl_vendorlib}/Lim/RPC/Transport/HTTPS.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Client/HTTP.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Client/HTTPS.pm
 %config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
 
 %files -n perl-Lim-Protocol-REST

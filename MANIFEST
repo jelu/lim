@@ -18,7 +18,6 @@ lib/Lim/Plugins.pm
 lib/Lim/RPC.pm
 lib/Lim/RPC/Call.pm
 lib/Lim/RPC/Callback.pm
-lib/Lim/RPC/Client.pm
 lib/Lim/RPC/Protocol.pm
 lib/Lim/RPC/Protocol/HTTP.pm
 lib/Lim/RPC/Protocol/JSONRPC1.pm
@@ -34,6 +33,10 @@ lib/Lim/RPC/Transport/HTTP.pm
 lib/Lim/RPC/Transport/HTTPS.pm
 lib/Lim/RPC/Transport/RabbitMQ.pm
 lib/Lim/RPC/Transports.pm
+lib/Lim/RPC/Transport/Client.pm
+lib/Lim/RPC/Transport/Clients.pm
+lib/Lim/RPC/Transport/Client/HTTP.pm
+lib/Lim/RPC/Transport/Client/HTTPS.pm
 lib/Lim/RPC/URIMaps.pm
 lib/Lim/RPC/Value.pm
 lib/Lim/RPC/Value/Collection.pm

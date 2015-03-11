@@ -1,4 +1,4 @@
-package Lim::RPC::Transports;
+package Lim::RPC::Transport::Clients;
 
 use common::sense;
 use Carp;
@@ -13,7 +13,7 @@ use Lim ();
 
 =head1 NAME
 
-Lim::RPC::Transports - Lim's RPC transport loader and container
+Lim::RPC::Transport::Clients - Lim's RPC transport client loader and container
 
 =head1 VERSION
 
@@ -26,8 +26,8 @@ our $INSTANCE;
 
 =head1 SYNOPSIS
 
-  use Lim::RPC::Transports;
-  $transport = Lim::RPC::Transports->instance->transport('name');
+  use Lim::RPC::Transport::Clients;
+  $transport = Lim::RPC::Transport::Clients->instance->transport('name');
 
 =head1 METHODS
 
@@ -55,7 +55,7 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     delete $self->{transport};
 }
 
@@ -63,32 +63,29 @@ END {
     undef($INSTANCE);
 }
 
-=item $instance = Lim::RPC::Transports->instance
+=item $instance = Lim::RPC::Transport::Clients->instance
 
 Returns the singelton instance of this class.
 
 =cut
 
 sub instance {
-    $INSTANCE ||= Lim::RPC::Transports->_new;
+    $INSTANCE ||= Lim::RPC::Transport::Clients->_new;
 }
 
 =item $instance->load
 
-Loads all classes that exists on the system under Lim::RPC::Transport::. Returns
-the reference to itself even on error.
+Loads all classes that exists on the system under Lim::RPC::Transport::Client::.
+Returns the reference to itself even on error.
 
 =cut
 
 sub load {
     my ($self) = @_;
-    
-    foreach my $module (findsubmod Lim::RPC::Transport) {
-        if ($module =~ /::Clients?$/o) {
-            next;
-        }
+
+    foreach my $module (findsubmod Lim::RPC::Transport::Client) {
         if (exists $self->{transport}->{$module}) {
-            Lim::WARN and $self->{logger}->warn('Transport ', $module, ' already loaded');
+            Lim::WARN and $self->{logger}->warn('Transport client ', $module, ' already loaded');
             next;
         }
 
@@ -105,9 +102,9 @@ sub load {
             die $@ if $@;
             $name = $module->name;
         };
-        
+
         if ($@) {
-            Lim::WARN and $self->{logger}->warn('Unable to load transport ', $module, ': ', $@);
+            Lim::WARN and $self->{logger}->warn('Unable to load transport client ', $module, ': ', $@);
             $self->{transport}->{$module} = {
                 name => $name,
                 module => $module,
@@ -116,9 +113,9 @@ sub load {
             };
             next;
         }
-        
+
         unless ($name =~ /^[a-z0-9_\-\.]+$/o) {
-            Lim::WARN and $self->{logger}->warn('Unable to load transport ', $module, ': Illegal characters in transport name');
+            Lim::WARN and $self->{logger}->warn('Unable to load transport client ', $module, ': Illegal characters in transport name');
             $self->{transport}->{$module} = {
                 module => $module,
                 loaded => 0,
@@ -154,21 +151,21 @@ sub transport {
 
     if (defined $name) {
         my $module;
-        
+
         foreach (keys %{$self->{transport}}) {
             if ($self->{transport}->{$_}->{loaded} and $self->{transport}->{$_}->{name} eq $name) {
                 $module = $self->{transport}->{$_}->{module};
                 last;
             }
         }
-        
+
         if (defined $module) {
             my $transport;
             eval {
                 $transport = $module->new(@_);
             };
             if ($@) {
-                Lim::WARN and $self->{logger}->warn('Unable to create new instance of transport ', $name, '(', $module, '): ', $@);
+                Lim::WARN and $self->{logger}->warn('Unable to create new instance of transport client ', $name, '(', $module, '): ', $@);
             }
             else {
                 return $transport;
@@ -192,7 +189,7 @@ Please report any bugs or feature requests to L<https://github.com/jelu/lim/issu
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Lim::RPC::Transports
+    perldoc Lim::RPC::Transport::Clients
 
 You can also look for information at:
 
@@ -219,4 +216,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transports
+1; # End of Lim::RPC::Transport::Clients

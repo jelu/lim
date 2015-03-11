@@ -1,4 +1,4 @@
-package Lim::RPC::Protocol;
+package Lim::RPC::Transport::Client;
 
 use common::sense;
 use Carp;
@@ -17,6 +17,14 @@ use Lim ();
 =head1 VERSION
 
 See L<Lim> for version.
+
+=over 4
+
+=item OK
+
+=item ERROR
+
+=back
 
 =cut
 
@@ -37,18 +45,9 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
-        server => undef
+        logger => Log::Log4perl->get_logger
     };
     bless $self, $class;
-
-    if (exists $args{server}) {
-        unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
-            confess __PACKAGE__, ': No server specified or invalid';
-        }
-        $self->{__server} = $args{server};
-        weaken($self->{__server});
-    }
 
     $self->Init(@_);
 
@@ -59,9 +58,8 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
-    delete $self->{__server};
 }
 
 =head2 Init
@@ -86,62 +84,12 @@ sub name {
     confess 'function name not overloaded';
 }
 
-=head2 serve
-
-=cut
-
-sub serve {
-    confess 'function serve not overloaded';
-}
-
-=head2 handle
-
-=cut
-
-sub handle {
-    confess 'function handle not overloaded';
-}
-
-=head2 timeout
-
-=cut
-
-sub timeout {
-    confess 'function timeout not overloaded';
-}
-
-=head2 server
-
-=cut
-
-sub server {
-    $_[0]->{__server};
-}
-
-=head2 precall
-
-=cut
-
-sub precall {
-    shift; # $self
-    shift; # $call
-    return @_;
-}
-
 =head2 request
 
 =cut
 
 sub request {
-    confess 'function request not overloaded';
-}
-
-=head2 response
-
-=cut
-
-sub response {
-    confess 'function response not overloaded';
+    confess 'function serve not overloaded';
 }
 
 =head1 AUTHOR
@@ -183,4 +131,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocol
+1; # End of Lim::RPC::Transport::Client

@@ -1,4 +1,4 @@
-package Lim::RPC::Client;
+package Lim::RPC::Transport::Client::HTTP;
 
 use common::sense;
 use Carp;
@@ -14,12 +14,12 @@ use HTTP::Request ();
 use HTTP::Response ();
 use HTTP::Status qw(:constants);
 
-use JSON::XS ();
-
 use Lim ();
 use Lim::Error ();
 use Lim::RPC::TLS ();
 use Lim::Util ();
+
+use base qw(Lim::RPC::Transport::Client);
 
 =encoding utf8
 
@@ -33,10 +33,6 @@ See L<Lim> for version.
 
 =over 4
 
-=item OK
-
-=item ERROR
-
 =item MAX_RESPONSE_LEN
 
 =back
@@ -44,10 +40,6 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $JSON = JSON::XS->new->ascii;
-
-sub OK (){ 1 }
-sub ERROR (){ -1 }
 
 sub MAX_RESPONSE_LEN (){ 8 * 1024 * 1024 }
 
@@ -57,94 +49,79 @@ sub MAX_RESPONSE_LEN (){ 8 * 1024 * 1024 }
 
 =head1 SUBROUTINES/METHODS
 
-=head2 new
+=head2 Init
 
 =cut
 
-sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
+sub Init {
+    my ($self) = @_;
+
+    if ($self->isa('Lim::RPC::Transport::Client::HTTPS') and !defined Lim::RPC::TLS->instance->tls_ctx) {
+        confess 'using HTTPS but can not create TLS context';
+    }
+}
+
+=head2 name
+
+=cut
+
+sub name {
+    'http';
+}
+
+=head2 request
+
+=cut
+
+sub request {
+    my $self = shift;
     my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
-        rbuf => '',
-        status => 0,
-        error => ''
-    };
-    bless $self, $class;
     my $real_self = $self;
     weaken($self);
-    
+
+    $self->{rbuf} = '';
+
     unless (defined $args{host}) {
         confess __PACKAGE__, ': No host specified';
     }
     unless (defined $args{port}) {
         confess __PACKAGE__, ': No port specified';
     }
-    unless (defined $args{method}) {
-        confess __PACKAGE__, ': No method specified';
-    }
-    unless (defined $args{uri}) {
-        confess __PACKAGE__, ': No uri specified';
-    }
-    if (defined $args{data} and ref($args{data}) ne 'HASH') {
-        confess __PACKAGE__, ': Data is not a hash';
+    unless (blessed $args{request} and $args{request}->isa('HTTP::Request')) {
+        confess __PACKAGE__, ': No request or not HTTP::Request';
     }
 
-    if (!defined Lim::RPC::TLS->instance->tls_ctx) {
-        confess 'using HTTPS but can not create TLS context';
-    }
-    
     $self->{host} = $args{host};
     $self->{port} = $args{port};
-    $self->{uri} = $args{uri};
     if (defined $args{cb} and ref($args{cb}) eq 'CODE') {
         $self->{cb} = $args{cb};
     }
-    $self->{request} = HTTP::Request->new($args{method}, $self->{uri});
+    $self->{request} = $args{request};
     $self->{request}->protocol('HTTP/1.1');
-    if (defined $args{data}) {
-        my $json;
-        eval {
-            $json = $JSON->encode($args{data});
-        };
-        if ($@) {
-            $self->{status} = ERROR;
-            $self->{error} = $@;
-            
-            if (exists $self->{cb}) {
-                $self->{cb}->($self);
-                delete $self->{cb};
-            }
-            return;
-        }
-        $self->{request}->content($json);
-        $self->{request}->header('Content-Length' => length($json));
-        $self->{request}->header('Content-Type' => 'application/json');
-    }
-    else {
-        $self->{request}->header('Content-Length' => 0);
-    }
-    
+
     Lim::Util::resolve_host $self->{host}, $self->{port}, sub {
         my ($host, $port) = @_;
 
         unless (defined $self) {
             return;
         }
-        
+
         unless (defined $host and defined $port) {
             Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
+            if (exists $self->{cb}) {
+                $self->{cb}->($self, Lim::Error->new(
+                    message => 'Unable to resolve host '.$self->{host},
+                    module => $self
+                ));
+                delete $self->{cb};
+            }
             return;
         }
-        
+
         $self->{host} = $host;
         $self->{port} = $port;
         $self->_connect;
     };
-
-    Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
-    $real_self;
 }
 
 =head2 _connect
@@ -155,31 +132,31 @@ sub _connect {
     my ($self) = @_;
     my $real_self = $self;
     weaken($self);
-    
-    $self->{socket} = AnyEvent::Socket::tcp_connect exists $self->{addr} ? $self->{addr} : $self->{host}, $self->{port}, sub {
+
+    $self->{socket} = AnyEvent::Socket::tcp_connect $self->{host}, $self->{port}, sub {
         my ($fh, $host, $port) = @_;
 
         unless (defined $self) {
             return;
         }
-        
+
         unless (defined $fh) {
-            Lim::WARN and $self->{logger}->warn('Error: ', $!);
-            $self->{status} = ERROR;
-            $self->{error} = $!;
-        
+            Lim::WARN and $self->{logger}->warn('No handle: ', $!);
+
             if (exists $self->{cb}) {
-                $self->{cb}->($self);
+                $self->{cb}->($self, Lim::Error->new(
+                    message => $!,
+                    module => $self
+                ));
                 delete $self->{cb};
             }
             return;
         }
-        
+
         my $handle;
         $handle = AnyEvent::Handle->new(
             fh => $fh,
-            tls => 'connect',
-            tls_ctx => Lim::RPC::TLS->instance->tls_ctx,
+            ($self->isa('Lim::RPC::Transport::Client::HTTPS') ? (tls => 'connect', tls_ctx => Lim::RPC::TLS->instance->tls_ctx) : ()),
             timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
@@ -187,14 +164,11 @@ sub _connect {
                 unless (defined $self) {
                     return;
                 }
-                
+
                 Lim::WARN and $self->{logger}->warn($handle, ' Error: ', $message);
-                $self->{status} = ERROR;
-                $self->{error} = $message;
-                
                 if (exists $self->{cb}) {
                     $self->{cb}->($self, Lim::Error->new(
-                        message => $self->{error},
+                        message => $message,
                         module => $self
                     ));
                     delete $self->{cb};
@@ -203,19 +177,17 @@ sub _connect {
             },
             on_timeout => sub {
                 my ($handle) = @_;
-                
+
                 unless (defined $self) {
                     return;
                 }
 
                 Lim::WARN and $self->{logger}->warn($handle, ' TIMEOUT');
-                $self->{status} = ERROR;
-                $self->{error} = 'Connection/Request/Response Timeout';
-                
+
                 if (exists $self->{cb}) {
                     $self->{cb}->($self, Lim::Error->new(
                         code => HTTP_REQUEST_TIMEOUT,
-                        message => $self->{error},
+                        message => 'Request timed out',
                         module => $self
                     ));
                     delete $self->{cb};
@@ -224,38 +196,47 @@ sub _connect {
             },
             on_eof => sub {
                 my ($handle) = @_;
-                
+
                 unless (defined $self) {
                     return;
                 }
 
                 Lim::WARN and $self->{logger}->warn($handle, ' EOF');
-                
+
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self);
+                    $self->{cb}->($self, Lim::Error->new(
+                        code => HTTP_GONE,
+                        message => 'Connection closed',
+                        module => $self
+                    ));
                     delete $self->{cb};
                 }
                 $handle->destroy;
             },
             on_read => sub {
                 my ($handle) = @_;
-                
+
                 unless (defined $self) {
                     return;
                 }
 
                 if ((length($self->{rbuf}) + length($handle->{rbuf})) > MAX_RESPONSE_LEN) {
-                    if (exists $self->{on_error}) {
-                        $self->{on_error}->($self, 1, 'Response too long');
+                    if (exists $self->{cb}) {
+                        $self->{cb}->($self, Lim::Error->new(
+                            code => HTTP_REQUEST_ENTITY_TOO_LARGE,
+                            message => 'Request too large',
+                            module => $self
+                        ));
+                        delete $self->{cb};
                     }
                     $handle->push_shutdown;
                     $handle->destroy;
                     return;
                 }
-                
+
                 unless (exists $self->{content}) {
                     $self->{headers} .= $handle->{rbuf};
-                    
+
                     if ($self->{headers} =~ /\015?\012\015?\012/o) {
                         my ($headers, $content) = split(/\015?\012\015?\012/o, $self->{headers}, 2);
                         $self->{headers} = $headers;
@@ -267,102 +248,26 @@ sub _connect {
                     $self->{content} .= $handle->{rbuf};
                 }
                 $handle->{rbuf} = '';
-                
+
                 if (defined $self->{response} and length($self->{content}) == $self->{response}->header('Content-Length')) {
                     my $response = $self->{response};
                     $response->content($self->{content});
                     delete $self->{response};
                     delete $self->{content};
                     $self->{headers} = '';
-                    
-                    my $data;
-                    
-                    if ($response->code == 200) {
-                        $self->{status} = OK;
-                    }
-                    else {
-                        $self->{status} = ERROR;
-                    }
-
-                    if ($response->header('Content-Length')) {
-                        if ($response->header('Content-Type') =~ /application\/json/io) {
-                            eval {
-                                $data = $JSON->decode($response->decoded_content);
-                            };
-                            if ($@) {
-                                $self->{status} = ERROR;
-                                $self->{error} = $@;
-                                undef($data);
-                            }
-                            else {
-                                if (ref($data) ne 'HASH') {
-                                    $data = Lim::Error->new(
-                                        code => 500,
-                                        message => 'Invalid data returned, not a hash',
-                                        module => $self);
-                                    $self->{status} = ERROR;
-                                }
-                                elsif ($self->{status} == ERROR) {
-                                    $data = Lim::Error->new->set($data);
-                                }
-                            }
-                        }
-                        else {
-                            $self->{status} = ERROR;
-                            $self->{error} = 'Unknown content type ['.$response->header('Content-Type').'] returned';
-                        }
-                    }
-                    
-                    if ($self->{status} == ERROR) {
-                        unless (defined $data) {
-                            $data = Lim::Error->new(
-                                code => $response->code,
-                                message => $self->{error},
-                                module => $self);
-                        }
-                        unless (blessed $data and $data->isa('Lim::Error')) {
-                            confess __PACKAGE__, ': status is ERROR but data is not a Lim::Error object';
-                        }
-                    }
 
                     if (exists $self->{cb}) {
-                        $self->{cb}->($self, $data);
+                        $self->{cb}->($self, $response);
                         delete $self->{cb};
                     }
                     $handle->push_shutdown;
                     $handle->destroy;
                 }
             });
-        
+
         $self->{handle} = $handle;
         $handle->push_write($self->{request}->as_string("\015\012"));
-        delete $self->{request};
     };
-}
-
-sub DESTROY {
-    my ($self) = @_;
-    Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
-    delete $self->{client};
-    delete $self->{socket};
-    delete $self->{handle};
-}
-
-=head2 status
-
-=cut
-
-sub status {
-    $_[0]->{status};
-}
-
-=head2 error
-
-=cut
-
-sub error {
-    $_[0]->{error};
 }
 
 =head1 AUTHOR
@@ -404,4 +309,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Client
+1; # End of Lim::RPC::Transport::Client::HTTP
