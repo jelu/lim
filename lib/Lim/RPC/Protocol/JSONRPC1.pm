@@ -2,6 +2,7 @@ package Lim::RPC::Protocol::JSONRPC1;
 
 use common::sense;
 
+use Carp;
 use Scalar::Util qw(blessed weaken);
 
 use HTTP::Status qw(:constants);
@@ -28,6 +29,8 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 our $JSON = JSON::XS->new->ascii->convert_blessed;
+our $ID = 1;
+our $ID_OVERFLOW = 2^32;
 
 =head1 SYNOPSIS
 
@@ -226,6 +229,108 @@ sub handle {
         return 1;
     }
     return;
+}
+
+=head2 request
+
+=cut
+
+sub request {
+    my $self = shift;
+    my %args = ( @_ );
+
+    my ($method, $uri) = Lim::Util::URIize($args{call});
+    $uri = (defined $args{path} ? $args{path} : '' ).'/'.lc($args{plugin});
+    my $request = HTTP::Request->new($method, $uri);
+
+    if (defined $args{data}) {
+        eval {
+            $request->content($JSON->encode({
+                id => $ID++,
+                method => $args{call},
+                params => $args{data}
+            }));
+        };
+        if ($@) {
+            confess 'JSON encoding of data failed: '.$@;
+        }
+    }
+    else {
+        $request->content($JSON->encode({
+            id => $ID++,
+            method => $args{call}
+        }));
+    }
+    $request->header('Content-Type' => 'application/json; charset=utf-8');
+    $request->header('Content-Length' => length($request->content));
+
+    if ($ID == $ID_OVERFLOW) {
+        $ID = 1;
+    }
+
+    return $request;
+}
+
+=head2 response
+
+=cut
+
+sub response {
+    my ($self, $response) = @_;
+    my $data = {};
+
+    unless (blessed $response and $response->isa('HTTP::Response')) {
+        return;
+    }
+
+    if ($response->header('Content-Length')) {
+        if ($response->header('Content-Type') =~ /application\/json/io) {
+            eval {
+                $data = $JSON->decode($response->decoded_content);
+            };
+            if ($@) {
+                return Lim::Error->new(
+                    message => 'JSON decode error: '.$@,
+                    module => $self
+                );
+            }
+
+            if (ref($data) ne 'HASH') {
+                return Lim::Error->new(
+                    message => 'Invalid data returned, not a hash',
+                    module => $self
+                );
+            }
+
+            unless ($response->code == 200) {
+                if (ref($data->{error}) eq 'HASH') {
+                    return Lim::Error->new->set({ 'Lim::Error' => $data->{error} });
+                }
+                return Lim::Error->new(
+                    code => $response->code,
+                    module => $self
+                );
+            }
+        }
+        else {
+            return Lim::Error->new(
+                message => 'Unknown content type ['.$response->header('Content-Type').'] returned',
+                module => $self
+            );
+        }
+    }
+    else {
+        unless ($response->code == 200) {
+            return Lim::Error->new(
+                code => $response->code,
+                module => $self
+            );
+        }
+    }
+
+    # TODO: How can we check id?
+
+    return defined $data->{result} ? $data->{result} : {};
 }
 
 =head1 AUTHOR
