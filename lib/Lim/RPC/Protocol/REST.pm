@@ -245,7 +245,7 @@ sub request {
         if ($@) {
             confess 'JSON encoding of data failed: '.$@;
         }
-        $request->header('Content-Type' => 'application/javascript; charset=utf-8');
+        $request->header('Content-Type' => 'application/json; charset=utf-8');
         $request->header('Content-Length' => length($request->content));
     }
     else {
