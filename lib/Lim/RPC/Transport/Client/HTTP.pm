@@ -80,19 +80,18 @@ sub request {
     weaken($self);
 
     $self->{rbuf} = '';
+    $self->{host} = 'localhost';
+    $self->{port} = $self->isa('Lim::RPC::Transport::Client::HTTPS') ? 443 : 80;
 
-    unless (defined $args{host}) {
-        confess __PACKAGE__, ': No host specified';
-    }
-    unless (defined $args{port}) {
-        confess __PACKAGE__, ': No port specified';
-    }
     unless (blessed $args{request} and $args{request}->isa('HTTP::Request')) {
         confess __PACKAGE__, ': No request or not HTTP::Request';
     }
 
-    $self->{host} = $args{host};
-    $self->{port} = $args{port};
+    foreach (qw(host port)) {
+        if (defined $args{$_}) {
+            $self->{$_} = $args{$_};
+        }
+    }
     if (defined $args{cb} and ref($args{cb}) eq 'CODE') {
         $self->{cb} = $args{cb};
     }
