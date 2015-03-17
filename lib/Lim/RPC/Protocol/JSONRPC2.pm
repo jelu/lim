@@ -285,49 +285,39 @@ sub response {
         return;
     }
 
-    if ($response->header('Content-Length')) {
-        if ($response->header('Content-Type') =~ /application\/json/io) {
-            eval {
-                $data = $JSON->decode($response->decoded_content);
-            };
-            if ($@) {
-                return Lim::Error->new(
-                    message => 'JSON decode error: '.$@,
-                    module => $self
-                );
-            }
-
-            if (ref($data) ne 'HASH') {
-                return Lim::Error->new(
-                    message => 'Invalid data returned, not a hash',
-                    module => $self
-                );
-            }
-
-            unless ($response->code == 200) {
-                if (ref($data->{error}) eq 'HASH') {
-                    return Lim::Error->new->set({ 'Lim::Error' => $data->{error} });
-                }
-                return Lim::Error->new(
-                    code => $response->code,
-                    module => $self
-                );
-            }
-        }
-        else {
+    if ($response->header('Content-Type') =~ /application\/json/io) {
+        eval {
+            $data = $JSON->decode($response->decoded_content);
+        };
+        if ($@) {
             return Lim::Error->new(
-                message => 'Unknown content type ['.$response->header('Content-Type').'] returned',
+                message => 'JSON decode error: '.$@,
                 module => $self
             );
         }
-    }
-    else {
+
+        if (ref($data) ne 'HASH') {
+            return Lim::Error->new(
+                message => 'Invalid data returned, not a hash',
+                module => $self
+            );
+        }
+
         unless ($response->code == 200) {
+            if (ref($data->{error}) eq 'HASH') {
+                return Lim::Error->new->set({ 'Lim::Error' => $data->{error} });
+            }
             return Lim::Error->new(
                 code => $response->code,
                 module => $self
             );
         }
+    }
+    else {
+        return Lim::Error->new(
+            message => 'Unknown content type ['.$response->header('Content-Type').'] returned',
+            module => $self
+        );
     }
 
     # TODO: How can we check id?
