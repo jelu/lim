@@ -14,6 +14,7 @@ use HTTP::Response ();
 
 use Lim ();
 use Lim::RPC::Callback ();
+use Lim::Util ();
 
 use base qw(Lim::RPC::Transport);
 
@@ -59,12 +60,12 @@ sub Init {
     $self->{user} = 'guest';
     $self->{pass} = 'guest';
     $self->{vhost} = '/';
-    $self->{timeout} = 1;
+    $self->{timeout} = 10;
     $self->{queue_prefix} = 'lim_';
     $self->{verbose} = 0;
     $self->{prefetch_count} = 1;
 
-    foreach (qw(host port user pass vhost timeout verbose prefetch_count)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
         }
@@ -83,8 +84,7 @@ sub Init {
         $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
     };
     if ($@) {
-        Lim::ERR and $self->{logger}->error('Failed to initiate AnyEvent::RabbitMQ: '.$@);
-        return;
+        confess 'Failed to initiate AnyEvent::RabbitMQ: '.$@;
     }
     unless (blessed $self->{rabbitmq} and $self->{rabbitmq}->isa('AnyEvent::RabbitMQ')) {
         confess 'unable to create AnyEvent::RabbitMQ object';
@@ -484,7 +484,7 @@ sub _consume {
                 $frame->{body}->payload
             );
 
-            Lim::RPC_DEBUG and $self->{logger}->debug('RabbitMQ Request: ', $request->as_string);
+            Lim::RPC_DEBUG and $self->{logger}->debug('RabbitMQ request: ', $request->as_string);
 
             my $cb = Lim::RPC::Callback->new(
                 cb => sub {
@@ -499,9 +499,16 @@ sub _consume {
                         and blessed($response)
                         and $response->isa('HTTP::Response'))
                     {
+                        Lim::RPC_DEBUG and $self->{logger}->debug('RabbitMQ response: ', $response->as_string);
+
                         $channel->{obj}->publish(
                             exchange    => '',
                             routing_key => $frame->{header}->reply_to,
+                            header => {
+                                headers => {
+                                    'Content-Type' => $response->header('Content-Type')
+                                }
+                            },
                             body        => $response->content
                         );
                     }
