@@ -128,6 +128,7 @@ sub load {
             next;
         }
         
+        Lim::DEBUG and $self->{logger}->debug('Loaded ', $module);
         $self->{protocol}->{$module} = {
             name => $name,
             module => $module,

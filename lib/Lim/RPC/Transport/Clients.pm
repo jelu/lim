@@ -129,6 +129,7 @@ sub load {
             next;
         }
 
+        Lim::DEBUG and $self->{logger}->debug('Loaded ', $module);
         $self->{transport}->{$module} = {
             name => $name,
             module => $module,
