@@ -143,16 +143,19 @@ sub new {
 
         $uri = URI->new('', 'http');
         $uri->path($path);
-        $uri->host_port($auth);
+        $uri->authority($auth);
+        my ($user, $pass) = split(/:/o, $uri->userinfo);
 
         $self->{host} = $uri->host;
-        $self->{port} = $uri->port;
+        $self->{port} = $uri->_port;
+        $self->{user} = $user;
+        $self->{pass} = $pass;
         $self->{path} = $uri->path;
         $self->{transport} = $transport;
         $self->{protocol} = $protocol;
     }
     else {
-        foreach (qw(host port path transport protocol)) {
+        foreach (qw(host port user pass path transport protocol)) {
             $self->{$_} = defined $args->{$_} ? $args->{$_} : Lim::Config->{cli}->{$_};
         }
     }
@@ -203,7 +206,7 @@ sub new {
 
     $self->{component}->_addCall($self);
     $self->{transport_obj}->request(
-        (map { $_ => $self->{$_} } qw(host port)),
+        (map { $_ => $self->{$_} } qw(plugin call host port user pass)),
         request => $request,
         cb => sub {
             my (undef, $response) = @_;
