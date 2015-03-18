@@ -7,8 +7,6 @@ use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 
 use AnyEvent ();
-use AnyEvent::Socket ();
-use AnyEvent::Handle ();
 use AnyEvent::RabbitMQ ();
 
 use HTTP::Request ();

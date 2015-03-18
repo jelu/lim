@@ -6,6 +6,7 @@ use Carp;
 use Scalar::Util qw(blessed weaken);
 
 use AnyEvent ();
+use AnyEvent::Handle ();
 use AnyEvent::Socket ();
 
 use HTTP::Status qw(:constants);
