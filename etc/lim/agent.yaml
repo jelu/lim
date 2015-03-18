@@ -4,6 +4,8 @@ agent:
 #  config_file:
   uri:
     - https+rest+soap+xmlrpc+jsonrpc2://0.0.0.0:5353
+#   - uri: http+rest://localhost:8080
+#     plugin: Name
 #
 #log:
 #  obj_debug: 1

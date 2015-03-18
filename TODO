@@ -7,4 +7,3 @@
 - Lim::Util::DBI pod
 - hosts cache in Lim::Util::resolve_hosts
 - Retry initiating transports
-- Use plugin.load.name=uri,uri,... to specify specific uri's where a plugin should be loaded
