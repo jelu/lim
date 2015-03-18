@@ -446,11 +446,21 @@ sub _consume {
         queue => $self->{queue_prefix}.$channel->{module},
         no_ack => 0,
         on_success => sub {
+            my ($method) = @_;
+
             unless (defined $self) {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel consuming successfully for '.$channel->{module});
+            unless (blessed $method and $method->can('method_frame')
+                and blessed $method->method_frame and $method->method_frame->can('consumer_tag'))
+            {
+                Lim::WARN and $self->{logger}->debug('Channel consuming for '.$channel->{module}.' but no consumer_tag found');
+            }
+            else {
+                Lim::DEBUG and $self->{logger}->debug('Channel consuming successfully for '.$channel->{module});
+                $channel->{consumer_tag} = $method->method_frame->consumer_tag;
+            }
         },
         on_consume => sub {
             my ($frame) = @_;
@@ -535,6 +545,13 @@ sub _consume {
                 delivery_tag => $frame->{deliver}->method_frame->delivery_tag
             );
         },
+        on_cancel => sub {
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+        },
         on_failure => sub {
             my ($message) = @_;
 
@@ -546,6 +563,72 @@ sub _consume {
             $self->_reopen($channel);
         }
     );
+}
+
+=head2 close
+
+=cut
+
+sub close {
+    my ($self, $cb) = @_;
+    my $real_self = $self;
+    weaken($self);
+    my $queue_prefix = $self->{queue_prefix};
+
+    unless (ref($cb) eq 'CODE') {
+        confess '$cb is not CODE';
+    }
+
+    my $cv = AnyEvent->condvar;
+    $cv->begin(sub {
+        $cb->();
+        $cv = undef;
+    });
+
+    foreach my $channel (values %{$self->{channel}}) {
+        unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel')) {
+            next;
+        }
+
+        my $delete = sub {
+            $channel->{obj}->delete_queue(
+                queue => $queue_prefix.$channel->{module},
+                on_success => sub {
+                    Lim::DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
+                    $cv->end;
+                },
+                on_failure => sub {
+                    my ($message) = @_;
+
+                    Lim::ERR and defined $self and $self->{logger}->error('Channel delete failure for ', $channel->{module}, ': '.$message);
+                    $cv->end;
+                }
+            );
+        };
+
+        $cv->begin;
+        if ($channel->{consumer_tag}) {
+            $channel->{obj}->cancel(
+                consumer_tag => $channel->{consumer_tag},
+                on_success => sub {
+                    Lim::DEBUG and defined $self and $self->{logger}->debug('Channel cancel successfully');
+                    $delete->();
+                },
+                on_failure => sub {
+                    my ($message) = @_;
+
+                    Lim::ERR and defined $self and $self->{logger}->error('Channel cancel failure: '.$message);
+                    $delete->();
+                }
+            );
+        }
+        else {
+            $delete->();
+        }
+    }
+    $cv->end;
+
+    $self;
 }
 
 =head1 AUTHOR
