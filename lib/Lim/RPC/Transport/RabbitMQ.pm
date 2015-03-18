@@ -98,6 +98,7 @@ sub Init {
 
         $self->{host} = $host;
         $self->{port} = $port;
+        $self->{uri} = URI->new('rabbitmq://'.$host.':'.$port);
         $self->_connect;
     };
 }
@@ -194,6 +195,7 @@ sub name {
 =cut
 
 sub uri {
+    $_[0]->{uri};
 }
 
 =head2 host
@@ -201,6 +203,7 @@ sub uri {
 =cut
 
 sub host {
+    $_[0]->{host};
 }
 
 =head2 port
@@ -208,6 +211,7 @@ sub host {
 =cut
 
 sub port {
+    $_[0]->{port};
 }
 
 =head2 serve

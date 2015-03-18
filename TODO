@@ -7,5 +7,3 @@
 - Lim::Util::DBI pod
 - hosts cache in Lim::Util::resolve_hosts
 - Retry initiating transports
-- plugin.load_all setting to not load all plugins, load only plugins in plugin.load
-- Use plugin.load.name=uri,uri,... to specify specific uri's where a plugin should be loaded

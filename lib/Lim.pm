@@ -69,6 +69,7 @@ our $CONFIG = {
         protocol => 'rest'
     },
     plugin => {
+        load_all => 1,
         load => {}
     }
 };

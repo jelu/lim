@@ -49,7 +49,8 @@ sub new {
         logger => Log::Log4perl->get_logger,
         protocol => {},
         transports => [],
-        module => {}
+        module => {},
+        transport_modules => {}
     };
     bless $self, $class;
 
@@ -58,6 +59,18 @@ sub new {
     }
 
     foreach my $uri (ref($args{uri}) eq 'ARRAY' ? @{$args{uri}} : $args{uri}) {
+        my $modules;
+
+        if (ref($uri) eq 'HASH') {
+            if (ref($uri->{plugin}) eq 'ARRAY') {
+                $modules = { map { $_ => 1 } @{$uri->{plugin}} };
+            }
+            unless (defined $uri->{uri}) {
+                next;
+            }
+            $uri = $uri->{uri};
+        }
+
         my ($scheme, $auth, $path, $query, $frag) = URI::Split::uri_split($uri);
 
         if ($scheme =~ /^([a-z0-9_\-\.]+)(?:\+([a-z0-9_\-\.\+]+))*/o) {
@@ -89,6 +102,9 @@ sub new {
             
             $transport->add_protocol(@protocols);
             push(@{$self->{transports}}, $transport);
+            if ($modules) {
+                $self->{transport_modules}->{$transport} = $modules;
+            }
         }
         else {
             confess __PACKAGE__, ': Unable to parse URI schema: ', $uri;
@@ -434,9 +450,16 @@ sub serve {
             };
 
             foreach my $protocol (values %{$self->{protocol}}) {
+                Lim::DEBUG and $self->{logger}->debug('serving ', $name, ' to protocol ', $protocol->name);
                 $protocol->serve($module, $name);
             }
             foreach my $transport (@{$self->{transports}}) {
+                if (exists $self->{transport_modules}->{$transport}
+                    and !exists $self->{transport_modules}->{$transport}->{$module->Name})
+                {
+                    next;
+                }
+                Lim::DEBUG and $self->{logger}->debug('serving ', $name, ' to transport ', $transport->name, ' at ', $transport->uri);
                 $transport->serve($module, $name);
             }
         }
