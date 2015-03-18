@@ -242,7 +242,7 @@ configuration.
 sub LoadConfigDirectory {
     my ($directory) = @_;
     
-    if (defined $directory and -d $directory) {
+    if (defined $directory and -r $directory and -x $directory and -d $directory) {
         unless(opendir(CONFIGS, $directory)) {
             confess __PACKAGE__, ': Unable to read configurations in directory ', $directory, ': ', $!, "\n";
         }
