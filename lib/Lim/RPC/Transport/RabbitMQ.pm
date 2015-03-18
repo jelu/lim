@@ -28,12 +28,6 @@ use base qw(Lim::RPC::Transport);
 
 See L<Lim> for version.
 
-=over 4
-
-=item
-
-=back
-
 =cut
 
 our $VERSION = $Lim::VERSION;

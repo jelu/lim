@@ -29,12 +29,6 @@ use base qw(Lim::RPC::Transport::Client);
 
 See L<Lim> for version.
 
-=over 4
-
-=item MAX_RESPONSE_LEN
-
-=back
-
 =cut
 
 our $VERSION = $Lim::VERSION;
