@@ -86,8 +86,24 @@ reference to itself even on error.
 
 sub Load {
     my ($self) = @_;
-    
-    foreach my $module (findsubmod Lim::Plugin) {
+    my @modules;
+
+    if (Lim::Config->{plugin}->{load_all}) {
+        @modules = findsubmod Lim::Plugin;
+    }
+    else {
+        foreach (findsubmod Lim::Plugin) {
+            my $name = $_;
+            $name =~ s/.*:://o;
+            if (exists Lim::Config->{plugin}->{load}->{$_}
+                or exists Lim::Config->{plugin}->{load}->{$name})
+            {
+                push(@modules, $_);
+            }
+        }
+    }
+
+    foreach my $module (@modules) {
         if (exists Lim::Config->{plugin} and exists Lim::Config->{plugin}->{load}) {
             if (exists Lim::Config->{plugin}->{load}->{$module} and !Lim::Config->{plugin}->{load}->{$module}) {
                 Lim::WARN and $self->{logger}->warn('Skipping ', $module, ' configured not to load.');
