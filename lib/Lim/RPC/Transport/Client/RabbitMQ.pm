@@ -96,7 +96,7 @@ sub request {
     }
     $self->{request} = $args{request};
 
-    Lim::DEBUG and $self->{logger}->debug('Connection to ', $self->{host}, ' port ', $self->{port});
+    Lim::RPC_DEBUG and $self->{logger}->debug('Connection to ', $self->{host}, ' port ', $self->{port});
     eval {
         $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
     };
@@ -148,7 +148,7 @@ sub _connect {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Server connected successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Server connected successfully');
             $self->_open;
         },
         on_failure => sub {
@@ -252,7 +252,7 @@ sub _open {
             }
 
             $self->{channel} = $obj;
-            Lim::DEBUG and $self->{logger}->debug('Channel opened successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel opened successfully');
             $self->_exchange;
         },
         on_failure => sub {
@@ -351,7 +351,7 @@ sub _exchange {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel exchange declared successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel exchange declared successfully');
             $self->_confirm;
         },
         on_failure => sub {
@@ -412,7 +412,7 @@ sub _declare {
 
             $self->{queue} = $method->method_frame->queue;
 
-            Lim::DEBUG and $self->{logger}->debug('Channel queue declared successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully');
             $self->_consume;
         },
         on_failure => sub {
@@ -459,7 +459,7 @@ sub _consume {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel consuming successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel consuming successfully');
             $self->_confirm;
         },
         on_consume => sub {
@@ -569,7 +569,7 @@ sub _confirm {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel confirm successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel confirm successfully');
             $self->_publish;
         },
         on_failure => sub {
@@ -631,7 +631,7 @@ sub _publish {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel publish ack');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel publish ack');
 
             if ($self->{broadcast}) {
                 if (exists $self->{cb}) {
@@ -696,7 +696,7 @@ sub _cancel {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel cancel successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel cancel successfully');
             $self->_delete;
         },
         on_failure => sub {
@@ -739,7 +739,7 @@ sub _delete {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel delete successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel delete successfully');
 
             if (exists $self->{cb}) {
                 $self->{cb}->($self, $self->{response});
