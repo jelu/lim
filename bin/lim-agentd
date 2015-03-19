@@ -273,6 +273,11 @@ $server->serve(Lim::Plugins->instance->LoadedModules);
 if (defined $server) {
     push(@watchers, $server);
     $cv->recv;
+    $cv = AnyEvent->condvar;
+    $server->close(sub {
+        $cv->send;
+    });
+    $cv->recv;
 }
 
 @watchers = ();

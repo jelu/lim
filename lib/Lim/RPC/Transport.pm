@@ -150,6 +150,22 @@ sub serve {
     confess 'function serve not overloaded';
 }
 
+=head2 close
+
+=cut
+
+sub close {
+    my ($self, $cb) = @_;
+
+    unless (ref($cb) eq 'CODE') {
+        confess '$cb is not CODE';
+    }
+
+    $cb->();
+
+    $self;
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>

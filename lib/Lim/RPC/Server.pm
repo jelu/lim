@@ -576,6 +576,35 @@ sub transports {
     @{$_[0]->{transports}};
 }
 
+=head2 close
+
+=cut
+
+sub close {
+    my ($self, $cb) = @_;
+
+    unless (ref($cb) eq 'CODE') {
+        confess '$cb is not CODE';
+    }
+
+    my $cv = AnyEvent->condvar;
+    $cv->begin(sub {
+        $cb->();
+        $cv = undef;
+    });
+
+    foreach my $transport (@{$self->{transports}}) {
+        $cv->begin;
+        Lim::DEBUG and $self->{logger}->debug('Closing transport ', $transport->name);
+        $transport->close(sub {
+            $cv->end;
+        });
+    }
+    $cv->end;
+
+    $self;
+}
+
 =head1 AUTHOR
 
 Jerry Lundström, C<< <lundstrom.jerry at gmail.com> >>
