@@ -60,6 +60,7 @@ sub new {
 
     foreach my $uri (ref($args{uri}) eq 'ARRAY' ? @{$args{uri}} : $args{uri}) {
         my $modules;
+        my $transport_config = {};
 
         if (ref($uri) eq 'HASH') {
             if (ref($uri->{plugin}) eq 'ARRAY') {
@@ -67,6 +68,9 @@ sub new {
             }
             unless (defined $uri->{uri}) {
                 next;
+            }
+            if (ref($uri->{transport}) eq 'HASH') {
+                $transport_config = $uri->{transport};
             }
             $uri = $uri->{uri};
         }
@@ -79,7 +83,7 @@ sub new {
             $uri = URI->new('', 'http');
             $uri->query($query);
             $uri->host_port($auth);
-            
+
             foreach my $protocol_name (split(/\+/o, $protocols)) {
                 unless (exists $self->{protocol}->{$protocol_name}) {
                     my $protocol;
@@ -95,8 +99,11 @@ sub new {
                     push(@protocols, $self->{protocol}->{$protocol_name});
                 }
             }
-            
-            unless (defined ($transport = Lim::RPC::Transports->instance->transport($transport_name, server => $self, uri => $uri))) {
+
+            unless (defined ($transport = Lim::RPC::Transports->instance->transport($transport_name,
+                (ref($transport_config->{$transport_name}) eq 'HASH' ? (%{$transport_config->{$transport_name}}) : ()),
+                server => $self, uri => $uri)))
+            {
                 confess __PACKAGE__, ': Transport ', $transport_name, ' does not exists';
             }
             

@@ -6,6 +6,9 @@ agent:
     - https+rest+soap+xmlrpc+jsonrpc2://0.0.0.0:5353
 #   - uri: http+rest://localhost:8080
 #     plugin: Name
+#     transport:
+#       rabbitmq:
+#         broadcast: 1
 #
 #log:
 #  obj_debug: 1
