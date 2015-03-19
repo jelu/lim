@@ -69,8 +69,10 @@ sub request {
     $self->{verbose} = 0;
     $self->{mandatory} = 0;
     $self->{immediate} = 0;
+    $self->{broadcast} = 0;
+    $self->{exchange_prefix} = 'lim_exchange_';
 
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose mandatory immediate)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose mandatory immediate broadcast exchange_prefix)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
         }
@@ -81,7 +83,7 @@ sub request {
             confess __PACKAGE__, ': No '.$_.' specified';
         }
     }
-    foreach (qw(plugin call host port user pass vhost timeout queue_prefix verbose mandatory immediate)) {
+    foreach (qw(plugin call host port user pass vhost timeout queue_prefix verbose mandatory immediate broadcast exchange_prefix)) {
         if (defined $args{$_}) {
             $self->{$_} = $args{$_};
         }
@@ -251,7 +253,7 @@ sub _open {
 
             $self->{channel} = $obj;
             Lim::DEBUG and $self->{logger}->debug('Channel opened successfully');
-            $self->_declare;
+            $self->_exchange;
         },
         on_failure => sub {
             my ($message) = @_;
@@ -315,6 +317,55 @@ sub _open {
             if (exists $self->{cb}) {
                 $self->{cb}->($self, Lim::Error->new(
                     message => 'Frame returned: '.$message,
+                    module => $self
+                ));
+                delete $self->{cb};
+            }
+        }
+    );
+}
+
+=head2 _exchange
+
+=cut
+
+sub _exchange {
+    my ($self, $channel) = @_;
+    my $real_self = $self;
+    weaken($self);
+
+    unless ($self->{broadcast}) {
+        $self->_declare;
+        return;
+    }
+
+    unless (blessed $self->{channel} and $self->{channel}->isa('AnyEvent::RabbitMQ::Channel')) {
+        confess '$self->{channel} is not AnyEvent::RabbitMQ::Channel';
+    }
+
+    $self->{channel}->declare_exchange(
+        exchange => $self->{exchange_prefix}.lc($self->{plugin}),
+        type => 'fanout',
+        on_success => sub {
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::DEBUG and $self->{logger}->debug('Channel exchange declared successfully');
+            $self->_confirm;
+        },
+        on_failure => sub {
+            my ($message) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::ERR and $self->{logger}->error('Channel exchange declare failure: '.$message);
+
+            if (exists $self->{cb}) {
+                $self->{cb}->($self, Lim::Error->new(
+                    message => 'Channel exchange declare failure: '.$message,
                     module => $self
                 ));
                 delete $self->{cb};
@@ -550,7 +601,7 @@ sub _publish {
     my $real_self = $self;
     weaken($self);
 
-    unless (defined $self->{queue}) {
+    if (!$self->{broadcast} and !defined $self->{queue}) {
         confess '$self->{queue} not defined';
     }
     unless (blessed $self->{channel} and $self->{channel}->isa('AnyEvent::RabbitMQ::Channel')) {
@@ -561,15 +612,34 @@ sub _publish {
     $self->{channel}->publish(
         (exists $self->{mandatory} ? (mandatory => $self->{mandatory}) : ()),
         (exists $self->{immediate} ? (immediate => $self->{immediate}) : ()),
-        exchange => '',
-        routing_key => $self->{queue_prefix}.lc($self->{plugin}),
+        ($self->{broadcast} ? (
+            exchange => $self->{exchange_prefix}.lc($self->{plugin}),
+            routing_key => '',
+        ) : (
+            exchange => '',
+            routing_key => $self->{queue_prefix}.lc($self->{plugin}),
+        )),
         header => {
-            reply_to => $self->{queue},
+            ($self->{broadcast} ? () : (reply_to => $self->{queue})),
             headers => {
                 'Content-Type' => $self->{request}->header('Content-Type')
             }
         },
         body => $self->{request}->content,
+        on_ack => sub {
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::DEBUG and $self->{logger}->debug('Channel publish ack');
+
+            if ($self->{broadcast}) {
+                if (exists $self->{cb}) {
+                    $self->{cb}->($self, {});
+                    delete $self->{cb};
+                }
+            }
+        },
         on_nack => sub {
             unless (defined $self) {
                 return;
@@ -595,30 +665,6 @@ sub _publish {
             if (exists $self->{cb}) {
                 $self->{cb}->($self, Lim::Error->new(
                     message => 'Channel publish failure: message returned',
-                    module => $self
-                ));
-                delete $self->{cb};
-            }
-        },
-        on_success => sub {
-            unless (defined $self) {
-                return;
-            }
-
-            Lim::DEBUG and $self->{logger}->debug('Channel publish successfully');
-        },
-        on_failure => sub {
-            my ($message) = @_;
-
-            unless (defined $self) {
-                return;
-            }
-
-            Lim::ERR and $self->{logger}->error('Channel publish failure: '.$message);
-
-            if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel publish failure: '.$message,
                     module => $self
                 ));
                 delete $self->{cb};

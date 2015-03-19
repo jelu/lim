@@ -131,7 +131,7 @@ sub new {
     }
 
     if (defined $args->{uri}) {
-        my ($scheme, $auth, $path) = URI::Split::uri_split($args->{uri});
+        my ($scheme, $auth, $path) = URI::Split::uri_split(delete $args->{uri});
         my ($transport, $protocol);
 
         if ($scheme =~ /^([a-z0-9_\-\.]+)\+([a-z0-9_\-\.\+]+)/o) {
@@ -156,7 +156,7 @@ sub new {
     }
     else {
         foreach (qw(host port user pass path transport protocol)) {
-            $self->{$_} = defined $args->{$_} ? $args->{$_} : Lim::Config->{cli}->{$_};
+            $self->{$_} = defined $args->{$_} ? delete $args->{$_} : Lim::Config->{cli}->{$_};
         }
     }
     $self->{cb} = $cb;
@@ -206,6 +206,7 @@ sub new {
 
     $self->{component}->_addCall($self);
     $self->{transport_obj}->request(
+        %$args,
         (map { $_ => $self->{$_} } qw(plugin call host port user pass)),
         request => $request,
         cb => sub {
