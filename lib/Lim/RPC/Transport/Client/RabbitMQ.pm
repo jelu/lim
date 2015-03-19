@@ -67,8 +67,10 @@ sub request {
     $self->{timeout} = 10;
     $self->{queue_prefix} = 'lim_';
     $self->{verbose} = 0;
+    $self->{mandatory} = 0;
+    $self->{immediate} = 0;
 
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose mandatory immediate)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
         }
@@ -79,7 +81,7 @@ sub request {
             confess __PACKAGE__, ': No '.$_.' specified';
         }
     }
-    foreach (qw(plugin call host port user pass vhost timeout queue_prefix verbose)) {
+    foreach (qw(plugin call host port user pass vhost timeout queue_prefix verbose mandatory immediate)) {
         if (defined $args{$_}) {
             $self->{$_} = $args{$_};
         }
@@ -557,7 +559,8 @@ sub _publish {
 
     Lim::RPC_DEBUG and $self->{logger}->debug('RabbitMQ request: ', $self->{request}->as_string);
     $self->{channel}->publish(
-        mandatory => 1,
+        (exists $self->{mandatory} ? (mandatory => $self->{mandatory}) : ()),
+        (exists $self->{immediate} ? (immediate => $self->{immediate}) : ()),
         exchange => '',
         routing_key => $self->{queue_prefix}.lc($self->{plugin}),
         header => {
