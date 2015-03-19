@@ -58,10 +58,17 @@ sub Init {
     $self->{queue_prefix} = 'lim_';
     $self->{verbose} = 0;
     $self->{prefetch_count} = 1;
+    $self->{broadcast} = 0;
+    $self->{exchange_prefix} = 'lim_exchange_';
 
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
+        }
+    }
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
+        if (defined $args{$_}) {
+            $self->{$_} = $args{$_};
         }
     }
 
@@ -255,6 +262,7 @@ sub _reopen {
     }
 
     delete $channel->{obj};
+    delete $channel->{queue};
     my $w; $w = AnyEvent->timer(after => 1, cb => sub {
         unless (defined $self) {
             return;
@@ -372,7 +380,7 @@ sub _qos {
             }
 
             Lim::DEBUG and $self->{logger}->debug('Channel QoS setup successfully for '.$channel->{module});
-            $self->_declare($channel);
+            $self->_exchange($channel);
         },
         on_failure => sub {
             my ($message) = @_;
@@ -382,6 +390,51 @@ sub _qos {
             }
 
             Lim::ERR and $self->{logger}->error('Channel QoS setup failure for '.$channel->{module}.': '.$message);
+            $self->_reopen($channel);
+        }
+    );
+}
+
+=head2 _exchange
+
+=cut
+
+sub _exchange {
+    my ($self, $channel) = @_;
+    my $real_self = $self;
+    weaken($self);
+
+    unless ($self->{broadcast}) {
+        $self->_declare($channel);
+        return;
+    }
+
+    unless (ref($channel) eq 'HASH') {
+        confess '$channel is not HASH';
+    }
+    unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel')) {
+        confess '$channel->{obj} is not AnyEvent::RabbitMQ::Channel';
+    }
+
+    $channel->{obj}->declare_exchange(
+        exchange => $self->{exchange_prefix}.$channel->{module},
+        type => 'fanout',
+        on_success => sub {
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::DEBUG and $self->{logger}->debug('Channel exchange declared successfully for '.$channel->{module});
+            $self->_declare($channel);
+        },
+        on_failure => sub {
+            my ($message) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::ERR and $self->{logger}->error('Channel exchange declare failure for '.$channel->{module}.': '.$message);
             $self->_reopen($channel);
         }
     );
@@ -404,7 +457,76 @@ sub _declare {
     }
 
     $channel->{obj}->declare_queue(
-        queue => $self->{queue_prefix}.$channel->{module},
+        ($self->{broadcast} ? (
+            exclusive => 1
+        ) : (
+            queue => $self->{queue_prefix}.$channel->{module}
+        )),
+        on_success => sub {
+            my ($method) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+
+            if ($self->{broadcast}) {
+                unless (blessed $method and $method->can('method_frame')
+                    and blessed $method->method_frame and $method->method_frame->can('queue'))
+                {
+                    Lim::ERR and $self->{logger}->error('Declare queue frame invalid for '.$channel->{module});
+                    $self->_reopen($channel);
+                    return;
+                }
+
+                $channel->{queue} = $method->method_frame->queue;
+            }
+            else {
+                $channel->{queue} = $self->{queue_prefix}.$channel->{module};
+            }
+
+            Lim::DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
+            $self->_bind($channel);
+        },
+        on_failure => sub {
+            my ($message) = @_;
+
+            unless (defined $self) {
+                return;
+            }
+
+            Lim::ERR and $self->{logger}->error('Channel queue declare failure for '.$channel->{module}.': '.$message);
+            $self->_reopen($channel);
+        }
+    );
+}
+
+=head2 _bind
+
+=cut
+
+sub _bind {
+    my ($self, $channel) = @_;
+    my $real_self = $self;
+    weaken($self);
+
+    unless ($self->{broadcast}) {
+        $self->_consume($channel);
+        return;
+    }
+
+    unless (ref($channel) eq 'HASH') {
+        confess '$channel is not HASH';
+    }
+    unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel')) {
+        confess '$channel->{obj} is not AnyEvent::RabbitMQ::Channel';
+    }
+    unless (defined $channel->{queue}) {
+        confess '$channel->{queue} is not defined';
+    }
+
+    $channel->{obj}->bind_queue(
+        exchange => $self->{exchange_prefix}.$channel->{module},
+        queue => $channel->{queue},
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -441,9 +563,12 @@ sub _consume {
     unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel')) {
         confess '$channel->{obj} is not AnyEvent::RabbitMQ::Channel';
     }
+    unless (defined $channel->{queue}) {
+        confess '$channel->{queue} is not defined';
+    }
 
     $channel->{obj}->consume(
-        queue => $self->{queue_prefix}.$channel->{module},
+        queue => $channel->{queue},
         no_ack => 0,
         on_success => sub {
             my ($method) = @_;
@@ -502,7 +627,8 @@ sub _consume {
                         return;
                     }
 
-                    if (blessed $frame->{header}
+                    if (!$self->{broadcast}
+                        and blessed $frame->{header}
                         and $frame->{header}->can('reply_to')
                         and blessed($response)
                         and $response->isa('HTTP::Response'))
@@ -586,13 +712,15 @@ sub close {
     });
 
     foreach my $channel (values %{$self->{channel}}) {
-        unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel')) {
+        unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel') and defined $channel->{queue}) {
             next;
         }
 
+        # TODO: Close exchange?
+
         my $delete = sub {
             $channel->{obj}->delete_queue(
-                queue => $queue_prefix.$channel->{module},
+                queue => $channel->{queue},
                 on_success => sub {
                     Lim::DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
                     $cv->end;
