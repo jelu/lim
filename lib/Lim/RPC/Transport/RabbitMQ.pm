@@ -126,7 +126,7 @@ sub _connect {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Server connected successfully');
+            Lim::RPC_DEBUG and $self->{logger}->debug('Server connected successfully');
 
             foreach my $channel (values %{$self->{channel}}) {
                 if (exists $channel->{obj}) {
@@ -303,7 +303,7 @@ sub _open {
             }
 
             $channel->{obj} = $obj;
-            Lim::DEBUG and $self->{logger}->debug('Channel opened successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel opened successfully for '.$channel->{module});
             $self->_qos($channel);
         },
         on_failure => sub {
@@ -379,7 +379,7 @@ sub _qos {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel QoS setup successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel QoS setup successfully for '.$channel->{module});
             $self->_exchange($channel);
         },
         on_failure => sub {
@@ -424,7 +424,7 @@ sub _exchange {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel exchange declared successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel exchange declared successfully for '.$channel->{module});
             $self->_declare($channel);
         },
         on_failure => sub {
@@ -484,7 +484,7 @@ sub _declare {
                 $channel->{queue} = $self->{queue_prefix}.$channel->{module};
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
             $self->_bind($channel);
         },
         on_failure => sub {
@@ -532,7 +532,7 @@ sub _bind {
                 return;
             }
 
-            Lim::DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
             $self->_consume($channel);
         },
         on_failure => sub {
@@ -583,7 +583,7 @@ sub _consume {
                 Lim::WARN and $self->{logger}->debug('Channel consuming for '.$channel->{module}.' but no consumer_tag found');
             }
             else {
-                Lim::DEBUG and $self->{logger}->debug('Channel consuming successfully for '.$channel->{module});
+                Lim::RPC_DEBUG and $self->{logger}->debug('Channel consuming successfully for '.$channel->{module});
                 $channel->{consumer_tag} = $method->method_frame->consumer_tag;
             }
         },
@@ -722,7 +722,7 @@ sub close {
             $channel->{obj}->delete_queue(
                 queue => $channel->{queue},
                 on_success => sub {
-                    Lim::DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
+                    Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
                     $cv->end;
                 },
                 on_failure => sub {
@@ -739,7 +739,7 @@ sub close {
             $channel->{obj}->cancel(
                 consumer_tag => $channel->{consumer_tag},
                 on_success => sub {
-                    Lim::DEBUG and defined $self and $self->{logger}->debug('Channel cancel successfully');
+                    Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel cancel successfully');
                     $delete->();
                 },
                 on_failure => sub {
