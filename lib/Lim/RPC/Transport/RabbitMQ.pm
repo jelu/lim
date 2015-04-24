@@ -6,7 +6,8 @@ use Carp;
 use Scalar::Util qw(blessed weaken);
 
 use AnyEvent ();
-use AnyEvent::RabbitMQ ();
+eval 'use AnyEvent::RabbitMQ ();';
+undef $@;
 
 use HTTP::Status qw(:constants);
 use HTTP::Request ();
