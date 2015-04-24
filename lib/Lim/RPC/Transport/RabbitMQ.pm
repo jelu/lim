@@ -641,6 +641,7 @@ sub _consume {
                             routing_key => $frame->{header}->reply_to,
                             header => {
                                 headers => {
+                                    'X-Lim-Code' => $response->code,
                                     'Content-Type' => $response->header('Content-Type')
                                 }
                             },

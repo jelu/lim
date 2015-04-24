@@ -516,7 +516,7 @@ sub _consume {
                 $headers->header(%{$frame->{header}->headers});
             }
             my $response = HTTP::Response->new(
-                HTTP::Status::HTTP_OK,
+                ( $headers->header('X-Lim-Code') ? $headers->header('X-Lim-Code') : HTTP::Status::HTTP_OK ),
                 '',
                 $headers,
                 $frame->{body}->payload
