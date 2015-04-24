@@ -232,6 +232,7 @@ sub new {
                 eval {
                     $data = $self->{protocol_obj}->response($response);
                 };
+
                 if ($@) {
                     $self->{error} = Lim::Error->new(
                         message => 'Protocol response failure: '.$@,
@@ -277,6 +278,9 @@ sub new {
                         );
                         $self->{status} = ERROR;
                         $data = undef;
+                    }
+                    else {
+                        $self->{status} = OK;
                     }
                 }
             }
