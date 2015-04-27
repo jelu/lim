@@ -118,7 +118,8 @@ WriteMakefile(
     )),
     META_MERGE => {
         recommends => {
-            'AnyEvent::ReadLine::Gnu' => 1
+            'AnyEvent::ReadLine::Gnu' => 1,
+            'URI::Escape::XS' => 0.11,
         }
     },
     (! eval { ExtUtils::MakeMaker->VERSION(6.46) } ? () :
