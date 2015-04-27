@@ -9,8 +9,10 @@ use Fcntl qw(:seek);
 use IO::File ();
 use Digest::SHA ();
 use Scalar::Util qw(blessed);
-use URI::Escape ();
-
+eval 'use URI::Escape::XS qw(uri_unescape);';
+if ($@) {
+    use URI::Escape qw(uri_unescape);
+}
 use AnyEvent ();
 use AnyEvent::Util ();
 use AnyEvent::Socket ();
@@ -58,12 +60,12 @@ full path to the file or undef if it does not exist.
 
 sub FileExists {
     my ($file) = @_;
-    
+
     if (defined $file) {
         $file =~ s/^\///o;
         foreach (@{Lim::Config->{prefix}}) {
             my $real_file = $_.'/'.$file;
-            
+
             if (-f $real_file) {
                 return $real_file;
             }
@@ -81,12 +83,12 @@ readable. Returns the full path to the file or undef if it does not exist.
 
 sub FileReadable {
     my ($file) = @_;
-    
+
     if (defined $file) {
         $file =~ s/^\///o;
         foreach (@{Lim::Config->{prefix}}) {
             my $real_file = $_.'/'.$file;
-            
+
             if (-f $real_file and -r $real_file) {
                 return $real_file;
             }
@@ -104,12 +106,12 @@ writable. Returns the full path to the file or undef if it does not exist.
 
 sub FileWritable {
     my ($file) = @_;
-    
+
     if (defined $file) {
         $file =~ s/^\///o;
         foreach (@{Lim::Config->{prefix}}) {
             my $real_file = $_.'/'.$file;
-            
+
             if (-f $real_file and -w $real_file) {
                 return $real_file;
             }
@@ -126,7 +128,7 @@ Read the file and return the content or undef if there was an error.
 
 sub FileReadContent {
     my ($file) = @_;
-    
+
     if (-r $file and defined (my $fh = IO::File->new($file))) {
         my ($tell, $content);
         $fh->seek(0, SEEK_END);
@@ -158,7 +160,7 @@ file and return the L<File::Temp> object or undef on error.
 sub FileWriteContent {
     my ($file, $content) = @_;
     my $filename;
-    
+
     if (defined $file and !defined $content) {
         $content = $file;
         undef($file);
@@ -194,7 +196,7 @@ sub FileWriteContent {
     print $file $content;
     $file->flush;
     $file->close;
-            
+
     my $fh = IO::File->new;
     if ($fh->open($filename)) {
         my ($tell, $read);
@@ -228,11 +230,11 @@ problems creating the temporary file.
 
 sub TempFile {
     my $tmp;
-    
+
     eval {
         $tmp = File::Temp->new;
     };
-    
+
     unless ($@) {
         # TODO log error
         return $tmp;
@@ -250,19 +252,19 @@ exist or if there where problems creating the temporary file.
 
 sub TempFileLikeThis {
     my ($file) = @_;
-    
+
     if (defined $file and -f $file) {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
             $atime,$mtime,$ctime,$blksize,$blocks)
             = stat($file);
         my $tmp;
-        
+
         eval {
             $tmp = File::Temp->new;
         };
-        
+
         # TODO log error
-        
+
         unless ($@) {
             if (chmod($mode, $tmp->filename) and chown($uid, $gid, $tmp->filename)) {
                 return $tmp;
@@ -303,26 +305,26 @@ PUT /other_call
 sub URIize {
     my @parts = split(/([A-Z][^A-Z]*)/o, $_[0]);
     my ($part, $method, $uri);
-    
+
     while (scalar @parts) {
         $part = shift(@parts);
         if ($part ne '') {
             last;
         }
     }
-    
+
     unless (exists $CALL_METHOD{$part}) {
         confess __PACKAGE__, ': No conversion found for ', $part, ' (', $_[0], ')';
     }
-    
+
     $method = $CALL_METHOD{$part};
-    
+
     @parts = grep !/^$/o, @parts;
     unless (scalar @parts) {
         confess __PACKAGE__, ': Could not build URI (', $_[0], ')';
     }
     $uri = lc(join('_', @parts));
-    
+
     return ($method, '/'.$uri);
 }
 
@@ -334,17 +336,17 @@ Returns an HASH reference of the decode query string.
 
 sub QueryDecode {
     my ($href, $href_final) = ({}, {});
-    
+
     foreach my $part (split(/&/o, $_[0])) {
         my ($key, $value) = split(/=/o, $part, 2);
 
-        $key = URI::Escape::uri_unescape($key);
-        $value = URI::Escape::uri_unescape($value);
-        
+        $key = uri_unescape($key);
+        $value = uri_unescape($value);
+
         unless ($key) {
             return;
         }
-        
+
         # check if last element is array and remove it from $key
         my $array = $key =~ s/\[\]$//o ? 1 : 0;
         # verify $key
@@ -373,7 +375,7 @@ sub QueryDecode {
                 $this = $this->{$k};
                 next;
             }
-            
+
             $this = $this->{$k} = {};
         }
     }
@@ -382,7 +384,7 @@ sub QueryDecode {
     my @process = ([$href, $href_final, undef, undef]);
     while (defined (my $this = shift(@process))) {
         my ($old, $new, $parent, $key) = @$this;
-        
+
         my $numeric = 1;
         foreach (keys %$old) {
             unless (/^\d+$/o) {
@@ -390,7 +392,7 @@ sub QueryDecode {
                 last;
             }
         }
-        
+
         if ($numeric) {
             my @array;
             foreach (sort (keys %$old)) {
@@ -402,7 +404,7 @@ sub QueryDecode {
                 }
                 push(@array, $old->{$_});
             }
-            
+
             if (ref($parent) eq 'HASH') {
                 $parent->{$key} = \@array;
             }
@@ -424,7 +426,7 @@ sub QueryDecode {
             }
         }
     }
-    
+
     return $href_final;
 }
 
@@ -454,11 +456,11 @@ LongURICallName
 sub Camelize {
     my ($underscore) = @_;
     my $camelized;
-    
+
     foreach (split(/_/o, $underscore)) {
         $camelized .= ucfirst($_);
     }
-    
+
     return $camelized;
 }
 
@@ -522,14 +524,14 @@ sub run_cmd {
         delete $pass_args{$_};
     }
     $pass_args{close_all} = 1;
-    
+
     if (exists $args{timeout}) {
         $pass_args{'$$'} = \$pid;
 
         unless (exists $args{cb} and ref($args{cb}) eq 'CODE') {
             confess __PACKAGE__, ': must have cb with timeout or invalid';
         }
-        
+
         unless ($args{timeout} > 0) {
             confess __PACKAGE__, ': timeout invalid';
         }
@@ -537,11 +539,11 @@ sub run_cmd {
         unless ($args{interval} > 0) {
             confess __PACKAGE__, ': interval invalid';
         }
-        
+
         unless ($args{kill_try} >= 0) {
             confess __PACKAGE__, ': kill_try invalid';
         }
-        
+
         $timeout = AnyEvent->timer(
             after => $args{timeout},
             interval => $args{interval},
@@ -550,7 +552,7 @@ sub run_cmd {
                     undef($timeout);
                     return;
                 }
-                
+
                 if ($args{kill_try}--) {
                     Lim::DEBUG and Log::Log4perl->get_logger->debug('trying to kill cmd ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
                     kill($args{kill_sig}, $pid);
@@ -576,7 +578,7 @@ sub run_cmd {
         });
         return;
     }
-    
+
     Lim::DEBUG and Log::Log4perl->get_logger->debug('run_cmd ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
 
     return AnyEvent::Util::run_cmd
@@ -590,24 +592,24 @@ sub run_cmd {
 
 sub resolve_host {
     my ($host, $port, $cb) = @_;
-    
+
     unless (defined $host) {
         confess __PACKAGE__, ': Missing host';
     }
     unless (ref($cb) eq 'CODE') {
         confess __PACKAGE__, ': Missing cb or is not CODE';
     }
-    
+
     if (AnyEvent::Socket::parse_address($host)) {
         $cb->($host, $port);
         return;
     }
-    
+
     if (Lim::Config->{rpc}->{skip_dns}) {
         $cb->(Lim::Util::resolve_hosts($host), $port);
         return;
     }
-    
+
     AnyEvent::Socket::resolve_sockaddr $host, $port, 0, undef, undef, sub {
         unless (scalar @_) {
             if (AnyEvent::Socket->VERSION < 6.01) {
@@ -618,13 +620,13 @@ sub resolve_host {
             }
             return;
         }
-        
+
         unless (ref($_[0]) eq 'ARRAY') {
             # TODO: warn?
             $cb->();
             return;
         }
-        
+
         my ($service, $ipn) = AnyEvent::Socket::unpack_sockaddr($_[0]->[3]);
         $cb->(AnyEvent::Socket::format_address($ipn), $service);
     };
@@ -636,7 +638,7 @@ sub resolve_host {
 
 sub resolve_hosts {
     my ($host, $cb) = @_;
-    
+
     unless (defined $host) {
         confess __PACKAGE__, ': Missing host';
     }
@@ -647,7 +649,7 @@ sub resolve_hosts {
             s/#.*//o;
             s/^\s+//o;
             s/\s+$//o;
-            
+
             my ($addr, @aliases) = split(/\s+/o);
             if (grep(/^$host$/, @aliases)) {
                 close(HOSTS);
@@ -656,7 +658,7 @@ sub resolve_hosts {
         }
         close(HOSTS);
     }
-    
+
     return;
 }
 
