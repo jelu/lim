@@ -67,7 +67,7 @@ chomp($port);
 if ($port =~ /^\d+$/o) {
     my $req = HTTP::Request->new(GET => 'http://127.0.0.1:'.$port.'/agent');
     $req->content_type('application/json');
-    $req->content(JSON::XS->new->ascii->encode({
+    $req->content(JSON::XS->new->utf8->encode({
         method => 'ReadVersion',
         id => 1
     }));
@@ -76,7 +76,7 @@ if ($port =~ /^\d+$/o) {
     my $json;
     
     if ($res->is_success) {
-        $json = JSON::XS->new->ascii->decode($res->content)
+        $json = JSON::XS->new->utf8->decode($res->content)
     }
     
     is_deeply($json, {error => undef, id => 1, result => {version => $Lim::VERSION}});

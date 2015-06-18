@@ -60,7 +60,7 @@ sub new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger,
-        json => JSON::XS->new->ascii->convert_blessed,
+        json => JSON::XS->new->utf8->convert_blessed,
         busy => 0
     };
     bless $self, $class;

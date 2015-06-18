@@ -30,7 +30,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $JSON = JSON::XS->new->ascii->convert_blessed;
+our $JSON = JSON::XS->new->utf8->convert_blessed;
 
 =head1 SYNOPSIS
 
