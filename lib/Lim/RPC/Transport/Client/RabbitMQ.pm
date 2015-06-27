@@ -10,13 +10,13 @@ use AnyEvent ();
 eval 'use AnyEvent::RabbitMQ ();';
 undef $@;
 
-use HTTP::Request ();
+use HTTP::Request  ();
 use HTTP::Response ();
 use HTTP::Status qw(:constants);
 
-use Lim ();
+use Lim        ();
 use Lim::Error ();
-use Lim::Util ();
+use Lim::Util  ();
 
 use base qw(Lim::RPC::Transport::Client);
 
@@ -53,24 +53,24 @@ sub name {
 =cut
 
 sub request {
-    my $self = shift;
-    my %args = ( @_ );
+    my $self      = shift;
+    my %args      = (@_);
     my $real_self = $self;
     weaken($self);
 
-    $self->{channel} = undef;
-    $self->{queue} = undef;
-    $self->{host} = 'localhost';
-    $self->{port} = 5672;
-    $self->{user} = 'guest';
-    $self->{pass} = 'guest';
-    $self->{vhost} = '/';
-    $self->{timeout} = 10;
-    $self->{queue_prefix} = 'lim_';
-    $self->{verbose} = 0;
-    $self->{mandatory} = 0;
-    $self->{immediate} = 0;
-    $self->{broadcast} = 0;
+    $self->{channel}         = undef;
+    $self->{queue}           = undef;
+    $self->{host}            = 'localhost';
+    $self->{port}            = 5672;
+    $self->{user}            = 'guest';
+    $self->{pass}            = 'guest';
+    $self->{vhost}           = '/';
+    $self->{timeout}         = 10;
+    $self->{queue_prefix}    = 'lim_';
+    $self->{verbose}         = 0;
+    $self->{mandatory}       = 0;
+    $self->{immediate}       = 0;
+    $self->{broadcast}       = 0;
     $self->{exchange_prefix} = 'lim_exchange_';
 
     foreach (qw(host port user pass vhost timeout queue_prefix verbose mandatory immediate broadcast exchange_prefix)) {
@@ -81,7 +81,7 @@ sub request {
 
     foreach (qw(plugin call)) {
         unless (defined $args{$_}) {
-            confess __PACKAGE__, ': No '.$_.' specified';
+            confess __PACKAGE__, ': No ' . $_ . ' specified';
         }
     }
     foreach (qw(plugin call host port user pass vhost timeout queue_prefix verbose mandatory immediate broadcast exchange_prefix)) {
@@ -98,11 +98,9 @@ sub request {
     $self->{request} = $args{request};
 
     Lim::RPC_DEBUG and $self->{logger}->debug('Connection to ', $self->{host}, ' port ', $self->{port});
-    eval {
-        $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
-    };
+    eval { $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec; };
     if ($@) {
-        confess 'Failed to initiate AnyEvent::RabbitMQ: '.$@;
+        confess 'Failed to initiate AnyEvent::RabbitMQ: ' . $@;
     }
     unless (blessed $self->{rabbitmq} and $self->{rabbitmq}->isa('AnyEvent::RabbitMQ')) {
         confess 'unable to create AnyEvent::RabbitMQ object';
@@ -118,10 +116,13 @@ sub request {
         unless (defined $host and defined $port) {
             Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Unable to resolve host '.$self->{host},
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Unable to resolve host ' . $self->{host},
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
             return;
@@ -160,17 +161,20 @@ sub _connect {
             }
 
             if ($fatal) {
-                Lim::ERR and $self->{logger}->error('Server connection failure: '.$message);
+                Lim::ERR and $self->{logger}->error('Server connection failure: ' . $message);
             }
             else {
-                Lim::WARN and $self->{logger}->warn('Server connection failure: '.$message);
+                Lim::WARN and $self->{logger}->warn('Server connection failure: ' . $message);
             }
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Server connection failure: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Server connection failure: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         },
@@ -182,25 +186,28 @@ sub _connect {
             }
 
             my $message = 'Unknown';
-            if (blessed $frame
+            if (    blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
                 and $frame->method_frame->can('reply_code')
                 and $frame->method_frame->can('reply_text'))
             {
-                $message = '['.$frame->method_frame->reply_code.'] '.$frame->method_frame->reply_text;
+                $message = '[' . $frame->method_frame->reply_code . '] ' . $frame->method_frame->reply_text;
             }
             elsif (defined $frame) {
                 $message = $frame;
             }
 
-            Lim::INFO and $self->{logger}->info('Server connection closed: '.$message);
+            Lim::INFO and $self->{logger}->info('Server connection closed: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Server connection closed: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Server connection closed: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         },
@@ -210,13 +217,16 @@ sub _connect {
             }
 
             my ($message) = @_;
-            Lim::WARN and $self->{logger}->warn('Server read failure: '.$message);
+            Lim::WARN and $self->{logger}->warn('Server read failure: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Server read failure: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Server read failure: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -243,10 +253,13 @@ sub _open {
             unless (blessed $obj and $obj->isa('AnyEvent::RabbitMQ::Channel')) {
                 Lim::ERR and $self->{logger}->error('Channel open failure, object given to on_success is not AnyEvent::RabbitMQ::Channel');
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        message => 'Channel open failure, object given to on_success is not AnyEvent::RabbitMQ::Channel',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            message => 'Channel open failure, object given to on_success is not AnyEvent::RabbitMQ::Channel',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 return;
@@ -263,13 +276,16 @@ sub _open {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel open failure: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel open failure: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel open failure: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel open failure: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         },
@@ -281,22 +297,25 @@ sub _open {
             }
 
             my $message = 'Unknown';
-            if (blessed $frame
+            if (    blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
                 and $frame->method_frame->can('reply_code')
                 and $frame->method_frame->can('reply_text'))
             {
-                $message = '['.$frame->method_frame->reply_code.'] '.$frame->method_frame->reply_text;
+                $message = '[' . $frame->method_frame->reply_code . '] ' . $frame->method_frame->reply_text;
             }
 
-            Lim::INFO and $self->{logger}->info('Channel closed: '.$message);
+            Lim::INFO and $self->{logger}->info('Channel closed: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel closed: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel closed: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         },
@@ -304,22 +323,25 @@ sub _open {
             my ($frame) = @_;
 
             my $message = 'Unknown';
-            if (blessed $frame
+            if (    blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
                 and $frame->method_frame->can('reply_code')
                 and $frame->method_frame->can('reply_text'))
             {
-                $message = '['.$frame->method_frame->reply_code.'] '.$frame->method_frame->reply_text;
+                $message = '[' . $frame->method_frame->reply_code . '] ' . $frame->method_frame->reply_text;
             }
 
-            Lim::WARN and $self->{logger}->warn('Frame returned: '.$message);
+            Lim::WARN and $self->{logger}->warn('Frame returned: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Frame returned: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Frame returned: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -345,8 +367,8 @@ sub _exchange {
     }
 
     $self->{channel}->declare_exchange(
-        exchange => $self->{exchange_prefix}.lc($self->{plugin}),
-        type => 'fanout',
+        exchange   => $self->{exchange_prefix} . lc($self->{plugin}),
+        type       => 'fanout',
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -362,13 +384,16 @@ sub _exchange {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel exchange declare failure: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel exchange declare failure: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel exchange declare failure: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel exchange declare failure: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -389,7 +414,7 @@ sub _declare {
     }
 
     $self->{channel}->declare_queue(
-        exclusive => 1,
+        exclusive  => 1,
         on_success => sub {
             my ($method) = @_;
 
@@ -397,15 +422,20 @@ sub _declare {
                 return;
             }
 
-            unless (blessed $method and $method->can('method_frame')
-                and blessed $method->method_frame and $method->method_frame->can('queue'))
+            unless (blessed $method
+                and $method->can('method_frame')
+                and blessed $method->method_frame
+                and $method->method_frame->can('queue'))
             {
                 Lim::ERR and $self->{logger}->error('Declare queue frame invalid');
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        message => 'Declare queue frame invalid',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            message => 'Declare queue frame invalid',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 return;
@@ -423,13 +453,16 @@ sub _declare {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel queue declare failure: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel queue declare failure: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel queue declare failure: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel queue declare failure: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -453,8 +486,8 @@ sub _consume {
     }
 
     $self->{channel}->consume(
-        queue => $self->{queue},
-        no_ack => 0,
+        queue      => $self->{queue},
+        no_ack     => 0,
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -471,26 +504,35 @@ sub _consume {
             }
             unless (defined $self->{channel}) {
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        message => 'Message consumed without channel',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            message => 'Message consumed without channel',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 return;
             }
 
             unless (ref($frame) eq 'HASH'
-                and blessed $frame->{deliver} and $frame->{deliver}->can('method_frame')
-                and blessed $frame->{deliver}->method_frame and $frame->{deliver}->method_frame->can('delivery_tag')
-                and blessed $frame->{deliver}->method_frame and $frame->{deliver}->method_frame->can('consumer_tag'))
+                and blessed $frame->{deliver}
+                and $frame->{deliver}->can('method_frame')
+                and blessed $frame->{deliver}->method_frame
+                and $frame->{deliver}->method_frame->can('delivery_tag')
+                and blessed $frame->{deliver}->method_frame
+                and $frame->{deliver}->method_frame->can('consumer_tag'))
             {
                 Lim::ERR and $self->{logger}->error('Consume frame invalid');
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        message => 'Consume frame invalid',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            message => 'Consume frame invalid',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 return;
@@ -499,24 +541,28 @@ sub _consume {
             unless (blessed $frame->{body} and $frame->{body}->can('payload')) {
                 Lim::ERR and $self->{logger}->error('Consume request invalid, no payload');
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        message => 'Consume request invalid, no payload',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            message => 'Consume request invalid, no payload',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 return;
             }
 
             my $headers = HTTP::Headers->new;
-            if (blessed $frame->{header} and $frame->{header}->can('headers')
+            if (    blessed $frame->{header}
+                and $frame->{header}->can('headers')
                 and ref($frame->{header}->headers) eq 'HASH'
                 and scalar %{$frame->{header}->headers})
             {
                 $headers->header(%{$frame->{header}->headers});
             }
             my $response = HTTP::Response->new(
-                ( $headers->header('X-Lim-Code') ? int($headers->header('X-Lim-Code')) : HTTP::Status::HTTP_OK ),
+                ($headers->header('X-Lim-Code') ? int($headers->header('X-Lim-Code')) : HTTP::Status::HTTP_OK),
                 '',
                 $headers,
                 $frame->{body}->payload
@@ -525,9 +571,7 @@ sub _consume {
             Lim::RPC_DEBUG and $self->{logger}->debug('RabbitMQ response: ', $response->as_string);
             $self->{response} = $response;
 
-            $self->{channel}->ack(
-                delivery_tag => $frame->{deliver}->method_frame->delivery_tag
-            );
+            $self->{channel}->ack(delivery_tag => $frame->{deliver}->method_frame->delivery_tag);
 
             $self->_cancel($frame->{deliver}->method_frame->consumer_tag);
         },
@@ -538,13 +582,16 @@ sub _consume {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel consume failure for: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel consume failure for: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel consume failure for: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel consume failure for: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -580,13 +627,16 @@ sub _confirm {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel confirm failure: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel confirm failure: ' . $message);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel confirm failure: '.$message,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel confirm failure: ' . $message,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -613,20 +663,22 @@ sub _publish {
     $self->{channel}->publish(
         (exists $self->{mandatory} ? (mandatory => $self->{mandatory}) : ()),
         (exists $self->{immediate} ? (immediate => $self->{immediate}) : ()),
-        ($self->{broadcast} ? (
-            exchange => $self->{exchange_prefix}.lc($self->{plugin}),
-            routing_key => '',
-        ) : (
-            exchange => '',
-            routing_key => $self->{queue_prefix}.lc($self->{plugin}),
-        )),
+        (
+            $self->{broadcast}
+            ? (
+                exchange    => $self->{exchange_prefix} . lc($self->{plugin}),
+                routing_key => '',
+              )
+            : (
+                exchange    => '',
+                routing_key => $self->{queue_prefix} . lc($self->{plugin}),
+            )
+        ),
         header => {
             ($self->{broadcast} ? () : (reply_to => $self->{queue})),
-            headers => {
-                'Content-Type' => $self->{request}->header('Content-Type')
-            }
+            headers => {'Content-Type' => $self->{request}->header('Content-Type')}
         },
-        body => $self->{request}->content,
+        body   => $self->{request}->content,
         on_ack => sub {
             unless (defined $self) {
                 return;
@@ -649,10 +701,13 @@ sub _publish {
             Lim::ERR and $self->{logger}->error('Channel publish failure: NACK');
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel publish failure: NACK',
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel publish failure: NACK',
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         },
@@ -664,10 +719,13 @@ sub _publish {
             Lim::ERR and $self->{logger}->error('Channel publish failure: message returned');
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Channel publish failure: message returned',
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Channel publish failure: message returned',
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
         }
@@ -692,7 +750,7 @@ sub _cancel {
 
     $self->{channel}->cancel(
         consumer_tag => $consumer_tag,
-        on_success => sub {
+        on_success   => sub {
             unless (defined $self) {
                 return;
             }
@@ -707,7 +765,7 @@ sub _cancel {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel cancel failure: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel cancel failure: ' . $message);
 
             if (exists $self->{cb}) {
                 $self->{cb}->($self, $self->{response});
@@ -734,7 +792,7 @@ sub _delete {
     }
 
     $self->{channel}->delete_queue(
-        queue => $self->{queue},
+        queue      => $self->{queue},
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -754,7 +812,7 @@ sub _delete {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel delete failure: '.$message);
+            Lim::ERR and $self->{logger}->error('Channel delete failure: ' . $message);
 
             if (exists $self->{cb}) {
                 $self->{cb}->($self, $self->{response});
@@ -803,4 +861,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::Client::RabbitMQ
+1;    # End of Lim::RPC::Transport::Client::RabbitMQ

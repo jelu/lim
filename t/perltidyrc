@@ -1,0 +1,10 @@
+-ole=unix
+-se
+-b
+-bext='/'
+-l=0
+-pt=2
+-sbt=2
+-bt=2
+-nsfs
+-boc

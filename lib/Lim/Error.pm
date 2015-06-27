@@ -57,16 +57,16 @@ of that object will be used.
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        code => 500,
+    my %args  = (@_);
+    my $self  = {
+        code    => 500,
         message => 'Generic Error',
-        module => 'UNKNOWN'
+        module  => 'UNKNOWN'
     };
     bless $self, $class;
-    
+
     if (defined $args{code}) {
         unless ($args{code} >= 300 and $args{code} < 600) {
             confess __PACKAGE__, ': Invalid code [', $args{code}, '] given in error';
@@ -105,7 +105,7 @@ sub set {
             }
         }
     }
-    
+
     $_[0];
 }
 
@@ -127,7 +127,7 @@ Set the error code to C<$code>.
 
 sub set_code {
     $_[0]->{code} = $_[1];
-    
+
     $_[0];
 }
 
@@ -149,7 +149,7 @@ Set the error message to C<$message>
 
 sub set_message {
     $_[0]->{message} = $_[1];
-    
+
     $_[0];
 }
 
@@ -171,7 +171,7 @@ Set the module name of the error, this can not take blessed objects.
 
 sub set_module {
     $_[0]->{module} = $_[1];
-    
+
     $_[0];
 }
 
@@ -185,9 +185,9 @@ objects to L<JSON::XS>.
 sub TO_JSON {
     {
         'Lim::Error' => {
-            code => $_[0]->{code},
+            code    => $_[0]->{code},
             message => $_[0]->{message},
-            module => $_[0]->{module}
+            module  => $_[0]->{module}
         }
     };
 }
@@ -243,4 +243,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Error
+1;    # End of Lim::Error

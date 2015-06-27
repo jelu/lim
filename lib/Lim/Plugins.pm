@@ -41,10 +41,10 @@ Lim::Plugins->instance->Load;
 =cut
 
 sub _new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
+    my %args  = (@_);
+    my $self  = {
         logger => Log::Log4perl->get_logger,
         plugin => {}
     };
@@ -59,7 +59,7 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     delete $self->{plugin};
 }
 
@@ -95,7 +95,7 @@ sub Load {
         foreach (findsubmod Lim::Plugin) {
             my $name = $_;
             $name =~ s/.*:://o;
-            if (exists Lim::Config->{plugin}->{load}->{$_}
+            if (   exists Lim::Config->{plugin}->{load}->{$_}
                 or exists Lim::Config->{plugin}->{load}->{$name})
             {
                 push(@modules, $_);
@@ -109,7 +109,7 @@ sub Load {
                 Lim::WARN and $self->{logger}->warn('Skipping ', $module, ' configured not to load.');
                 next;
             }
-            
+
             my $name = $module;
             $name =~ s/.*:://o;
             if (exists Lim::Config->{plugin}->{load}->{$name} and !Lim::Config->{plugin}->{load}->{$name}) {
@@ -117,7 +117,7 @@ sub Load {
                 next;
             }
         }
-            
+
         if (exists $self->{plugin}->{$module}) {
             Lim::WARN and $self->{logger}->warn('Plugin ', $module, ' already loaded');
             next;
@@ -134,45 +134,46 @@ sub Load {
         eval {
             eval "require $module;";
             die $@ if $@;
-            $name = $module->Name;
+            $name        = $module->Name;
             $description = $module->Description;
         };
-        
+
         if ($@) {
             Lim::WARN and $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
             $self->{plugin}->{$module} = {
-                name => $name,
+                name        => $name,
                 description => $description,
-                module => $module,
-                version => -1,
-                loaded => 0,
-                error => $@
+                module      => $module,
+                version     => -1,
+                loaded      => 0,
+                error       => $@
             };
             next;
         }
-        
+
         $self->{plugin}->{$module} = {
-            name => $name,
+            name        => $name,
             description => $description,
-            module => $module,
-            version => $module->VERSION,
-            loaded => 1
+            module      => $module,
+            version     => $module->VERSION,
+            loaded      => 1
         };
     }
-    
+
     if (exists Lim::Config->{plugin} and exists Lim::Config->{plugin}->{load}) {
         foreach my $module (keys %{Lim::Config->{plugin}->{load}}) {
             unless (Lim::Config->{plugin}->{load}->{$module}) {
                 next;
             }
-            
-            unless (exists $self->{plugin}->{$module} or exists $self->{plugin}->{'Lim::Plugin::'.$module}) {
+
+            unless (exists $self->{plugin}->{$module} or exists $self->{plugin}->{'Lim::Plugin::' . $module}) {
                 Lim::ERR and $self->{logger}->error('Required module ', $module, ' not found');
+
                 # TODO Should we die here?
             }
         }
     }
-    
+
     $self;
 }
 
@@ -185,13 +186,13 @@ Returns a list of loaded plugin's module name (eg Lim::Plugin::Example).
 sub LoadedModules {
     my ($self) = @_;
     my @modules;
-    
+
     foreach my $module (values %{$self->{plugin}}) {
         if ($module->{loaded}) {
             push(@modules, $module->{module});
         }
     }
-    
+
     return @modules;
 }
 
@@ -215,13 +216,13 @@ Returns a list of hash references of loaded plugins.
 sub Loaded {
     my ($self) = @_;
     my @modules;
-    
+
     foreach my $module (values %{$self->{plugin}}) {
         if ($module->{loaded}) {
             push(@modules, $module);
         }
     }
-    
+
     return @modules;
 }
 
@@ -277,4 +278,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Plugins
+1;    # End of Lim::Plugins

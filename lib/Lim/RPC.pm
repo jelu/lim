@@ -5,7 +5,7 @@ use Carp;
 
 use Scalar::Util qw(blessed);
 
-use Lim ();
+use Lim        ();
 use Lim::Error ();
 
 =encoding utf8
@@ -55,7 +55,7 @@ sub V {
         }
 
         my @v = ([$q, $def]);
-        while (defined (my $v = shift(@v))) {
+        while (defined(my $v = shift(@v))) {
             ($q, $def) = @$v;
             my $a;
 
@@ -189,4 +189,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC
+1;    # End of Lim::RPC

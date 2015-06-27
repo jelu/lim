@@ -48,19 +48,15 @@ sub Description {
 
 sub Calls {
     {
-        ReadVersion => {
-            out => {
-                version => 'string'
-            }
-        },
+        ReadVersion => {out => {version => 'string'}},
         ReadPlugins => {
             out => {
                 plugin => {
-                    name => 'string',
+                    name        => 'string',
                     description => 'string optional',
-                    module => 'string',
-                    version => 'string',
-                    loaded => 'bool'
+                    module      => 'string',
+                    version     => 'string',
+                    loaded      => 'bool'
                 }
             }
         },
@@ -70,49 +66,33 @@ sub Calls {
                 'plugin.name=\w+/version => ReadPluginVersion',
                 'plugin.name=\w+/loaded => ReadPluginLoaded'
             ],
-            in => {
-                plugin => {
-                    name => 'string'
-                }
-            },
+            in  => {plugin => {name => 'string'}},
             out => {
                 plugin => {
-                    name => 'string',
+                    name        => 'string',
                     description => 'string optional',
-                    module => 'string',
-                    version => 'string',
-                    loaded => 'bool'
+                    module      => 'string',
+                    version     => 'string',
+                    loaded      => 'bool'
                 }
             }
         },
         ReadPluginVersion => {
-            uri_map => [
-                'plugin.name=\w+'
-            ],
-            in => {
+            uri_map => ['plugin.name=\w+'],
+            in      => {plugin => {name => 'string'}},
+            out     => {
                 plugin => {
-                    name => 'string'
-                }
-            },
-            out => {
-                plugin => {
-                    name => 'string',
+                    name    => 'string',
                     version => 'string'
                 }
             }
         },
         ReadPluginLoaded => {
-            uri_map => [
-                'plugin.name=\w+'
-            ],
-            in => {
+            uri_map => ['plugin.name=\w+'],
+            in      => {plugin => {name => 'string'}},
+            out     => {
                 plugin => {
-                    name => 'string'
-                }
-            },
-            out => {
-                plugin => {
-                    name => 'string',
+                    name   => 'string',
                     loaded => 'bool'
                 }
             }
@@ -170,4 +150,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Agent
+1;    # End of Lim::Agent

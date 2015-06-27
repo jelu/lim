@@ -33,11 +33,11 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
+    my %args  = (@_);
+    my $self  = {
+        logger      => Log::Log4perl->get_logger,
         __protocols => []
     };
     bless $self, $class;
@@ -47,7 +47,7 @@ sub new {
     }
     $self->{__server} = $args{server};
     weaken($self->{__server});
-    
+
     $self->Init(@_);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -57,7 +57,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
     delete $self->{__protocols};
     delete $self->{__server};
@@ -99,14 +99,14 @@ sub uri {
 
 sub add_protocol {
     my $self = shift;
-    
+
     foreach (@_) {
         unless (blessed($_) and $_->isa('Lim::RPC::Protocol')) {
             confess 'Argument is not a Lim::RPC::Protocol';
         }
     }
     push(@{$self->{__protocols}}, @_);
-    
+
     $self;
 }
 
@@ -205,4 +205,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport
+1;    # End of Lim::RPC::Transport

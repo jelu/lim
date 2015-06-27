@@ -5,18 +5,18 @@ use Carp;
 
 use Scalar::Util qw(blessed weaken);
 
-use AnyEvent ();
+use AnyEvent         ();
 use AnyEvent::Handle ();
 use AnyEvent::Socket ();
 
 use HTTP::Status qw(:constants);
-use HTTP::Request ();
+use HTTP::Request  ();
 use HTTP::Response ();
-use URI ();
+use URI            ();
 use Socket;
 
-use Lim ();
-use Lim::RPC::TLS ();
+use Lim                ();
+use Lim::RPC::TLS      ();
 use Lim::RPC::Callback ();
 
 use base qw(Lim::RPC::Transport);
@@ -41,7 +41,7 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub MAX_REQUEST_LEN (){ 8 * 1024 * 1024 }
+sub MAX_REQUEST_LEN () { 8 * 1024 * 1024 }
 
 =head1 SYNOPSIS
 
@@ -54,14 +54,14 @@ sub MAX_REQUEST_LEN (){ 8 * 1024 * 1024 }
 =cut
 
 sub Init {
-    my $self = shift;
-    my %args = ( @_ );
+    my $self      = shift;
+    my %args      = (@_);
     my $real_self = $self;
     weaken($self);
 
     $self->{client} = {};
-    $self->{host} = Lim::Config->{rpc}->{transport}->{http}->{host};
-    $self->{port} = Lim::Config->{rpc}->{transport}->{http}->{port};
+    $self->{host}   = Lim::Config->{rpc}->{transport}->{http}->{host};
+    $self->{port}   = Lim::Config->{rpc}->{transport}->{http}->{port};
 
     if (exists $args{uri}) {
         unless (blessed($args{uri}) and $args{uri}->isa('URI')) {
@@ -114,7 +114,8 @@ sub _connect {
         $handle = AnyEvent::Handle->new(
             fh => $fh,
             ($self->isa('Lim::RPC::Transport::HTTPS') ? (tls => 'accept', tls_ctx => Lim::RPC::TLS->instance->tls_ctx) : ()),
-#            timeout => Lim::Config->{rpc}->{timeout},
+
+            #            timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
 
@@ -136,13 +137,13 @@ sub _connect {
 
                 Lim::WARN and $self->{logger}->warn($handle, ' TIMEOUT');
 
-#                my $client = $self->{client}->{$handle};
-#
-#                if (defined $client) {
-#                    if (exists $client->{processing} and exists $client->{protocol}) {
-#                        $client->{protocol}->timeout($client->{request});
-#                    }
-#                }
+                #                my $client = $self->{client}->{$handle};
+                #
+                #                if (defined $client) {
+                #                    if (exists $client->{processing} and exists $client->{protocol}) {
+                #                        $client->{protocol}->timeout($client->{request});
+                #                    }
+                #                }
 
                 delete $self->{client}->{$handle};
                 $handle->destroy;
@@ -208,7 +209,7 @@ sub _connect {
                         $client->{headers} = $headers;
                         $client->{content} = $content;
                         $client->{request} = HTTP::Request->parse($client->{headers});
-                        $client->{request}->header('X-Lim-Base-URL' => ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https' : 'http').'://'.$sockhost.':'.$self->{port});
+                        $client->{request}->header('X-Lim-Base-URL' => ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https' : 'http') . '://' . $sockhost . ':' . $self->{port});
                     }
                 }
                 else {
@@ -224,12 +225,13 @@ sub _connect {
                     Lim::RPC_DEBUG and $self->{logger}->debug('HTTP Request: ', $client->{request}->as_string);
 
                     $client->{processing} = 1;
-#                    $handle->timeout(Lim::Config->{rpc}->{call_timeout});
+
+                    #                    $handle->timeout(Lim::Config->{rpc}->{call_timeout});
                     my $real_client = $client;
                     weaken($client);
                     $client->{process_watcher} = AnyEvent->timer(
                         after => 0,
-                        cb => sub {
+                        cb    => sub {
                             unless (defined $self and defined $client) {
                                 return;
                             }
@@ -256,7 +258,7 @@ sub _connect {
 
                                     if ($response->code != HTTP_OK and !length($response->content)) {
                                         $response->header('Content-Type' => 'text/plain; charset=utf-8');
-                                        $response->content($response->code.' '.HTTP::Status::status_message($response->code)."\015\012");
+                                        $response->content($response->code . ' ' . HTTP::Status::status_message($response->code) . "\015\012");
                                     }
 
                                     $response->header('Content-Length' => length($response->content));
@@ -270,12 +272,13 @@ sub _connect {
 
                                     if ($client->{request}->protocol ne 'HTTP/1.1' and lc($client->{request}->header('Connection')) ne 'keep-alive') {
                                         Lim::RPC_DEBUG and $self->{logger}->debug('Connection requested to be closed');
-#                                        $client->{handle}->timeout(0);
+
+                                        #                                        $client->{handle}->timeout(0);
                                         $response->header('Connection' => 'close');
                                         $client->{close} = 1;
                                     }
                                     else {
-#                                        $client->{handle}->timeout(Lim::Config->{rpc}->{timeout});
+                                        #                                        $client->{handle}->timeout(Lim::Config->{rpc}->{timeout});
                                         $response->header('Connection' => 'keep-alive');
                                     }
 
@@ -293,8 +296,9 @@ sub _connect {
                                         return;
                                     }
 
-#                                    $client->{handle}->timeout_reset;
-                                });
+                                    #                                    $client->{handle}->timeout_reset;
+                                }
+                            );
 
                             foreach my $protocol ($self->protocols) {
                                 Lim::RPC_DEBUG and $self->{logger}->debug('Trying protocol ', $protocol->name);
@@ -309,16 +313,18 @@ sub _connect {
                             $response->request($client->{request});
                             $response->protocol($client->{request}->protocol);
                             $cb->cb->($response);
-                        });
+                        }
+                    );
                 }
-            });
+            }
+        );
 
         $self->{client}->{$handle} = {
-            handle => $handle,
+            handle  => $handle,
             headers => '',
-            close => 0
+            close   => 0
         };
-    }, sub {
+      }, sub {
         my (undef, $host, $port) = @_;
 
         Lim::RPC_DEBUG and $self->{logger}->debug(__PACKAGE__, ' ', $self, ' ready at ', $host, ':', $port);
@@ -326,11 +332,9 @@ sub _connect {
         $self->{real_host} = $host;
         $self->{real_port} = $port;
 
-        $self->{uri} = URI->new(
-            ($self->isa('Lim::RPC::Transport::HTTPS') ? 'https://' : 'http://').
-            $host.':'.$port);
+        $self->{uri} = URI->new(($self->isa('Lim::RPC::Transport::HTTPS') ? 'https://' : 'http://') . $host . ':' . $port);
         $Lim::CONFIG->{rpc}->{srv_listen};
-    };
+      };
 }
 
 =head2 Destroy
@@ -422,4 +426,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::HTTP
+1;    # End of Lim::RPC::Transport::HTTP

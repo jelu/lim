@@ -1,14 +1,15 @@
 #!/usr/bin/env perl
 
 use common::sense;
-use Getopt::Long ();
-use Pod::Usage ();
+use Getopt::Long  ();
+use Pod::Usage    ();
 use Log::Log4perl ();
 $Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
 use POSIX;
 
 use AnyEvent ();
 if (AnyEvent->VERSION < 6.01) {
+
     # Try and force detection of modules for old AnyEvents
     foreach (qw(EV Event Glib EventLib POE)) {
         eval "use $_ ();";
@@ -19,17 +20,17 @@ if (AnyEvent->VERSION < 6.01) {
     AnyEvent::detect;
 }
 
-use Lim ();
+use Lim              ();
 use Lim::RPC::Server ();
-use Lim::RPC::TLS ();
-use Lim::Agent ();
-use Lim::Plugins ();
+use Lim::RPC::TLS    ();
+use Lim::Agent       ();
+use Lim::Plugins     ();
 
 my $help = 0;
 my $conf;
 my $log4perl;
 my $foreground = 0;
-my $pidfile = '/var/run/lim-agentd.pid';
+my $pidfile    = '/var/run/lim-agentd.pid';
 my @options;
 my @uris;
 my $uid;
@@ -39,7 +40,7 @@ my $group;
 
 sub _set_user_group {
     if (defined $group and !defined $gid) {
-        unless (defined ($gid = getgrnam($group))) {
+        unless (defined($gid = getgrnam($group))) {
             print STDERR 'Unable to get group id for ', $group, ': ', $!;
             exit(3);
         }
@@ -47,27 +48,27 @@ sub _set_user_group {
     my @gids;
     if (defined $user or defined $uid) {
         my $user = $user;
-        my $gid = $gid;
+        my $gid  = $gid;
         my $putback;
-        
+
         unless (defined $user) {
-            unless (defined ($user = getpwuid($uid))) {
+            unless (defined($user = getpwuid($uid))) {
                 print STDERR 'Unable to get user name for id ', $uid, ': ', $!;
                 exit(3);
             }
         }
-        
+
         unless (defined $gid) {
             (undef, undef, undef, $gid) = getpwnam($user);
             unless (defined $gid) {
                 print STDERR 'Unable to get group id for user ', $user, ': ', $!;
                 exit(3);
             }
-            $putback=1;
+            $putback = 1;
         }
-        
+
         setgrent;
-        while (my ($gname,undef,$_gid,$members) = getgrent) {
+        while (my ($gname, undef, $_gid, $members) = getgrent) {
             foreach (split(/\s+/o, $members)) {
                 if (defined $gid and $_gid == $gid) {
                     next;
@@ -79,7 +80,7 @@ sub _set_user_group {
             }
         }
         endgrent;
-        
+
         if (defined $putback) {
             unshift(@gids, $gid);
         }
@@ -102,9 +103,9 @@ sub _set_user_group {
             exit(3);
         }
     }
-    
+
     if (defined $user and !defined $uid) {
-        unless (defined ($uid = getpwnam($user))) {
+        unless (defined($uid = getpwnam($user))) {
             print STDERR 'Unable to get user id for ', $user, ': ', $!;
             exit(3);
         }
@@ -118,17 +119,17 @@ sub _set_user_group {
 }
 
 Getopt::Long::GetOptions(
-    'help|?' => \$help,
-    'conf:s' => \$conf,
+    'help|?'     => \$help,
+    'conf:s'     => \$conf,
     'log4perl:s' => \$log4perl,
     'foreground' => \$foreground,
-    'pidfile:s' => \$pidfile,
-    'option:s' => \@options,
-    'uri:s' => \@uris,
-    'uid:i' => \$uid,
-    'gid:i' => \$gid,
-    'user:s' => \$user,
-    'group:s' => \$group
+    'pidfile:s'  => \$pidfile,
+    'option:s'   => \@options,
+    'uri:s'      => \@uris,
+    'uid:i'      => \$uid,
+    'gid:i'      => \$gid,
+    'user:s'     => \$user,
+    'group:s'    => \$group
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -137,23 +138,27 @@ if (defined $log4perl and -f $log4perl) {
 }
 elsif ($foreground) {
     STDOUT->autoflush(1);
-    Log::Log4perl->init( \q(
+    Log::Log4perl->init(
+        \q(
     log4perl.logger                   = DEBUG, Screen
     log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
     log4perl.appender.Screen.stderr   = 0
     log4perl.appender.Screen.layout   = Log::Log4perl::Layout::PatternLayout
     log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
-    ) );
+    )
+    );
 }
 else {
-    Log::Log4perl->init( \q(
+    Log::Log4perl->init(
+        \q(
     log4perl.logger                    = DEBUG, SYSLOG
     log4perl.appender.SYSLOG           = Log::Dispatch::Syslog
     log4perl.appender.SYSLOG.min_level = debug
     log4perl.appender.SYSLOG.ident     = lim-agentd
     log4perl.appender.SYSLOG.facility  = daemon
     log4perl.appender.SYSLOG.layout    = Log::Log4perl::Layout::SimpleLayout
-    ) );
+    )
+    );
 }
 
 if (defined $conf) {
@@ -185,23 +190,23 @@ unless ($foreground) {
     elsif ($pid) {
         exit 0;
     }
-    
+
     if ($pidfile) {
-        unless(open(PIDFILE, '>', $pidfile,)) {
+        unless (open(PIDFILE, '>', $pidfile,)) {
             print STDERR 'Unable to open pidfile "', $pidfile, '" for writing: ', $!, "\n";
             exit(2);
         }
         print PIDFILE POSIX::getpid, "\n";
         close(PIDFILE);
-        
-        unless(open(PIDFILE, $pidfile)) {
+
+        unless (open(PIDFILE, $pidfile)) {
             print STDERR 'Unable to open pidfile "', $pidfile, '" for verifying pid: ', $!, "\n";
             exit(2);
         }
         my $pidinfile = <PIDFILE>;
         chomp($pidinfile);
         close(PIDFILE);
-        
+
         unless (POSIX::getpid == $pidinfile) {
             print STDERR 'Unable to correctly write my pid to pidfile "', $pidfile, "\"\n";
             exit(2);
@@ -213,7 +218,7 @@ unless ($foreground) {
 
     # Change the gid and/or uid if set
     _set_user_group;
-    
+
     # Daemonize the process
     unless (chdir('/')) {
         print STDERR 'Unable to chdir to / : ', $!;
@@ -221,11 +226,11 @@ unless ($foreground) {
     }
     POSIX::setsid();
     umask(0);
-    foreach (0 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024)) {
+    foreach (0 .. (POSIX::sysconf(&POSIX::_SC_OPEN_MAX) || 1024)) {
         POSIX::close($_);
     }
 
-    open(STDIN, '<', '/dev/null');
+    open(STDIN,  '<', '/dev/null');
     open(STDOUT, '>', '/dev/null');
     open(STDERR, '>', '/dev/null');
 }
@@ -241,22 +246,38 @@ else {
 my $cv = AnyEvent->condvar;
 my @watchers;
 
-push(@watchers,
-    AnyEvent->signal(signal => "HUP", cb => sub {
-    }),
-    AnyEvent->signal(signal => "PIPE", cb => sub {
-    }),
-    AnyEvent->signal(signal => "INT", cb => sub {
-        if ($foreground) {
+push(
+    @watchers,
+    AnyEvent->signal(
+        signal => "HUP",
+        cb     => sub {
+        }
+    ),
+    AnyEvent->signal(
+        signal => "PIPE",
+        cb     => sub {
+        }
+    ),
+    AnyEvent->signal(
+        signal => "INT",
+        cb     => sub {
+            if ($foreground) {
+                $cv->send;
+            }
+        }
+    ),
+    AnyEvent->signal(
+        signal => "QUIT",
+        cb     => sub {
             $cv->send;
         }
-    }),
-    AnyEvent->signal(signal => "QUIT", cb => sub {
-        $cv->send;
-    }),
-    AnyEvent->signal(signal => "TERM", cb => sub {
-        $cv->send;
-    }),
+    ),
+    AnyEvent->signal(
+        signal => "TERM",
+        cb     => sub {
+            $cv->send;
+        }
+    ),
 );
 
 # Initiate the server and serve
@@ -264,9 +285,7 @@ unless (scalar @uris) {
     @uris = @{Lim::Config->{agent}->{uri}};
 }
 
-my $server = Lim::RPC::Server->new(
-    uri => (@uris == 1 ? $uris[0] : \@uris)
-);
+my $server = Lim::RPC::Server->new(uri => (@uris == 1 ? $uris[0] : \@uris));
 $server->serve(qw(Lim::Agent));
 $server->serve(Lim::Plugins->instance->LoadedModules);
 
@@ -274,9 +293,11 @@ if (defined $server) {
     push(@watchers, $server);
     $cv->recv;
     $cv = AnyEvent->condvar;
-    $server->close(sub {
-        $cv->send;
-    });
+    $server->close(
+        sub {
+            $cv->send;
+        }
+    );
     $cv->recv;
 }
 

@@ -33,10 +33,10 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
+    my %args  = (@_);
+    my $self  = {
         logger => Log::Log4perl->get_logger,
         server => undef
     };
@@ -59,7 +59,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
     delete $self->{__server};
 }
@@ -123,8 +123,8 @@ sub server {
 =cut
 
 sub precall {
-    shift; # $self
-    shift; # $call
+    shift;    # $self
+    shift;    # $call
     return @_;
 }
 
@@ -183,4 +183,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocol
+1;    # End of Lim::RPC::Protocol

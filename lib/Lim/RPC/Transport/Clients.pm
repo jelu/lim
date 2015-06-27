@@ -36,12 +36,12 @@ our $INSTANCE;
 =cut
 
 sub _new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger,
-        transport => {},
+    my %args  = (@_);
+    my $self  = {
+        logger         => Log::Log4perl->get_logger,
+        transport      => {},
         transport_name => {}
     };
     bless $self, $class;
@@ -106,10 +106,10 @@ sub load {
         if ($@) {
             Lim::WARN and $self->{logger}->warn('Unable to load transport client ', $module, ': ', $@);
             $self->{transport}->{$module} = {
-                name => $name,
+                name   => $name,
                 module => $module,
                 loaded => 0,
-                error => $@
+                error  => $@
             };
             next;
         }
@@ -119,7 +119,7 @@ sub load {
             $self->{transport}->{$module} = {
                 module => $module,
                 loaded => 0,
-                error => 'Illegal characters in transport name'
+                error  => 'Illegal characters in transport name'
             };
             next;
         }
@@ -131,10 +131,10 @@ sub load {
 
         Lim::DEBUG and $self->{logger}->debug('Loaded ', $module);
         $self->{transport}->{$module} = {
-            name => $name,
-            module => $module,
+            name    => $name,
+            module  => $module,
             version => $module->VERSION,
-            loaded => 1
+            loaded  => 1
         };
         $self->{transport_name}->{$name} = $module;
     }
@@ -162,9 +162,7 @@ sub transport {
 
         if (defined $module) {
             my $transport;
-            eval {
-                $transport = $module->new(@_);
-            };
+            eval { $transport = $module->new(@_); };
             if ($@) {
                 Lim::WARN and $self->{logger}->warn('Unable to create new instance of transport client ', $name, '(', $module, '): ', $@);
             }
@@ -217,4 +215,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::Clients
+1;    # End of Lim::RPC::Transport::Clients

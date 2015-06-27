@@ -41,12 +41,10 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
+    my %args  = (@_);
+    my $self  = {logger => Log::Log4perl->get_logger};
     bless $self, $class;
 
     $self->Init(@_);
@@ -131,4 +129,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::Client
+1;    # End of Lim::RPC::Transport::Client

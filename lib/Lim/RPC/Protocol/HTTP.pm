@@ -5,14 +5,14 @@ use common::sense;
 use Scalar::Util qw(blessed weaken);
 
 use HTTP::Status qw(:constants);
-use HTTP::Request ();
-use HTTP::Response ();
+use HTTP::Request   ();
+use HTTP::Response  ();
 use LWP::MediaTypes ();
-use Fcntl ();
-use JSON::XS ();
+use Fcntl           ();
+use JSON::XS        ();
 
-use Lim ();
-use Lim::Util ();
+use Lim                ();
+use Lim::Util          ();
 use Lim::RPC::Callback ();
 
 use base qw(Lim::RPC::Protocol);
@@ -30,7 +30,7 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $JSON = JSON::XS->new->utf8->convert_blessed;
+our $JSON    = JSON::XS->new->utf8->convert_blessed;
 
 =head1 SYNOPSIS
 
@@ -73,11 +73,11 @@ sub serve {
 
 sub handle {
     my ($self, $cb, $request) = @_;
-    
+
     unless (blessed($request) and $request->isa('HTTP::Request')) {
         return;
     }
-    
+
     unless (defined Lim::Config->{protocol}->{http}->{webroot}
         and -d Lim::Config->{protocol}->{http}->{webroot})
     {
@@ -105,16 +105,16 @@ sub handle {
         my $response = HTTP::Response->new;
         $response->request($request);
         $response->protocol($request->protocol);
-        
+
         unless (defined $file) {
             $file = 'index.html';
         }
-        $path .= '/'.$file;
-        
+        $path .= '/' . $file;
+
         if (-d $path) {
             $path .= '/index.html';
         }
-        
+
         unless (-r $path) {
             return;
         }
@@ -129,7 +129,7 @@ sub handle {
         else {
             $query = Lim::Util::QueryDecode($request->uri->query);
         }
-        
+
         Lim::DEBUG and $self->{logger}->debug('Serving file ', $path);
 
         unless (sysopen(FILE, $path, Fcntl::O_RDONLY)) {
@@ -139,24 +139,22 @@ sub handle {
         }
 
         binmode(FILE);
-        
-        my ($size, $mtime) = (stat(FILE))[7,9];
+
+        my ($size, $mtime) = (stat(FILE))[7, 9];
         unless (defined $size and defined $mtime) {
             $response->code(HTTP_INTERNAL_SERVER_ERROR);
             $cb->cb->($response);
             return 1;
         }
-        
+
         if (defined $query->{jsonpCallback}) {
             my ($content, $buf);
-            while (sysread(FILE, $buf, 64*1024)) {
+            while (sysread(FILE, $buf, 64 * 1024)) {
                 $content .= $buf;
             }
             close(FILE);
-            
-            eval {
-                $content = $JSON->encode({ content => $content });
-            };
+
+            eval { $content = $JSON->encode({content => $content}); };
             if ($@) {
                 $response->code(HTTP_INTERNAL_SERVER_ERROR);
                 $cb->cb->($response);
@@ -164,20 +162,20 @@ sub handle {
             }
 
             $response->header('Content-Type' => 'application/javascript; charset=utf-8');
-            $response->content($query->{jsonpCallback}.'('.$content.');');
+            $response->content($query->{jsonpCallback} . '(' . $content . ');');
             $response->code(HTTP_OK);
 
             $cb->cb->($response);
             return 1;
         }
-        
+
         unless (LWP::MediaTypes::guess_media_type($path, $response)) {
             $response->code(HTTP_INTERNAL_SERVER_ERROR);
             $cb->cb->($response);
             return 1;
         }
 
-        if ($request->header('If-Modified-Since')
+        if (    $request->header('If-Modified-Since')
             and $request->header('If-Modified-Since') >= $mtime)
         {
             close(FILE);
@@ -188,15 +186,15 @@ sub handle {
 
         $response->header(
             'Content-Length' => $size,
-            'Last-Modified' => $mtime
-            );
+            'Last-Modified'  => $mtime
+        );
 
         my $buf;
-        while (sysread(FILE, $buf, 64*1024)) {
+        while (sysread(FILE, $buf, 64 * 1024)) {
             $response->add_content($buf);
         }
         close(FILE);
-        
+
         $response->code(HTTP_OK);
 
         $cb->cb->($response);
@@ -244,4 +242,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocol::HTTP
+1;    # End of Lim::RPC::Protocol::HTTP

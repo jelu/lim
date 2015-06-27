@@ -35,32 +35,32 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub STRING (){ 'string' }
-sub INTEGER (){ 'integer' }
-sub BOOL (){ 'bool' }
-sub BASE64 (){ 'base64' }
+sub STRING ()  { 'string' }
+sub INTEGER () { 'integer' }
+sub BOOL ()    { 'bool' }
+sub BASE64 ()  { 'base64' }
 
 our %TYPE = (
-    STRING() => STRING,
+    STRING()  => STRING,
     INTEGER() => INTEGER,
-    BOOL() => BOOL,
-    BASE64() => BASE64
+    BOOL()    => BOOL,
+    BASE64()  => BASE64
 );
 our %XSD_TYPE = (
-    STRING() => 'xsd:string',
+    STRING()  => 'xsd:string',
     INTEGER() => 'xsd:integer',
-    BOOL() => 'xsd:boolean',
-    BASE64() => 'xsd:base64Binary'
+    BOOL()    => 'xsd:boolean',
+    BASE64()  => 'xsd:base64Binary'
 );
 our %XMLRPC_TYPE = (
-    STRING() => 'string',
+    STRING()  => 'string',
     INTEGER() => 'int',
-    BOOL() => 'boolean',
-    BASE64() => 'base64'
+    BOOL()    => 'boolean',
+    BASE64()  => 'base64'
 );
 
-sub OPT_REQUIRED (){ 0x00000001 }
-sub OPT_NOTEMPTY (){ 0x00000002 }
+sub OPT_REQUIRED () { 0x00000001 }
+sub OPT_NOTEMPTY () { 0x00000002 }
 
 our %OPTIONS = (
     'required' => OPT_REQUIRED,
@@ -69,7 +69,7 @@ our %OPTIONS = (
 
 our %NEGATIVE_OPTIONS = (
     'optional' => OPT_REQUIRED,
-    'empty' => OPT_NOTEMPTY
+    'empty'    => OPT_NOTEMPTY
 );
 
 =head1 SYNOPSIS
@@ -83,13 +83,11 @@ our %NEGATIVE_OPTIONS = (
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = scalar @_ > 1 ? ( @_ ) : ( textual => $_[0] );
-    my $self = {
-        options => OPT_REQUIRED | OPT_NOTEMPTY
-    };
-    
+    my %args  = scalar @_ > 1 ? (@_) : (textual => $_[0]);
+    my $self  = {options => OPT_REQUIRED | OPT_NOTEMPTY};
+
     if (exists $args{textual}) {
         foreach (split(/\s+/o, lc($args{textual}))) {
             if (exists $TYPE{$_}) {
@@ -105,7 +103,7 @@ sub new {
                 $self->{options} &= ~$NEGATIVE_OPTIONS{$_};
             }
             else {
-                confess __PACKAGE__, ': unknown RPC value setting "'.$_.'"';
+                confess __PACKAGE__, ': unknown RPC value setting "' . $_ . '"';
             }
         }
     }
@@ -116,14 +114,14 @@ sub new {
         unless (exists $TYPE{$args{type}}) {
             confess __PACKAGE__, ': Invalid type specified';
         }
-        
+
         $self->{type} = $args{type};
 
         if (defined $args{options}) {
             unless (ref($args{options}) eq 'ARRAY') {
                 confess __PACKAGE__, ': Invalid options specified';
             }
-            
+
             foreach (@{$args{options}}) {
                 if (exists $OPTIONS{$_}) {
                     $self->{options} |= $OPTIONS{$_};
@@ -132,12 +130,12 @@ sub new {
                     $self->{options} &= ~$NEGATIVE_OPTIONS{$_};
                 }
                 else {
-                    confess __PACKAGE__, ': Unknown RPC value option "'.$_.'"';
+                    confess __PACKAGE__, ': Unknown RPC value option "' . $_ . '"';
                 }
             }
         }
     }
-    
+
     unless (exists $self->{type}) {
         confess __PACKAGE__, ': no type defined';
     }
@@ -187,15 +185,15 @@ sub required {
 
 sub comform {
     my ($self, $value) = @_;
-    
+
     # TODO validate type
-    
+
     if (($self->{options} & OPT_NOTEMPTY)) {
         if (!defined $value or $value !~ /$\s*^/o) {
             return 0;
         }
     }
-    
+
     return 1;
 }
 
@@ -238,4 +236,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Value
+1;    # End of Lim::RPC::Value

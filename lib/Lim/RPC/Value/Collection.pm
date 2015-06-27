@@ -29,14 +29,14 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub OPT_REQUIRED (){ 0x00000001 }
-sub OPT_SWALLOW (){ 0x00000002 }
-sub OPT_SINGLE (){ 0x00000004 }
+sub OPT_REQUIRED () { 0x00000001 }
+sub OPT_SWALLOW ()  { 0x00000002 }
+sub OPT_SINGLE ()   { 0x00000004 }
 
 our %OPTIONS = (
     'required' => OPT_REQUIRED,
-    'swallow' => OPT_SWALLOW,
-    'single' => OPT_SINGLE
+    'swallow'  => OPT_SWALLOW,
+    'single'   => OPT_SINGLE
 );
 
 =head1 SYNOPSIS
@@ -50,12 +50,10 @@ our %OPTIONS = (
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = scalar @_ > 1 ? ( @_ ) : ( textual => $_[0] );
-    my $self = {
-        options => 0
-    };
+    my %args  = scalar @_ > 1 ? (@_) : (textual => $_[0]);
+    my $self  = {options => 0};
 
     if (exists $args{textual}) {
         foreach (split(/\s+/o, lc($args{textual}))) {
@@ -63,7 +61,7 @@ sub new {
                 $self->{options} |= $OPTIONS{$_};
             }
             else {
-                confess __PACKAGE__, ': unknown RPC value collection setting "'.$_.'"';
+                confess __PACKAGE__, ': unknown RPC value collection setting "' . $_ . '"';
             }
         }
     }
@@ -83,7 +81,7 @@ sub new {
                     $self->{options} |= $OPTIONS{$_};
                 }
                 else {
-                    confess __PACKAGE__, ': Unknown RPC value collection option "'.$_.'"';
+                    confess __PACKAGE__, ': Unknown RPC value collection option "' . $_ . '"';
                 }
             }
         }
@@ -198,4 +196,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Value::Collection
+1;    # End of Lim::RPC::Value::Collection

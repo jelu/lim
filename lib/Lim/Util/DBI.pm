@@ -5,10 +5,10 @@ use Carp;
 use Scalar::Util qw(weaken);
 
 use Log::Log4perl ();
-use DBI ();
-use JSON::XS ();
+use DBI           ();
+use JSON::XS      ();
 
-use AnyEvent ();
+use AnyEvent       ();
 use AnyEvent::Util ();
 
 use Lim ();
@@ -26,13 +26,13 @@ See L<Lim> for version.
 =cut
 
 our $VERSION = $Lim::VERSION;
-our %METHOD = (
-    connect => 1,
+our %METHOD  = (
+    connect    => 1,
     disconnect => 1,
-    execute => 1,
+    execute    => 1,
     begin_work => 1,
-    commit => 1,
-    rollback => 1
+    commit     => 1,
+    rollback   => 1
 );
 
 =head1 SYNOPSIS
@@ -52,28 +52,28 @@ use Lim::Util::DBI;
 =cut
 
 sub new {
-    my $this = shift;
-    my $class = ref($this) || $this;
-    my $dbi = shift;
-    my $user = shift;
+    my $this     = shift;
+    my $class    = ref($this) || $this;
+    my $dbi      = shift;
+    my $user     = shift;
     my $password = shift;
-    my %args = ( @_ );
-    my $self = {
+    my %args     = (@_);
+    my $self     = {
         logger => Log::Log4perl->get_logger,
-        json => JSON::XS->new->utf8->convert_blessed,
-        busy => 0
+        json   => JSON::XS->new->utf8->convert_blessed,
+        busy   => 0
     };
     bless $self, $class;
     my $real_self = $self;
     weaken($self);
-    
+
     unless (defined $dbi) {
         confess __PACKAGE__, ': Missing dbi connection string';
     }
     unless (defined $args{on_connect} and ref($args{on_connect}) eq 'CODE') {
         confess __PACKAGE__, ': Missing on_connect or it is not CODE';
     }
-    
+
     my $on_connect = delete $args{on_connect};
 
     if (defined $args{on_error}) {
@@ -92,31 +92,29 @@ sub new {
     $self->{child} = $child;
 
     my $pid = fork;
-    
+
     if ($pid) {
         #
         # Parent process
         #
-        
+
         close $parent;
 
-        $self->{child_pid} = $pid;
+        $self->{child_pid}     = $pid;
         $self->{child_watcher} = AnyEvent->io(
-            fh => $child,
+            fh   => $child,
             poll => 'r',
-            cb => sub {
+            cb   => sub {
                 unless (defined $self and exists $self->{child}) {
                     return;
                 }
-                
+
                 my $response;
-                my $len = sysread $self->{child}, my $buf, 64*1024;
+                my $len = sysread $self->{child}, my $buf, 64 * 1024;
                 if ($len > 0) {
                     undef $@;
-                    
-                    eval {
-                        $response = $self->{json}->incr_parse($buf);
-                    };
+
+                    eval { $response = $self->{json}->incr_parse($buf); };
                     if ($@) {
                         Lim::DEBUG and $self->{logger}->debug('Response JSON parse failed: ', $@);
                         $response = [];
@@ -131,73 +129,74 @@ sub new {
                 elsif (defined $len) {
                     $@ = 'Unexpected EOF';
                     Lim::DEBUG and $self->{logger}->debug($@);
-                    
+
                     shutdown($self->{child}, 2);
                     close(delete $self->{child});
                     $response = [];
                 }
                 elsif ($! != Errno::EAGAIN) {
-                    $@ = 'Unable to read from child: '.$!;
+                    $@ = 'Unable to read from child: ' . $!;
                     Lim::DEBUG and $self->{logger}->debug($@);
 
                     shutdown($self->{child}, 2);
                     close(delete $self->{child});
                     $response = [];
                 }
-                
+
                 if (defined $response and exists $self->{cb}) {
                     unless (ref($response) eq 'ARRAY') {
                         $@ = 'Invalid response';
                         Lim::DEBUG and $self->{logger}->debug($@);
                         $response = [];
                     }
-                    
+
                     my $cb = delete $self->{cb};
                     $self->{busy} = 0;
                     $cb->($self, @$response);
                 }
-            });
+            }
+        );
     }
     elsif (defined $pid) {
         #
         # Child process
         #
 
-        $SIG{HUP} => 'IGNORE';
-        $SIG{INT} => 'IGNORE';
+        $SIG{HUP}  => 'IGNORE';
+        $SIG{INT}  => 'IGNORE';
         $SIG{TERM} => 'IGNORE';
         $SIG{PIPE} => 'IGNORE';
         $SIG{QUIT} => 'IGNORE';
         $SIG{ALRM} => 'IGNORE';
 
-        Log::Log4perl->init( \q(
+        Log::Log4perl->init(
+            \q(
 log4perl.threshold                = OFF
 log4perl.logger                   = DEBUG, Screen
 log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
 log4perl.appender.Screen.stderr   = 0
 log4perl.appender.Screen.layout   = Log::Log4perl::Layout::PatternLayout
 log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
-) );
+)
+        );
 
         if (exists $self->{close_fds} and $self->{close_fds}) {
             my $parent_fno = fileno $parent;
-            
-            foreach ($^F+1 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024)) {
+
+            foreach ($^F + 1 .. (POSIX::sysconf(&POSIX::_SC_OPEN_MAX) || 1024)) {
                 unless ($_ == $parent_fno) {
                     POSIX::close($_);
                 }
             }
         }
-        
+
         while () {
             my $request;
-            my $len = sysread $parent, my $buf, 64*1024;
+            my $len = sysread $parent, my $buf, 64 * 1024;
             if ($len > 0) {
                 undef $@;
-                
-                eval {
-                    $request = $self->{json}->incr_parse($buf);
-                };
+
+                eval { $request = $self->{json}->incr_parse($buf); };
                 if ($@) {
                     last;
                 }
@@ -208,43 +207,39 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
             else {
                 last;
             }
-            
+
             if (defined $request) {
                 unless (ref($request) eq 'ARRAY') {
                     last;
                 }
-                
+
                 my $response = $self->process(@$request);
-                
+
                 undef $@;
-                eval {
-                    $response = $self->{json}->encode($response);
-                };
+                eval { $response = $self->{json}->encode($response); };
                 if ($@) {
                     my $errstr = $@;
                     undef $@;
-                    eval {
-                        $response = $self->{json}->encode([$errstr]);
-                    };
+                    eval { $response = $self->{json}->encode([$errstr]); };
                     if ($@) {
                         last;
                     }
                 }
-                
-                my $wrote = 0;
+
+                my $wrote   = 0;
                 my $res_len = length $response;
                 while () {
-                    $len = syswrite $parent, $response, 64*1024;
+                    $len = syswrite $parent, $response, 64 * 1024;
                     unless (defined $len and $len > 0) {
                         last;
                     }
-                    
+
                     $wrote += $len;
-                    
+
                     if ($wrote >= $res_len) {
                         last;
                     }
-                    
+
                     $response = substr $response, $len;
                 }
                 if ($wrote != $res_len) {
@@ -259,7 +254,7 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
     else {
         confess __PACKAGE__, ': Unable to fork: ', $!;
     }
-    
+
     $self->connect($on_connect, $dbi, $user, $password, %args);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -271,13 +266,15 @@ sub DESTROY {
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
 
     if (exists $self->{child_pid}) {
-        my $child_watcher; $child_watcher = AnyEvent->child(
+        my $child_watcher;
+        $child_watcher = AnyEvent->child(
             pid => $self->{child_pid},
-            cb => sub {
+            cb  => sub {
                 undef $child_watcher;
-            });
+            }
+        );
     }
-    
+
     if (exists $self->{child}) {
         shutdown($self->{child}, 2);
         close($self->{child});
@@ -289,22 +286,20 @@ sub DESTROY {
 =cut
 
 sub process {
-    my $self = shift;
+    my $self   = shift;
     my $method = shift;
     my $response;
-    
+
     unless (exists $METHOD{$method}) {
-        return ['Method '.$method.' is not allowed'];
+        return ['Method ' . $method . ' is not allowed'];
     }
-    
-    $method = 'child_'.$method;
-    eval {
-        $response = $self->$method(@_);
-    };
+
+    $method = 'child_' . $method;
+    eval { $response = $self->$method(@_); };
     if ($@) {
         return [$@];
     }
-    
+
     return $response;
 }
 
@@ -313,47 +308,45 @@ sub process {
 =cut
 
 sub request {
-    my $self = shift;
-    my $cb = shift;
+    my $self     = shift;
+    my $cb       = shift;
     my ($method) = @_;
     my $request;
     weaken($self);
-    
+
     undef $@;
-    
+
     unless (ref($cb) eq 'CODE') {
         confess __PACKAGE__, 'cb is not CODE';
     }
 
     unless (exists $METHOD{$method}) {
-        $@ = 'Method '.$method.' is not allowed';
+        $@ = 'Method ' . $method . ' is not allowed';
         $cb->();
         return;
     }
-    
+
     unless (exists $self->{child}) {
         $@ = 'No connection to the DBI process';
         $cb->();
         return;
     }
-    
+
     if ($self->{busy}) {
         $@ = 'DBH is busy, multiple command execution is not allowed';
         $cb->();
         return;
     }
-    
-    eval {
-        $request = $self->{json}->encode(\@_);
-    };
+
+    eval { $request = $self->{json}->encode(\@_); };
     if ($@) {
         $cb->();
         return;
     }
-    
+
     $self->{busy} = 1;
-    $self->{cb} = $cb;
-    
+    $self->{cb}   = $cb;
+
     Lim::DEBUG and $self->{logger}->debug('Sending DBI request ', $method);
 
     my $len = syswrite $self->{child}, $request;
@@ -363,18 +356,18 @@ sub request {
         $cb->();
         return;
     }
-    
+
     unless ($len >= length $request) {
         $request = substr $request, $len;
-        
+
         $self->{request_watcher} = AnyEvent->io(
-            fh => $request,
+            fh   => $request,
             poll => 'w',
-            cb => sub {
+            cb   => sub {
                 unless (defined $self) {
                     return;
                 }
-                
+
                 $len = syswrite $self->{child}, $request;
                 unless (defined $len and $len > 0) {
                     $@ = 'Connection broken';
@@ -383,16 +376,17 @@ sub request {
                     $cb->();
                     return;
                 }
-                
+
                 unless ($len >= length $request) {
                     $request = substr $request, $len;
                     return;
                 }
-                
+
                 delete $self->{request_watcher};
-            });
+            }
+        );
     }
-    
+
     return 1;
 }
 
@@ -402,12 +396,12 @@ sub request {
 
 sub kill {
     my ($self) = @_;
-    
+
     if (exists $self->{child}) {
         shutdown($self->{child}, 2);
         close(delete $self->{child});
     }
-    
+
     delete $self->{child_watcher};
     delete $self->{request_watcher};
     $self->{busy} = 0;
@@ -420,7 +414,7 @@ sub kill {
 
 sub child_connect {
     my ($self, $dbi, $user, $pass, $attr) = @_;
-    
+
     unless (($self->{dbh} = DBI->connect($dbi, $user, $pass, $attr))) {
         return [$DBI::errstr];
     }
@@ -434,14 +428,14 @@ sub child_connect {
 
 sub child_disconnect {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
-    
+
     $self->{dbh}->disconnect;
     delete $self->{dbh};
-    
+
     [0, 1];
 }
 
@@ -452,22 +446,22 @@ sub child_disconnect {
 sub child_execute {
     my ($self, $statement, @args) = @_;
     my ($sth, $rv, $rows);
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
-    
+
     unless (($sth = $self->{dbh}->prepare_cached($statement, undef, 1))) {
         return [$DBI::errstr];
     }
-    
+
     unless (($rv = $sth->execute(@args))) {
         return [$sth->errstr];
     }
-    
+
     $rows = $sth->fetchall_arrayref;
     $sth->finish;
-    
+
     [0, $rows, $rv];
 }
 
@@ -477,7 +471,7 @@ sub child_execute {
 
 sub child_begin_work {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
@@ -495,7 +489,7 @@ sub child_begin_work {
 
 sub child_commit {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
@@ -513,7 +507,7 @@ sub child_commit {
 
 sub child_rollback {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
@@ -531,7 +525,7 @@ sub child_rollback {
 
 sub connect {
     my ($self, $cb, $dbi, $user, $pass, %attr) = @_;
-    
+
     $self->request($cb, 'connect', $dbi, $user, $pass, \%attr);
 }
 
@@ -541,7 +535,7 @@ sub connect {
 
 sub disconnect {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'disconnect');
 }
 
@@ -552,7 +546,7 @@ sub disconnect {
 sub execute {
     my $cb = pop(@_);
     my ($self, $statement, @args) = @_;
-    
+
     $self->request($cb, 'execute', $statement, @args);
 }
 
@@ -562,7 +556,7 @@ sub execute {
 
 sub begin_work {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'begin_work');
 }
 
@@ -572,7 +566,7 @@ sub begin_work {
 
 sub commit {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'commit');
 }
 
@@ -582,7 +576,7 @@ sub commit {
 
 sub rollback {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'rollback');
 }
 
@@ -627,4 +621,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Util::DBI
+1;    # End of Lim::Util::DBI

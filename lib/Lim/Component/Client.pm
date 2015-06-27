@@ -33,22 +33,20 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my $self = {
+    my $self  = {
         logger => Log::Log4perl->get_logger,
-        call => {}
+        call   => {}
     };
     bless $self, $class;
 
-    eval {
-        $self->Init(@_);
-    };
+    eval { $self->Init(@_); };
     if ($@) {
-        Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        Lim::WARN and $self->{logger}->warn('Unable to initialize module ' . $class . ': ' . $@);
         return;
     }
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -56,7 +54,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
 }
 
@@ -84,11 +82,11 @@ sub _addCall {
     unless (blessed $call and $call->isa('Lim::RPC::Call')) {
         confess __PACKAGE__, ': call is not a Lim::RPC::Call';
     }
-    
+
     unless (exists $self->{call}->{$call}) {
         $self->{call}->{$call} = $call;
     }
-    
+
     $self;
 }
 
@@ -102,11 +100,11 @@ sub _deleteCall {
     unless (blessed $call and $call->isa('Lim::RPC::Call')) {
         confess __PACKAGE__, ': call is not a Lim::RPC::Call';
     }
-    
+
     if (exists $self->{call}->{$call}) {
         delete $self->{call}->{$call};
     }
-    
+
     $self;
 }
 
@@ -149,4 +147,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Component::Client
+1;    # End of Lim::Component::Client

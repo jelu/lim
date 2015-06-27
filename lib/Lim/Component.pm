@@ -6,10 +6,10 @@ use Carp;
 use Log::Log4perl ();
 use Scalar::Util qw(blessed);
 
-use Lim ();
-use Lim::RPC::Value ();
+use Lim                         ();
+use Lim::RPC::Value             ();
 use Lim::RPC::Value::Collection ();
-use Lim::RPC::Call ();
+use Lim::RPC::Call              ();
 
 =encoding utf8
 
@@ -134,7 +134,7 @@ sub CLI {
     }
     $self .= '::CLI';
 
-    eval 'use '.$self.' ();';
+    eval 'use ' . $self . ' ();';
     if ($@) {
         return;
     }
@@ -160,11 +160,11 @@ sub Client {
     }
 
     # TODO: Can we check if $self->can(...) ?
-    my $calls = $self->Calls;
+    my $calls  = $self->Calls;
     my $plugin = $self->Name;
     $self .= '::Client';
 
-    eval 'use '.$self.' ();';
+    eval 'use ' . $self . ' ();';
     if ($@) {
         return;
     }
@@ -176,7 +176,7 @@ sub Client {
     no strict 'refs';
     foreach my $call (keys %$calls) {
         unless ($self->can($call)) {
-            my $sub = $self.'::'.$call;
+            my $sub      = $self . '::' . $call;
             my $call_def = $calls->{$call};
 
             unless (ref($call_def) eq 'HASH') {
@@ -194,7 +194,7 @@ sub Client {
                 }
 
                 my @values = ($call_def->{in});
-                while (defined (my $value = shift(@values))) {
+                while (defined(my $value = shift(@values))) {
                     foreach my $key (keys %$value) {
                         if (ref($value->{$key}) eq 'HASH') {
                             if (exists $value->{$key}->{''}) {
@@ -279,7 +279,7 @@ sub Client {
         }
     }
 
-    my $sub = $self.'::__lim_bootstrapped';
+    my $sub = $self . '::__lim_bootstrapped';
     *$sub = sub {
         1;
     };
@@ -305,7 +305,7 @@ sub Server {
     }
     $self .= '::Server';
 
-    eval 'use '.$self.' ();';
+    eval 'use ' . $self . ' ();';
     if ($@) {
         return;
     }
@@ -354,4 +354,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Component
+1;    # End of Lim::Component

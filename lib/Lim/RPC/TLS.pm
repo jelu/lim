@@ -6,7 +6,7 @@ use Carp;
 use Log::Log4perl ();
 
 use AnyEvent::TLS ();
-use Net::SSLeay ();
+use Net::SSLeay   ();
 
 use Lim ();
 
@@ -36,13 +36,13 @@ our $INSTANCE;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my $self = {
+    my $self  = {
         logger => Log::Log4perl->get_logger,
     };
     bless $self, $class;
-    
+
     eval {
         if (!defined Lim::Config->{rpc}->{tls}->{key_file}) {
             $@ = 'No key_file set';
@@ -127,4 +127,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::TLS
+1;    # End of Lim::RPC::TLS

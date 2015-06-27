@@ -18,59 +18,53 @@ Version 0.19
 =cut
 
 our $VERSION = '0.19';
-our $CONFIG = {
+our $CONFIG  = {
     log => {
         obj_debug => 1,
         rpc_debug => 1,
-        debug => 1,
-        info => 1,
-        warn => 1,
-        err => 1
+        debug     => 1,
+        info      => 1,
+        warn      => 1,
+        err       => 1
     },
     prefix => ['', '/usr', '/usr/local'],
-    rpc => {
-        srv_listen => 10,
-        timeout => 30,
+    rpc    => {
+        srv_listen   => 10,
+        timeout      => 30,
         call_timeout => 300,
-        skip_dns => 0,
-        transport => {
+        skip_dns     => 0,
+        transport    => {
             http => {
                 host => undef,
                 port => 5353
             }
         },
-        protocol => {
-            http => {
-                webroot => '/usr/share/lim/html'
-            }
-        },
-        tls => {
-            method => 'any',
-            verify => 1,
+        protocol => {http => {webroot => '/usr/share/lim/html'}},
+        tls      => {
+            method                     => 'any',
+            verify                     => 1,
             verify_require_client_cert => 1,
-            ca_path => '/etc/lim/ssl/certs'
+            ca_path                    => '/etc/lim/ssl/certs'
         },
-        json => {
-            pretty => 0
-        }
+        json => {pretty => 0}
     },
     agent => {
         config_file => '',
-        uri => []
+        uri         => []
     },
     cli => {
         history_length => 1000,
-        history_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.lim_history' : '',
-        config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
-        editor => $ENV{EDITOR},
-        host => 'localhost',
-        port => 5353,
-        transport => 'http',
-        protocol => 'rest'
+        history_file   => defined $ENV{HOME} ? $ENV{HOME} . ($ENV{HOME} =~ /\/$/o ? '' : '/') . '.lim_history' : '',
+        config_file    => defined $ENV{HOME} ? $ENV{HOME} . ($ENV{HOME} =~ /\/$/o ? '' : '/') . '.limrc' : '',
+        editor         => $ENV{EDITOR},
+        host           => 'localhost',
+        port           => 5353,
+        transport      => 'http',
+        protocol       => 'rest'
     },
     plugin => {
         load_all => 1,
-        load => {}
+        load     => {}
     }
 };
 
@@ -175,7 +169,7 @@ Return a hash reference to the configuration.
 
 =cut
 
-sub Config (){ $CONFIG }
+sub Config () { $CONFIG }
 
 =item Lim::MergeConfig($config)
 
@@ -187,11 +181,12 @@ sub MergeConfig {
     if (ref($_[0]) eq 'HASH') {
         my @merge = ([$_[0], $CONFIG]);
 
-        while (defined (my $merge = shift(@merge))) {
+        while (defined(my $merge = shift(@merge))) {
             my ($from, $to) = @$merge;
             foreach my $key (keys %$from) {
                 if (exists $to->{$key}) {
                     unless (ref($from->{$key}) eq ref($to->{$key})) {
+
                         # TODO display what entry is missmatching
                         confess __PACKAGE__, 'Can not merge config, entries type missmatch';
                     }
@@ -216,14 +211,12 @@ configuration.
 
 sub LoadConfig {
     my ($filename) = @_;
-    
+
     if (defined $filename and -r $filename) {
         my $yaml;
-        
+
         Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $filename);
-        eval {
-            $yaml = YAML::Any::LoadFile($filename);
-        };
+        eval { $yaml = YAML::Any::LoadFile($filename); };
         if ($@) {
             confess __PACKAGE__, ': Unable to read configuration file ', $filename, ': ', $@, "\n";
         }
@@ -242,23 +235,21 @@ configuration.
 
 sub LoadConfigDirectory {
     my ($directory) = @_;
-    
+
     if (defined $directory and -r $directory and -x $directory and -d $directory) {
-        unless(opendir(CONFIGS, $directory)) {
+        unless (opendir(CONFIGS, $directory)) {
             confess __PACKAGE__, ': Unable to read configurations in directory ', $directory, ': ', $!, "\n";
         }
 
         foreach my $entry (sort readdir(CONFIGS)) {
             my $yaml;
-            
-            unless(-r $directory.'/'.$entry and $entry =~ /\.yaml$/o) {
+
+            unless (-r $directory . '/' . $entry and $entry =~ /\.yaml$/o) {
                 next;
             }
-            
+
             Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry, ' from directory ', $directory);
-            eval {
-                $yaml = YAML::Any::LoadFile($directory.'/'.$entry);
-            };
+            eval { $yaml = YAML::Any::LoadFile($directory . '/' . $entry); };
             if ($@) {
                 confess __PACKAGE__, ': Unable to read configuration file ', $entry, ' from directory ', $directory, ': ', $@, "\n";
             }
@@ -283,24 +274,24 @@ sub ParseOptions {
         unless ($name and defined $value) {
             confess __PACKAGE__, ': Invalid or unknown option: ', $option, "\n";
         }
-        
+
         my @parts = split(/\./o, $name);
         my $ref = $CONFIG;
         while (defined(my $part = shift(@parts))) {
             unless (scalar @parts) {
                 if ($part =~ /^(.+)\[\]$/o) {
                     $part = $1;
-                    
+
                     if (exists $ref->{$part}) {
                         if (ref($ref->{$part}) eq 'ARRAY') {
                             push(@{$ref->{$part}}, $value);
                         }
                         else {
-                            $ref->{$part} = [ $ref->{$part}, $value ];
+                            $ref->{$part} = [$ref->{$part}, $value];
                         }
                     }
                     else {
-                        $ref->{$part} = [ $value ];
+                        $ref->{$part} = [$value];
                     }
                 }
                 else {
@@ -308,7 +299,7 @@ sub ParseOptions {
                 }
                 last;
             }
-            
+
             unless (exists $ref->{$part}) {
                 $ref->{$part} = {};
             }
@@ -328,7 +319,7 @@ sub UpdateConfig {
     foreach my $key (keys %{$CONFIG->{log}}) {
         {
             no warnings;
-            eval 'sub '.uc($key).' {'.($CONFIG->{log}->{$key} ? '1' : '0').'}';
+            eval 'sub ' . uc($key) . ' {' . ($CONFIG->{log}->{$key} ? '1' : '0') . '}';
         }
     }
 }
@@ -374,4 +365,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim
+1;    # End of Lim

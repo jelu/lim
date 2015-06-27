@@ -7,16 +7,16 @@ use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 use URI::Split ();
 
-use Lim ();
-use Lim::Error ();
-use Lim::Util ();
-use Lim::RPC ();
-use Lim::RPC::Protocols ();
+use Lim                          ();
+use Lim::Error                   ();
+use Lim::Util                    ();
+use Lim::RPC                     ();
+use Lim::RPC::Protocols          ();
 use Lim::RPC::Transport::Clients ();
 
-use HTTP::Request ();
+use HTTP::Request  ();
 use HTTP::Response ();
-use HTTP::Status ();
+use HTTP::Status   ();
 
 =encoding utf8
 
@@ -40,8 +40,8 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub OK (){ 1 }
-sub ERROR (){ -1 }
+sub OK ()    { 1 }
+sub ERROR () { -1 }
 
 =head1 SYNOPSIS
 
@@ -54,9 +54,9 @@ sub ERROR (){ -1 }
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my $self = {
+    my $self  = {
         logger => Log::Log4perl->get_logger,
         status => 0
     };
@@ -64,9 +64,9 @@ sub new {
     my $real_self = $self;
     weaken($self);
 
-    $self->{plugin} = shift;
-    $self->{call} = shift;
-    $self->{call_def} = shift;
+    $self->{plugin}    = shift;
+    $self->{call}      = shift;
+    $self->{call_def}  = shift;
     $self->{component} = shift;
     my ($data, $cb, $args, $method, $uri);
 
@@ -80,12 +80,12 @@ sub new {
     }
     elsif (scalar @_ == 2) {
         if (ref($_[0]) eq 'CODE') {
-            $cb = $_[0];
+            $cb   = $_[0];
             $args = $_[1];
         }
         elsif (ref($_[1]) eq 'CODE') {
             $data = $_[0];
-            $cb = $_[1];
+            $cb   = $_[1];
         }
         else {
             confess __PACKAGE__, ': Given two arguments but non are CODE callback';
@@ -97,7 +97,7 @@ sub new {
         }
 
         $data = $_[0];
-        $cb = $_[1];
+        $cb   = $_[1];
         $args = $_[2];
     }
     elsif (scalar @_ > 3) {
@@ -106,8 +106,8 @@ sub new {
         }
 
         $data = shift;
-        $cb = shift;
-        $args = { @_ };
+        $cb   = shift;
+        $args = {@_};
     }
     else {
         confess __PACKAGE__, ': Too many arguments';
@@ -138,7 +138,7 @@ sub new {
             ($transport, $protocol) = ($1, $2);
         }
         else {
-            confess __PACKAGE__, ': Invalid schema in uri '.$uri;
+            confess __PACKAGE__, ': Invalid schema in uri ' . $uri;
         }
 
         $uri = URI->new('', 'http');
@@ -146,13 +146,13 @@ sub new {
         $uri->authority($auth);
         my ($user, $pass) = split(/:/o, $uri->userinfo);
 
-        $self->{host} = $uri->host;
-        $self->{port} = $uri->_port;
-        $self->{user} = $user;
-        $self->{pass} = $pass;
-        $self->{path} = $uri->path;
+        $self->{host}      = $uri->host;
+        $self->{port}      = $uri->_port;
+        $self->{user}      = $user;
+        $self->{pass}      = $pass;
+        $self->{path}      = $uri->path;
         $self->{transport} = $transport;
-        $self->{protocol} = $protocol;
+        $self->{protocol}  = $protocol;
     }
     else {
         foreach (qw(host port user pass path transport protocol)) {
@@ -163,30 +163,25 @@ sub new {
 
     foreach (qw(host transport protocol)) {
         unless (defined $self->{$_}) {
-            confess __PACKAGE__, ': No '.$_.' specified';
+            confess __PACKAGE__, ': No ' . $_ . ' specified';
         }
     }
 
-    unless (defined ($self->{protocol_obj} = Lim::RPC::Protocols->instance->protocol($self->{protocol}))) {
-        confess __PACKAGE__, ': Unsupported protocol '.$self->{protocol};
+    unless (defined($self->{protocol_obj} = Lim::RPC::Protocols->instance->protocol($self->{protocol}))) {
+        confess __PACKAGE__, ': Unsupported protocol ' . $self->{protocol};
     }
-    unless (defined ($self->{transport_obj} = Lim::RPC::Transport::Clients->instance->transport($self->{transport}))) {
-        confess __PACKAGE__, ': Unsupported transport '.$self->{transport};
+    unless (defined($self->{transport_obj} = Lim::RPC::Transport::Clients->instance->transport($self->{transport}))) {
+        confess __PACKAGE__, ': Unsupported transport ' . $self->{transport};
     }
 
     if (defined $data and ref($data) ne 'HASH') {
         confess __PACKAGE__, ': Data is not a hash';
     }
     if (exists $self->{call_def}->{in}) {
-        eval {
-            Lim::RPC::V(defined $data ? $data : {}, $self->{call_def}->{in});
-        };
+        eval { Lim::RPC::V(defined $data ? $data : {}, $self->{call_def}->{in}); };
         if ($@) {
             use Data::Dumper;
-            confess __PACKAGE__, ': Unable to verify data ', "\n",
-                Dumper(defined $data ? $data : {}), "\n",
-                Dumper($self->{call_def}->{in}), "\n",
-                $@;
+            confess __PACKAGE__, ': Unable to verify data ', "\n", Dumper(defined $data ? $data : {}), "\n", Dumper($self->{call_def}->{in}), "\n", $@;
         }
     }
     elsif (defined $data and %$data) {
@@ -201,7 +196,7 @@ sub new {
         );
     };
     if ($@ or !defined $request) {
-        confess __PACKAGE__, ': Protocol request creation failed: '.(($@) ? $@ : 'Unknown');
+        confess __PACKAGE__, ': Protocol request creation failed: ' . (($@) ? $@ : 'Unknown');
     }
 
     $self->{component}->_addCall($self);
@@ -209,7 +204,7 @@ sub new {
         %$args,
         (map { $_ => $self->{$_} } qw(plugin call host port user pass)),
         request => $request,
-        cb => sub {
+        cb      => sub {
             my (undef, $response) = @_;
             my $data;
 
@@ -220,49 +215,45 @@ sub new {
             unless (blessed $response) {
                 $self->{error} = Lim::Error->new(
                     message => 'Transport returned invalid response',
-                    module => $self
+                    module  => $self
                 );
                 $self->{status} = ERROR;
             }
             elsif ($response->isa('Lim::Error')) {
-                $self->{error} = $response;
+                $self->{error}  = $response;
                 $self->{status} = ERROR;
             }
             elsif ($response->isa('HTTP::Response')) {
-                eval {
-                    $data = $self->{protocol_obj}->response($response);
-                };
+                eval { $data = $self->{protocol_obj}->response($response); };
 
                 if ($@) {
                     $self->{error} = Lim::Error->new(
-                        message => 'Protocol response failure: '.$@,
-                        module => $self
+                        message => 'Protocol response failure: ' . $@,
+                        module  => $self
                     );
                     $self->{status} = ERROR;
                     $data = undef;
                 }
                 elsif (blessed $data and $data->isa('Lim::Error')) {
-                    $self->{error} = $data;
+                    $self->{error}  = $data;
                     $self->{status} = ERROR;
-                    $data = undef;
+                    $data           = undef;
                 }
                 elsif (ref($data) ne 'HASH') {
                     $self->{error} = Lim::Error->new(
                         message => 'Protocol returned invalid data from response',
-                        module => $self
+                        module  => $self
                     );
                     $self->{status} = ERROR;
                     $data = undef;
                 }
                 else {
                     if (exists $self->{call_def}->{out}) {
-                        eval {
-                            Lim::RPC::V($data, $self->{call_def}->{out});
-                        };
+                        eval { Lim::RPC::V($data, $self->{call_def}->{out}); };
                         if ($@) {
                             $self->{error} = Lim::Error->new(
                                 message => $@,
-                                module => $self
+                                module  => $self
                             );
                             $self->{status} = ERROR;
                             $data = undef;
@@ -274,7 +265,7 @@ sub new {
                     elsif (%$data) {
                         $self->{error} = Lim::Error->new(
                             message => 'Invalid data return, does not match definition',
-                            module => $self
+                            module  => $self
                         );
                         $self->{status} = ERROR;
                         $data = undef;
@@ -287,7 +278,7 @@ sub new {
             else {
                 $self->{error} = Lim::Error->new(
                     message => 'Transport returned invalid response',
-                    module => $self
+                    module  => $self
                 );
                 $self->{status} = ERROR;
             }
@@ -371,4 +362,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Call
+1;    # End of Lim::RPC::Call

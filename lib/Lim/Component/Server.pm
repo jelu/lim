@@ -6,8 +6,8 @@ use Carp;
 use Log::Log4perl ();
 use Scalar::Util qw(blessed);
 
-use Lim ();
-use Lim::RPC ();
+use Lim        ();
+use Lim::RPC   ();
 use Lim::Error ();
 
 =encoding utf8
@@ -35,21 +35,17 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
+    my $self  = {logger => Log::Log4perl->get_logger};
     bless $self, $class;
 
-    eval {
-        $self->Init(@_);
-    };
+    eval { $self->Init(@_); };
     if ($@) {
-        Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        Lim::WARN and $self->{logger}->warn('Unable to initialize module ' . $class . ': ' . $@);
         return;
     }
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -57,7 +53,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
 }
 
@@ -81,10 +77,8 @@ sub Destroy {
 
 sub Successful {
     my ($self, $cb, $data) = @_;
-    
-    eval {
-        Lim::RPC::R($cb, $data);
-    };
+
+    eval { Lim::RPC::R($cb, $data); };
     if ($@) {
         Lim::WARN and $self->{logger}->warn('data validation failed: ', $@);
         Lim::DEBUG and eval {
@@ -102,7 +96,7 @@ sub Successful {
 
 sub Error {
     my ($self, $cb, $error, @rest) = @_;
-    
+
     if (blessed($error) and $error->isa('Lim::Error')) {
         Lim::RPC::R($cb, $error);
     }
@@ -156,4 +150,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Base
+1;    # End of Lim::RPC::Base

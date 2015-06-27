@@ -6,12 +6,12 @@ use Carp;
 use Scalar::Util qw(blessed weaken);
 
 use HTTP::Status qw(:constants);
-use HTTP::Request ();
+use HTTP::Request  ();
 use HTTP::Response ();
-use JSON::XS ();
+use JSON::XS       ();
 
-use Lim ();
-use Lim::Util ();
+use Lim                ();
+use Lim::Util          ();
 use Lim::RPC::Callback ();
 
 use base qw(Lim::RPC::Protocol);
@@ -28,12 +28,12 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::VERSION;
-our $JSON = JSON::XS->new->utf8->convert_blessed;
+our $VERSION   = $Lim::VERSION;
+our $JSON      = JSON::XS->new->utf8->convert_blessed;
 our %REST_CRUD = (
-    GET => 'READ',
-    PUT => 'UPDATE',
-    POST => 'CREATE',
+    GET    => 'READ',
+    PUT    => 'UPDATE',
+    POST   => 'CREATE',
     DELETE => 'DELETE'
 );
 
@@ -104,7 +104,7 @@ sub handle {
                 $method = lc($request->method);
             }
             $function = lc($function);
-            $call = ucfirst($method).Lim::Util::Camelize($function);
+            $call     = ucfirst($method) . Lim::Util::Camelize($function);
 
             my $obj;
             if ($server->have_module_call($module, $call)) {
@@ -122,9 +122,7 @@ sub handle {
                     $query = Lim::Util::QueryDecode($query_str);
                 }
                 elsif ($request->header('Content-Type') =~ /(?:^|\s)application\/json(?:$|\s|;)/o) {
-                    eval {
-                        $query = $JSON->decode($request->content);
-                    };
+                    eval { $query = $JSON->decode($request->content); };
                     if ($@) {
                         $response->code(HTTP_INTERNAL_SERVER_ERROR);
                         undef($query);
@@ -150,69 +148,69 @@ sub handle {
             if (defined $obj) {
                 my $real_self = $self;
                 weaken($self);
-                $obj->$call(Lim::RPC::Callback->new(
-                    request => $request,
-                    cb => sub {
-                        my ($result) = @_;
+                $obj->$call(
+                    Lim::RPC::Callback->new(
+                        request => $request,
+                        cb      => sub {
+                            my ($result) = @_;
 
-                        unless (defined $self) {
+                            unless (defined $self) {
+                                return;
+                            }
+
+                            if (blessed $result and $result->isa('Lim::Error')) {
+                                $response->code($result->code);
+                                eval { $response->content($JSON->encode($result)); };
+                                if ($@) {
+                                    $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                    Lim::WARN and $self->{logger}->warn('JSON encode error: ', $@);
+                                }
+                                else {
+                                    $response->header(
+                                        'Content-Type'  => 'application/json; charset=utf-8',
+                                        'Cache-Control' => 'no-cache',
+                                        'Pragma'        => 'no-cache'
+                                    );
+
+                                    if (defined $jsonp) {
+                                        $response->content($jsonp . '(' . $response->content() . ');');
+                                        $response->header('Content-Type' => 'application/javascript; charset=utf-8');
+                                    }
+                                }
+                            }
+                            elsif (ref($result) eq 'HASH') {
+                                eval { $response->content($JSON->encode($result)); };
+                                if ($@) {
+                                    $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                                    Lim::WARN and $self->{logger}->warn('JSON encode error: ', $@);
+                                }
+                                else {
+                                    $response->header(
+                                        'Content-Type'  => 'application/json; charset=utf-8',
+                                        'Cache-Control' => 'no-cache',
+                                        'Pragma'        => 'no-cache'
+                                    );
+                                    $response->code(HTTP_OK);
+
+                                    if (defined $jsonp) {
+                                        $response->content($jsonp . '(' . $response->content() . ');');
+                                        $response->header('Content-Type' => 'application/javascript; charset=utf-8');
+                                    }
+                                }
+                            }
+                            else {
+                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
+                            }
+
+                            $cb->cb->($response);
                             return;
+                        },
+                        reset_timeout => sub {
+                            $cb->reset_timeout;
                         }
-
-                        if (blessed $result and $result->isa('Lim::Error')) {
-                            $response->code($result->code);
-                            eval {
-                                $response->content($JSON->encode($result));
-                            };
-                            if ($@) {
-                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                                Lim::WARN and $self->{logger}->warn('JSON encode error: ', $@);
-                            }
-                            else {
-                                $response->header(
-                                    'Content-Type' => 'application/json; charset=utf-8',
-                                    'Cache-Control' => 'no-cache',
-                                    'Pragma' => 'no-cache'
-                                    );
-
-                                if (defined $jsonp) {
-                                    $response->content($jsonp.'('.$response->content().');');
-                                    $response->header('Content-Type' => 'application/javascript; charset=utf-8');
-                                }
-                            }
-                        }
-                        elsif (ref($result) eq 'HASH') {
-                            eval {
-                                $response->content($JSON->encode($result));
-                            };
-                            if ($@) {
-                                $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                                Lim::WARN and $self->{logger}->warn('JSON encode error: ', $@);
-                            }
-                            else {
-                                $response->header(
-                                    'Content-Type' => 'application/json; charset=utf-8',
-                                    'Cache-Control' => 'no-cache',
-                                    'Pragma' => 'no-cache'
-                                    );
-                                $response->code(HTTP_OK);
-
-                                if (defined $jsonp) {
-                                    $response->content($jsonp.'('.$response->content().');');
-                                    $response->header('Content-Type' => 'application/javascript; charset=utf-8');
-                                }
-                            }
-                        }
-                        else {
-                            $response->code(HTTP_INTERNAL_SERVER_ERROR);
-                        }
-
-                        $cb->cb->($response);
-                        return;
-                    },
-                    reset_timeout => sub {
-                        $cb->reset_timeout;
-                    }), $query);
+                    ),
+                    $query
+                );
                 return 1;
             }
         }
@@ -232,20 +230,18 @@ sub handle {
 
 sub request {
     my $self = shift;
-    my %args = ( @_ );
+    my %args = (@_);
 
     my ($method, $uri) = Lim::Util::URIize($args{call});
-    $uri = (defined $args{path} ? $args{path} : '' ).'/'.lc($args{plugin}).$uri;
+    $uri = (defined $args{path} ? $args{path} : '') . '/' . lc($args{plugin}) . $uri;
     my $request = HTTP::Request->new($method, $uri);
 
     if (defined $args{data}) {
-        eval {
-            $request->content($JSON->encode($args{data}));
-        };
+        eval { $request->content($JSON->encode($args{data})); };
         if ($@) {
-            confess 'JSON encoding of data failed: '.$@;
+            confess 'JSON encoding of data failed: ' . $@;
         }
-        $request->header('Content-Type' => 'application/json; charset=utf-8');
+        $request->header('Content-Type'   => 'application/json; charset=utf-8');
         $request->header('Content-Length' => length($request->content));
     }
     else {
@@ -269,20 +265,18 @@ sub response {
 
     if ($response->header('Content-Length')) {
         if ($response->header('Content-Type') =~ /application\/json/io) {
-            eval {
-                $data = $JSON->decode($response->decoded_content);
-            };
+            eval { $data = $JSON->decode($response->decoded_content); };
             if ($@) {
                 return Lim::Error->new(
-                    message => 'JSON decode error: '.$@,
-                    module => $self
+                    message => 'JSON decode error: ' . $@,
+                    module  => $self
                 );
             }
 
             if (ref($data) ne 'HASH') {
                 return Lim::Error->new(
                     message => 'Invalid data returned, not a hash',
-                    module => $self
+                    module  => $self
                 );
             }
 
@@ -292,15 +286,15 @@ sub response {
         }
         else {
             return Lim::Error->new(
-                message => 'Unknown content type ['.$response->header('Content-Type').'] returned',
-                module => $self
+                message => 'Unknown content type [' . $response->header('Content-Type') . '] returned',
+                module  => $self
             );
         }
     }
     else {
         unless ($response->code == 200) {
             return Lim::Error->new(
-                code => $response->code,
+                code   => $response->code,
                 module => $self
             );
         }
@@ -348,4 +342,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocol::REST
+1;    # End of Lim::RPC::Protocol::REST

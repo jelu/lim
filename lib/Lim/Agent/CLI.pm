@@ -4,7 +4,7 @@ use common::sense;
 
 use Scalar::Util qw(weaken);
 
-use Lim ();
+use Lim        ();
 use Lim::Agent ();
 
 use base qw(Lim::Component::CLI);
@@ -36,20 +36,22 @@ our $VERSION = $Lim::VERSION;
 sub version {
     my ($self) = @_;
     my $agent = Lim::Agent->Client;
-    
+
     weaken($self);
-    $agent->ReadVersion(sub {
-        my ($call, $response) = @_;
-        
-        if ($call->Successful) {
-            $self->cli->println('agent version ', $response->{version});
-            $self->Successful;
+    $agent->ReadVersion(
+        sub {
+            my ($call, $response) = @_;
+
+            if ($call->Successful) {
+                $self->cli->println('agent version ', $response->{version});
+                $self->Successful;
+            }
+            else {
+                $self->Error($call->Error);
+            }
+            undef($agent);
         }
-        else {
-            $self->Error($call->Error);
-        }
-        undef($agent);
-    });
+    );
 }
 
 =head2 plugins
@@ -59,25 +61,27 @@ sub version {
 sub plugins {
     my ($self) = @_;
     my $agent = Lim::Agent->Client;
-    
+
     weaken($self);
-    $agent->ReadPlugins(sub {
-        my ($call, $response) = @_;
-        
-        if ($call->Successful) {
-            if (exists $response->{plugin}) {
-                $self->cli->println(join("\t", qw(Name Description Module Version)));
-                foreach my $plugin (ref($response->{plugin}) eq 'ARRAY' ? @{$response->{plugin}} : $response->{plugin}) {
-                    $self->cli->println(join("\t", $plugin->{name}, $plugin->{description}, $plugin->{module}, $plugin->{version}));
+    $agent->ReadPlugins(
+        sub {
+            my ($call, $response) = @_;
+
+            if ($call->Successful) {
+                if (exists $response->{plugin}) {
+                    $self->cli->println(join("\t", qw(Name Description Module Version)));
+                    foreach my $plugin (ref($response->{plugin}) eq 'ARRAY' ? @{$response->{plugin}} : $response->{plugin}) {
+                        $self->cli->println(join("\t", $plugin->{name}, $plugin->{description}, $plugin->{module}, $plugin->{version}));
+                    }
                 }
+                $self->Successful;
             }
-            $self->Successful;
+            else {
+                $self->Error($call->Error);
+            }
+            undef($agent);
         }
-        else {
-            $self->Error($call->Error);
-        }
-        undef($agent);
-    });
+    );
 }
 
 =head1 AUTHOR
@@ -119,4 +123,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Agent::CLI
+1;    # End of Lim::Agent::CLI

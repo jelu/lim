@@ -69,4 +69,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Agent::Client
+1;    # End of Lim::Agent::Client

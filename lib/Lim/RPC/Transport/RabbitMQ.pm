@@ -10,12 +10,12 @@ eval 'use AnyEvent::RabbitMQ ();';
 undef $@;
 
 use HTTP::Status qw(:constants);
-use HTTP::Request ();
+use HTTP::Request  ();
 use HTTP::Response ();
 
-use Lim ();
+use Lim                ();
 use Lim::RPC::Callback ();
-use Lim::Util ();
+use Lim::Util          ();
 
 use base qw(Lim::RPC::Transport);
 
@@ -44,22 +44,22 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub Init {
-    my $self = shift;
-    my %args = ( @_ );
+    my $self      = shift;
+    my %args      = (@_);
     my $real_self = $self;
     weaken($self);
 
-    $self->{channel} = {};
-    $self->{host} = 'localhost';
-    $self->{port} = 5672;
-    $self->{user} = 'guest';
-    $self->{pass} = 'guest';
-    $self->{vhost} = '/';
-    $self->{timeout} = 10;
-    $self->{queue_prefix} = 'lim_';
-    $self->{verbose} = 0;
-    $self->{prefetch_count} = 1;
-    $self->{broadcast} = 0;
+    $self->{channel}         = {};
+    $self->{host}            = 'localhost';
+    $self->{port}            = 5672;
+    $self->{user}            = 'guest';
+    $self->{pass}            = 'guest';
+    $self->{vhost}           = '/';
+    $self->{timeout}         = 10;
+    $self->{queue_prefix}    = 'lim_';
+    $self->{verbose}         = 0;
+    $self->{prefetch_count}  = 1;
+    $self->{broadcast}       = 0;
     $self->{exchange_prefix} = 'lim_exchange_';
 
     foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
@@ -82,11 +82,9 @@ sub Init {
         $self->{port} = $args{uri}->port;
     }
 
-    eval {
-        $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
-    };
+    eval { $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec; };
     if ($@) {
-        confess 'Failed to initiate AnyEvent::RabbitMQ: '.$@;
+        confess 'Failed to initiate AnyEvent::RabbitMQ: ' . $@;
     }
     unless (blessed $self->{rabbitmq} and $self->{rabbitmq}->isa('AnyEvent::RabbitMQ')) {
         confess 'unable to create AnyEvent::RabbitMQ object';
@@ -106,7 +104,7 @@ sub Init {
 
         $self->{host} = $host;
         $self->{port} = $port;
-        $self->{uri} = URI->new('rabbitmq://'.$host.':'.$port);
+        $self->{uri}  = URI->new('rabbitmq://' . $host . ':' . $port);
         $self->_connect;
     };
 }
@@ -144,10 +142,10 @@ sub _connect {
             }
 
             if ($fatal) {
-                Lim::ERR and $self->{logger}->error('Server connection failure: '.$message);
+                Lim::ERR and $self->{logger}->error('Server connection failure: ' . $message);
             }
             else {
-                Lim::WARN and $self->{logger}->warn('Server connection failure: '.$message);
+                Lim::WARN and $self->{logger}->warn('Server connection failure: ' . $message);
             }
         },
         on_close => sub {
@@ -158,19 +156,19 @@ sub _connect {
             }
 
             my $message = 'Unknown';
-            if (blessed $frame
+            if (    blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
                 and $frame->method_frame->can('reply_code')
                 and $frame->method_frame->can('reply_text'))
             {
-                $message = '['.$frame->method_frame->reply_code.'] '.$frame->method_frame->reply_text;
+                $message = '[' . $frame->method_frame->reply_code . '] ' . $frame->method_frame->reply_text;
             }
             elsif (defined $frame) {
                 $message = $frame;
             }
 
-            Lim::INFO and $self->{logger}->info('Server connection closed: '.$message);
+            Lim::INFO and $self->{logger}->info('Server connection closed: ' . $message);
         },
         on_read_failure => sub {
             unless (defined $self) {
@@ -178,7 +176,7 @@ sub _connect {
             }
 
             my ($message) = @_;
-            Lim::WARN and $self->{logger}->warn('Server read failure: '.$message);
+            Lim::WARN and $self->{logger}->warn('Server read failure: ' . $message);
         }
     );
 }
@@ -236,13 +234,11 @@ sub serve {
     }
 
     if (exists $self->{channel}->{$module_shortname}) {
-        Lim::WARN and $self->{logger}->warn('Already serving '.$module_shortname);
+        Lim::WARN and $self->{logger}->warn('Already serving ' . $module_shortname);
         return;
     }
 
-    $self->{channel}->{$module_shortname} = {
-        module => $module_shortname
-    };
+    $self->{channel}->{$module_shortname} = {module => $module_shortname};
 
     if ($self->{rabbitmq}->is_open) {
         $self->_open($self->{channel}->{$module_shortname});
@@ -264,16 +260,20 @@ sub _reopen {
 
     delete $channel->{obj};
     delete $channel->{queue};
-    my $w; $w = AnyEvent->timer(after => 1, cb => sub {
-        unless (defined $self) {
-            return;
-        }
+    my $w;
+    $w = AnyEvent->timer(
+        after => 1,
+        cb    => sub {
+            unless (defined $self) {
+                return;
+            }
 
-        if ($self->{rabbitmq}->is_open) {
-            $self->_open($channel);
+            if ($self->{rabbitmq}->is_open) {
+                $self->_open($channel);
+            }
+            $w = undef;
         }
-        $w = undef;
-    });
+    );
 }
 
 =head2 _open
@@ -299,12 +299,12 @@ sub _open {
             }
 
             unless (blessed $obj and $obj->isa('AnyEvent::RabbitMQ::Channel')) {
-                Lim::ERR and $self->{logger}->error('Channel open failure for '.$channel->{module}.': object given to on_success is not AnyEvent::RabbitMQ::Channel');
+                Lim::ERR and $self->{logger}->error('Channel open failure for ' . $channel->{module} . ': object given to on_success is not AnyEvent::RabbitMQ::Channel');
                 return;
             }
 
             $channel->{obj} = $obj;
-            Lim::RPC_DEBUG and $self->{logger}->debug('Channel opened successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel opened successfully for ' . $channel->{module});
             $self->_qos($channel);
         },
         on_failure => sub {
@@ -314,7 +314,7 @@ sub _open {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel open failure for '.$channel->{module}.': '.$message);
+            Lim::ERR and $self->{logger}->error('Channel open failure for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         },
         on_close => sub {
@@ -325,32 +325,32 @@ sub _open {
             }
 
             my $message = 'Unknown';
-            if (blessed $frame
+            if (    blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
                 and $frame->method_frame->can('reply_code')
                 and $frame->method_frame->can('reply_text'))
             {
-                $message = '['.$frame->method_frame->reply_code.'] '.$frame->method_frame->reply_text;
+                $message = '[' . $frame->method_frame->reply_code . '] ' . $frame->method_frame->reply_text;
             }
 
-            Lim::INFO and $self->{logger}->info('Channel closed for '.$channel->{module}.': '.$message);
+            Lim::INFO and $self->{logger}->info('Channel closed for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         },
         on_return => sub {
             my ($frame) = @_;
 
             my $message = 'Unknown';
-            if (blessed $frame
+            if (    blessed $frame
                 and $frame->can('method_frame')
                 and blessed $frame->method_frame
                 and $frame->method_frame->can('reply_code')
                 and $frame->method_frame->can('reply_text'))
             {
-                $message = '['.$frame->method_frame->reply_code.'] '.$frame->method_frame->reply_text;
+                $message = '[' . $frame->method_frame->reply_code . '] ' . $frame->method_frame->reply_text;
             }
 
-            Lim::WARN and $self->{logger}->warn('Frame returned: '.$message);
+            Lim::WARN and $self->{logger}->warn('Frame returned: ' . $message);
         }
     );
 }
@@ -373,14 +373,14 @@ sub _qos {
 
     $channel->{obj}->qos(
         prefetch_count => $self->{prefetch_count},
-        on_success => sub {
+        on_success     => sub {
             my ($obj) = @_;
 
             unless (defined $self) {
                 return;
             }
 
-            Lim::RPC_DEBUG and $self->{logger}->debug('Channel QoS setup successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel QoS setup successfully for ' . $channel->{module});
             $self->_exchange($channel);
         },
         on_failure => sub {
@@ -390,7 +390,7 @@ sub _qos {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel QoS setup failure for '.$channel->{module}.': '.$message);
+            Lim::ERR and $self->{logger}->error('Channel QoS setup failure for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         }
     );
@@ -418,14 +418,14 @@ sub _exchange {
     }
 
     $channel->{obj}->declare_exchange(
-        exchange => $self->{exchange_prefix}.$channel->{module},
-        type => 'fanout',
+        exchange   => $self->{exchange_prefix} . $channel->{module},
+        type       => 'fanout',
         on_success => sub {
             unless (defined $self) {
                 return;
             }
 
-            Lim::RPC_DEBUG and $self->{logger}->debug('Channel exchange declared successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel exchange declared successfully for ' . $channel->{module});
             $self->_declare($channel);
         },
         on_failure => sub {
@@ -435,7 +435,7 @@ sub _exchange {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel exchange declare failure for '.$channel->{module}.': '.$message);
+            Lim::ERR and $self->{logger}->error('Channel exchange declare failure for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         }
     );
@@ -458,11 +458,7 @@ sub _declare {
     }
 
     $channel->{obj}->declare_queue(
-        ($self->{broadcast} ? (
-            exclusive => 1
-        ) : (
-            queue => $self->{queue_prefix}.$channel->{module}
-        )),
+        ($self->{broadcast} ? (exclusive => 1) : (queue => $self->{queue_prefix} . $channel->{module})),
         on_success => sub {
             my ($method) = @_;
 
@@ -471,10 +467,12 @@ sub _declare {
             }
 
             if ($self->{broadcast}) {
-                unless (blessed $method and $method->can('method_frame')
-                    and blessed $method->method_frame and $method->method_frame->can('queue'))
+                unless (blessed $method
+                    and $method->can('method_frame')
+                    and blessed $method->method_frame
+                    and $method->method_frame->can('queue'))
                 {
-                    Lim::ERR and $self->{logger}->error('Declare queue frame invalid for '.$channel->{module});
+                    Lim::ERR and $self->{logger}->error('Declare queue frame invalid for ' . $channel->{module});
                     $self->_reopen($channel);
                     return;
                 }
@@ -482,10 +480,10 @@ sub _declare {
                 $channel->{queue} = $method->method_frame->queue;
             }
             else {
-                $channel->{queue} = $self->{queue_prefix}.$channel->{module};
+                $channel->{queue} = $self->{queue_prefix} . $channel->{module};
             }
 
-            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully for ' . $channel->{module});
             $self->_bind($channel);
         },
         on_failure => sub {
@@ -495,7 +493,7 @@ sub _declare {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel queue declare failure for '.$channel->{module}.': '.$message);
+            Lim::ERR and $self->{logger}->error('Channel queue declare failure for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         }
     );
@@ -526,14 +524,14 @@ sub _bind {
     }
 
     $channel->{obj}->bind_queue(
-        exchange => $self->{exchange_prefix}.$channel->{module},
-        queue => $channel->{queue},
+        exchange   => $self->{exchange_prefix} . $channel->{module},
+        queue      => $channel->{queue},
         on_success => sub {
             unless (defined $self) {
                 return;
             }
 
-            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully for '.$channel->{module});
+            Lim::RPC_DEBUG and $self->{logger}->debug('Channel queue declared successfully for ' . $channel->{module});
             $self->_consume($channel);
         },
         on_failure => sub {
@@ -543,7 +541,7 @@ sub _bind {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel queue declare failure for '.$channel->{module}.': '.$message);
+            Lim::ERR and $self->{logger}->error('Channel queue declare failure for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         }
     );
@@ -569,8 +567,8 @@ sub _consume {
     }
 
     $channel->{obj}->consume(
-        queue => $channel->{queue},
-        no_ack => 0,
+        queue      => $channel->{queue},
+        no_ack     => 0,
         on_success => sub {
             my ($method) = @_;
 
@@ -578,13 +576,15 @@ sub _consume {
                 return;
             }
 
-            unless (blessed $method and $method->can('method_frame')
-                and blessed $method->method_frame and $method->method_frame->can('consumer_tag'))
+            unless (blessed $method
+                and $method->can('method_frame')
+                and blessed $method->method_frame
+                and $method->method_frame->can('consumer_tag'))
             {
-                Lim::WARN and $self->{logger}->debug('Channel consuming for '.$channel->{module}.' but no consumer_tag found');
+                Lim::WARN and $self->{logger}->debug('Channel consuming for ' . $channel->{module} . ' but no consumer_tag found');
             }
             else {
-                Lim::RPC_DEBUG and $self->{logger}->debug('Channel consuming successfully for '.$channel->{module});
+                Lim::RPC_DEBUG and $self->{logger}->debug('Channel consuming successfully for ' . $channel->{module});
                 $channel->{consumer_tag} = $method->method_frame->consumer_tag;
             }
         },
@@ -596,8 +596,10 @@ sub _consume {
             }
 
             unless (ref($frame) eq 'HASH'
-                and blessed $frame->{deliver} and $frame->{deliver}->can('method_frame')
-                and blessed $frame->{deliver}->method_frame and $frame->{deliver}->method_frame->can('delivery_tag'))
+                and blessed $frame->{deliver}
+                and $frame->{deliver}->can('method_frame')
+                and blessed $frame->{deliver}->method_frame
+                and $frame->{deliver}->method_frame->can('delivery_tag'))
             {
                 Lim::ERR and $self->{logger}->error('Consume request invalid, may go unacked');
                 return;
@@ -613,7 +615,7 @@ sub _consume {
                 $headers->header(%{$frame->{header}->headers});
             }
             my $request = HTTP::Request->new(
-                GET => '/'.$channel->{module},
+                GET => '/' . $channel->{module},
                 $headers,
                 $frame->{body}->payload
             );
@@ -628,7 +630,7 @@ sub _consume {
                         return;
                     }
 
-                    if (!$self->{broadcast}
+                    if (    !$self->{broadcast}
                         and blessed $frame->{header}
                         and $frame->{header}->can('reply_to')
                         and blessed($response)
@@ -639,19 +641,17 @@ sub _consume {
                         $channel->{obj}->publish(
                             exchange    => '',
                             routing_key => $frame->{header}->reply_to,
-                            header => {
+                            header      => {
                                 headers => {
-                                    'X-Lim-Code' => $response->code,
+                                    'X-Lim-Code'   => $response->code,
                                     'Content-Type' => $response->header('Content-Type')
                                 }
                             },
-                            body        => $response->content
+                            body => $response->content
                         );
                     }
 
-                    $channel->{obj}->ack(
-                        delivery_tag => $frame->{deliver}->method_frame->delivery_tag
-                    );
+                    $channel->{obj}->ack(delivery_tag => $frame->{deliver}->method_frame->delivery_tag);
                 },
                 reset_timeout => sub {
                 }
@@ -669,16 +669,14 @@ sub _consume {
 
             # TODO: reject rabbitmq frame?
 
-            $channel->{obj}->ack(
-                delivery_tag => $frame->{deliver}->method_frame->delivery_tag
-            );
+            $channel->{obj}->ack(delivery_tag => $frame->{deliver}->method_frame->delivery_tag);
         },
         on_cancel => sub {
             unless (defined $self) {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+            Lim::ERR and $self->{logger}->error('Channel cancelled for ' . $channel->{module});
         },
         on_failure => sub {
             my ($message) = @_;
@@ -687,7 +685,7 @@ sub _consume {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel consume failure for '.$channel->{module}.': '.$message);
+            Lim::ERR and $self->{logger}->error('Channel consume failure for ' . $channel->{module} . ': ' . $message);
             $self->_reopen($channel);
         }
     );
@@ -708,10 +706,12 @@ sub close {
     }
 
     my $cv = AnyEvent->condvar;
-    $cv->begin(sub {
-        $cb->();
-        $cv = undef;
-    });
+    $cv->begin(
+        sub {
+            $cb->();
+            $cv = undef;
+        }
+    );
 
     foreach my $channel (values %{$self->{channel}}) {
         unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel') and defined $channel->{queue}) {
@@ -722,7 +722,7 @@ sub close {
 
         my $delete = sub {
             $channel->{obj}->delete_queue(
-                queue => $channel->{queue},
+                queue      => $channel->{queue},
                 on_success => sub {
                     Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
                     $cv->end;
@@ -730,7 +730,7 @@ sub close {
                 on_failure => sub {
                     my ($message) = @_;
 
-                    Lim::ERR and defined $self and $self->{logger}->error('Channel delete failure for ', $channel->{module}, ': '.$message);
+                    Lim::ERR and defined $self and $self->{logger}->error('Channel delete failure for ', $channel->{module}, ': ' . $message);
                     $cv->end;
                 }
             );
@@ -740,14 +740,14 @@ sub close {
         if ($channel->{consumer_tag}) {
             $channel->{obj}->cancel(
                 consumer_tag => $channel->{consumer_tag},
-                on_success => sub {
+                on_success   => sub {
                     Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel cancel successfully');
                     $delete->();
                 },
                 on_failure => sub {
                     my ($message) = @_;
 
-                    Lim::ERR and defined $self and $self->{logger}->error('Channel cancel failure: '.$message);
+                    Lim::ERR and defined $self and $self->{logger}->error('Channel cancel failure: ' . $message);
                     $delete->();
                 }
             );
@@ -800,4 +800,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::RabbitMQ
+1;    # End of Lim::RPC::Transport::RabbitMQ

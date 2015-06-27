@@ -33,12 +33,10 @@ our $VERSION = $Lim::VERSION;
 =cut
 
 sub new {
-    my $this = shift;
+    my $this  = shift;
     my $class = ref($this) || $this;
-    my %args = ( @_ );
-    my $self = {
-        logger => Log::Log4perl->get_logger
-    };
+    my %args  = (@_);
+    my $self  = {logger => Log::Log4perl->get_logger};
     bless $self, $class;
 
     unless (defined $args{cli}) {
@@ -47,14 +45,12 @@ sub new {
     $self->{cli} = delete $args{cli};
     weaken($self->{cli});
 
-    eval {
-        $self->Init(%args);
-    };
+    eval { $self->Init(%args); };
     if ($@) {
-        Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
+        Lim::WARN and $self->{logger}->warn('Unable to initialize module ' . $class . ': ' . $@);
         return;
     }
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -62,7 +58,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
 }
 
@@ -94,13 +90,13 @@ sub cli {
 
 sub Prompt {
     my ($self) = @_;
-    
+
     if (ref($self)) {
         $self = ref($self);
     }
     $self =~ s/::[^:]+$//o;
-    
-    return '/'.lc($self->Name);
+
+    return '/' . lc($self->Name);
 }
 
 =head2 Successful
@@ -109,7 +105,7 @@ sub Prompt {
 
 sub Successful {
     my ($self) = @_;
-    
+
     if (defined $self->{cli}) {
         $self->{cli}->Successful;
     }
@@ -121,7 +117,7 @@ sub Successful {
 
 sub Error {
     my $self = shift;
-    
+
     if (defined $self->{cli}) {
         $self->{cli}->Error(@_);
     }
@@ -169,4 +165,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Component::CLI
+1;    # End of Lim::Component::CLI

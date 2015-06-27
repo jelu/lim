@@ -1,14 +1,15 @@
 #!/usr/bin/env perl
 
 use common::sense;
-use Getopt::Long ();
-use Pod::Usage ();
-use Log::Log4perl ();
+use Getopt::Long                      ();
+use Pod::Usage                        ();
+use Log::Log4perl                     ();
 use Log::Log4perl::Appender::Lim::CLI ();
 $Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
 
 use AnyEvent ();
 if (AnyEvent->VERSION < 6.01) {
+
     # Try and force detection of modules for old AnyEvents
     foreach (qw(EV Event Glib EventLib POE)) {
         eval "use $_ ();";
@@ -19,8 +20,8 @@ if (AnyEvent->VERSION < 6.01) {
     AnyEvent::detect;
 }
 
-use Lim ();
-use Lim::CLI ();
+use Lim           ();
+use Lim::CLI      ();
 use Lim::RPC::TLS ();
 
 my $help = 0;
@@ -31,12 +32,12 @@ my $log4perl;
 my @options;
 
 Getopt::Long::GetOptions(
-    'help|?' => \$help,
-    'conf:s' => \$conf,
-    'host:s' => \$host,
-    'port:i' => \$port,
+    'help|?'     => \$help,
+    'conf:s'     => \$conf,
+    'host:s'     => \$host,
+    'port:i'     => \$port,
     'log4perl:s' => \$log4perl,
-    'option:s' => \@options
+    'option:s'   => \@options
 ) or Pod::Usage::pod2usage(2);
 Pod::Usage::pod2usage(1) if $help;
 
@@ -44,7 +45,8 @@ if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
 }
 else {
-    Log::Log4perl->init( \q(
+    Log::Log4perl->init(
+        \q(
     log4perl.logger                   = DEBUG, Screen, LimCLI
     log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
     log4perl.appender.Screen.stderr   = 1
@@ -55,7 +57,8 @@ else {
     log4perl.appender.LimCLI.stderr   = 1
     log4perl.appender.LimCLI.layout   = Log::Log4perl::Layout::PatternLayout
     log4perl.appender.LimCLI.layout.ConversionPattern = %d %F [%L] %p: %m%n
-    ) );
+    )
+    );
 }
 
 Lim::LoadConfig('/etc/lim/cli.yaml');
@@ -93,31 +96,48 @@ my $cv = AnyEvent->condvar;
 my @watchers;
 my $cli;
 
-push(@watchers,
-    AnyEvent->signal(signal => "HUP", cb => sub {
-    }),
-    AnyEvent->signal(signal => "PIPE", cb => sub {
-    }),
-    AnyEvent->signal(signal => "INT", cb => sub {
-        if (defined $cli) {
-            $cli->clear_line;
+push(
+    @watchers,
+    AnyEvent->signal(
+        signal => "HUP",
+        cb     => sub {
         }
-        else {
+    ),
+    AnyEvent->signal(
+        signal => "PIPE",
+        cb     => sub {
+        }
+    ),
+    AnyEvent->signal(
+        signal => "INT",
+        cb     => sub {
+            if (defined $cli) {
+                $cli->clear_line;
+            }
+            else {
+                $cv->send;
+            }
+        }
+    ),
+    AnyEvent->signal(
+        signal => "QUIT",
+        cb     => sub {
             $cv->send;
         }
-    }),
-    AnyEvent->signal(signal => "QUIT", cb => sub {
-        $cv->send;
-    }),
-    AnyEvent->signal(signal => "TERM", cb => sub {
-        $cv->send;
-    }),
+    ),
+    AnyEvent->signal(
+        signal => "TERM",
+        cb     => sub {
+            $cv->send;
+        }
+    ),
 );
 
 $cli = Lim::CLI->new(
     on_quit => sub {
         $cv->send;
-    });
+    }
+);
 
 if (defined $cli) {
     push(@watchers, $cli);

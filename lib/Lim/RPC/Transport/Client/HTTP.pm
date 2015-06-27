@@ -6,18 +6,18 @@ use Carp;
 use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
 
-use AnyEvent ();
+use AnyEvent         ();
 use AnyEvent::Socket ();
 use AnyEvent::Handle ();
 
-use HTTP::Request ();
+use HTTP::Request  ();
 use HTTP::Response ();
 use HTTP::Status qw(:constants);
 
-use Lim ();
-use Lim::Error ();
+use Lim           ();
+use Lim::Error    ();
 use Lim::RPC::TLS ();
-use Lim::Util ();
+use Lim::Util     ();
 
 use base qw(Lim::RPC::Transport::Client);
 
@@ -41,7 +41,7 @@ See L<Lim> for version.
 
 our $VERSION = $Lim::VERSION;
 
-sub MAX_RESPONSE_LEN (){ 8 * 1024 * 1024 }
+sub MAX_RESPONSE_LEN () { 8 * 1024 * 1024 }
 
 =head1 SYNOPSIS
 
@@ -74,8 +74,8 @@ sub name {
 =cut
 
 sub request {
-    my $self = shift;
-    my %args = ( @_ );
+    my $self      = shift;
+    my %args      = (@_);
     my $real_self = $self;
     weaken($self);
 
@@ -108,10 +108,13 @@ sub request {
         unless (defined $host and defined $port) {
             Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => 'Unable to resolve host '.$self->{host},
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => 'Unable to resolve host ' . $self->{host},
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
             return;
@@ -143,10 +146,13 @@ sub _connect {
             Lim::WARN and $self->{logger}->warn('No handle: ', $!);
 
             if (exists $self->{cb}) {
-                $self->{cb}->($self, Lim::Error->new(
-                    message => $!,
-                    module => $self
-                ));
+                $self->{cb}->(
+                    $self,
+                    Lim::Error->new(
+                        message => $!,
+                        module  => $self
+                    )
+                );
                 delete $self->{cb};
             }
             return;
@@ -156,7 +162,7 @@ sub _connect {
         $handle = AnyEvent::Handle->new(
             fh => $fh,
             ($self->isa('Lim::RPC::Transport::Client::HTTPS') ? (tls => 'connect', tls_ctx => Lim::RPC::TLS->instance->tls_ctx) : ()),
-            timeout => Lim::Config->{rpc}->{timeout},
+            timeout  => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;
 
@@ -166,10 +172,13 @@ sub _connect {
 
                 Lim::WARN and $self->{logger}->warn($handle, ' Error: ', $message);
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        message => $message,
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            message => $message,
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 $handle->destroy;
@@ -184,11 +193,14 @@ sub _connect {
                 Lim::WARN and $self->{logger}->warn($handle, ' TIMEOUT');
 
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        code => HTTP_REQUEST_TIMEOUT,
-                        message => 'Request timed out',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            code    => HTTP_REQUEST_TIMEOUT,
+                            message => 'Request timed out',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 $handle->destroy;
@@ -203,11 +215,14 @@ sub _connect {
                 Lim::WARN and $self->{logger}->warn($handle, ' EOF');
 
                 if (exists $self->{cb}) {
-                    $self->{cb}->($self, Lim::Error->new(
-                        code => HTTP_GONE,
-                        message => 'Connection closed',
-                        module => $self
-                    ));
+                    $self->{cb}->(
+                        $self,
+                        Lim::Error->new(
+                            code    => HTTP_GONE,
+                            message => 'Connection closed',
+                            module  => $self
+                        )
+                    );
                     delete $self->{cb};
                 }
                 $handle->destroy;
@@ -221,11 +236,14 @@ sub _connect {
 
                 if ((length($self->{headers}) + (exists $self->{content} ? length($self->{content}) : 0) + length($handle->{rbuf})) > MAX_RESPONSE_LEN) {
                     if (exists $self->{cb}) {
-                        $self->{cb}->($self, Lim::Error->new(
-                            code => HTTP_REQUEST_ENTITY_TOO_LARGE,
-                            message => 'Request too large',
-                            module => $self
-                        ));
+                        $self->{cb}->(
+                            $self,
+                            Lim::Error->new(
+                                code    => HTTP_REQUEST_ENTITY_TOO_LARGE,
+                                message => 'Request too large',
+                                module  => $self
+                            )
+                        );
                         delete $self->{cb};
                     }
                     $handle->push_shutdown;
@@ -238,8 +256,8 @@ sub _connect {
 
                     if ($self->{headers} =~ /\015?\012\015?\012/o) {
                         my ($headers, $content) = split(/\015?\012\015?\012/o, $self->{headers}, 2);
-                        $self->{headers} = $headers;
-                        $self->{content} = $content;
+                        $self->{headers}  = $headers;
+                        $self->{content}  = $content;
                         $self->{response} = HTTP::Response->parse($self->{headers});
                     }
                 }
@@ -262,7 +280,8 @@ sub _connect {
                     $handle->push_shutdown;
                     $handle->destroy;
                 }
-            });
+            }
+        );
 
         $self->{handle} = $handle;
         $handle->push_write($self->{request}->as_string("\015\012"));
@@ -308,4 +327,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Transport::Client::HTTP
+1;    # End of Lim::RPC::Transport::Client::HTTP

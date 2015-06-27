@@ -4,17 +4,17 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use File::Temp ();
+use File::Temp    ();
 use Fcntl qw(:seek);
-use IO::File ();
+use IO::File    ();
 use Digest::SHA ();
 use Scalar::Util qw(blessed);
 eval 'use URI::Escape::XS qw(uri_unescape);';
 if ($@) {
     use URI::Escape qw(uri_unescape);
 }
-use AnyEvent ();
-use AnyEvent::Util ();
+use AnyEvent         ();
+use AnyEvent::Util   ();
 use AnyEvent::Socket ();
 
 use Lim ();
@@ -31,10 +31,10 @@ See L<Lim> for version.
 
 =cut
 
-our $VERSION = $Lim::VERSION;
+our $VERSION     = $Lim::VERSION;
 our %CALL_METHOD = (
     Create => 'POST',
-    Read => 'GET',
+    Read   => 'GET',
     Update => 'PUT',
     Delete => 'DELETE'
 );
@@ -64,7 +64,7 @@ sub FileExists {
     if (defined $file) {
         $file =~ s/^\///o;
         foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
+            my $real_file = $_ . '/' . $file;
 
             if (-f $real_file) {
                 return $real_file;
@@ -87,7 +87,7 @@ sub FileReadable {
     if (defined $file) {
         $file =~ s/^\///o;
         foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
+            my $real_file = $_ . '/' . $file;
 
             if (-f $real_file and -r $real_file) {
                 return $real_file;
@@ -110,7 +110,7 @@ sub FileWritable {
     if (defined $file) {
         $file =~ s/^\///o;
         foreach (@{Lim::Config->{prefix}}) {
-            my $real_file = $_.'/'.$file;
+            my $real_file = $_ . '/' . $file;
 
             if (-f $real_file and -w $real_file) {
                 return $real_file;
@@ -129,7 +129,7 @@ Read the file and return the content or undef if there was an error.
 sub FileReadContent {
     my ($file) = @_;
 
-    if (-r $file and defined (my $fh = IO::File->new($file))) {
+    if (-r $file and defined(my $fh = IO::File->new($file))) {
         my ($tell, $content);
         $fh->seek(0, SEEK_END);
         $tell = $fh->tell;
@@ -177,16 +177,15 @@ sub FileWriteContent {
             return;
         }
         $filename = $file;
-        $file = $fh;
+        $file     = $fh;
     }
     unless (defined $content) {
         return;
     }
     unless (defined $file) {
-        eval {
-            $file = File::Temp->new;
-        };
+        eval { $file = File::Temp->new; };
         if ($@) {
+
             # TODO log error
             return;
         }
@@ -231,11 +230,10 @@ problems creating the temporary file.
 sub TempFile {
     my $tmp;
 
-    eval {
-        $tmp = File::Temp->new;
-    };
+    eval { $tmp = File::Temp->new; };
 
     unless ($@) {
+
         # TODO log error
         return $tmp;
     }
@@ -254,14 +252,13 @@ sub TempFileLikeThis {
     my ($file) = @_;
 
     if (defined $file and -f $file) {
-        my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
-            $atime,$mtime,$ctime,$blksize,$blocks)
-            = stat($file);
+        my (
+            $dev,   $ino,   $mode,  $nlink,   $uid, $gid, $rdev, $size,
+            $atime, $mtime, $ctime, $blksize, $blocks
+        ) = stat($file);
         my $tmp;
 
-        eval {
-            $tmp = File::Temp->new;
-        };
+        eval { $tmp = File::Temp->new; };
 
         # TODO log error
 
@@ -325,7 +322,7 @@ sub URIize {
     }
     $uri = lc(join('_', @parts));
 
-    return ($method, '/'.$uri);
+    return ($method, '/' . $uri);
 }
 
 =item $hash_ref = Lim::Util::QueryDecode($query_string)
@@ -340,7 +337,7 @@ sub QueryDecode {
     foreach my $part (split(/&/o, $_[0])) {
         my ($key, $value) = split(/=/o, $part, 2);
 
-        $key = uri_unescape($key);
+        $key   = uri_unescape($key);
         $value = uri_unescape($value);
 
         unless ($key) {
@@ -349,16 +346,18 @@ sub QueryDecode {
 
         # check if last element is array and remove it from $key
         my $array = $key =~ s/\[\]$//o ? 1 : 0;
+
         # verify $key
         unless ($key =~ /^[^\]]+(?:\[[^\]]+\])*$/o) {
             return;
         }
+
         # remove last ] so we don't split or get it in $k
         $key =~ s/\]$//o;
 
         my @keys = split(/(?:\]\[|\[)/o, $key);
         my $this = $href;
-        while (defined (my $k = shift(@keys))) {
+        while (defined(my $k = shift(@keys))) {
             unless (scalar @keys) {
                 if ($array and exists $this->{$k}) {
                     unless (ref($this->{$k}) eq 'ARRAY') {
@@ -367,7 +366,7 @@ sub QueryDecode {
                     push(@{$this->{$k}}, $value);
                     last;
                 }
-                $this->{$k} = $array ? [ $value ] : $value;
+                $this->{$k} = $array ? [$value] : $value;
                 last;
             }
 
@@ -382,7 +381,7 @@ sub QueryDecode {
 
     # restruct hashes with all numeric keys to arrays
     my @process = ([$href, $href_final, undef, undef]);
-    while (defined (my $this = shift(@process))) {
+    while (defined(my $this = shift(@process))) {
         my ($old, $new, $parent, $key) = @$this;
 
         my $numeric = 1;
@@ -509,12 +508,12 @@ C<kill_sig> for the specified number of C<kill_try> attempts.
 =cut
 
 sub run_cmd {
-    my $cmd = shift;
+    my $cmd  = shift;
     my %args = (
-        kill_try => 3,
+        kill_try  => 3,
         kill_kill => 1,
-        kill_sig => 15,
-        interval => 1,
+        kill_sig  => 15,
+        interval  => 1,
         @_
     );
     my ($pid, $timeout) = (0, undef);
@@ -545,9 +544,9 @@ sub run_cmd {
         }
 
         $timeout = AnyEvent->timer(
-            after => $args{timeout},
+            after    => $args{timeout},
             interval => $args{interval},
-            cb => sub {
+            cb       => sub {
                 unless ($pid) {
                     undef($timeout);
                     return;
@@ -564,26 +563,27 @@ sub run_cmd {
                     }
                     undef($timeout);
                 }
-            });
+            }
+        );
 
-        Lim::DEBUG and Log::Log4perl->get_logger->debug('run_cmd [timeout ', $args{timeout},'] ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
+        Lim::DEBUG and Log::Log4perl->get_logger->debug('run_cmd [timeout ', $args{timeout}, '] ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
 
-        my $cv = AnyEvent::Util::run_cmd
-            $cmd,
-            %pass_args;
-        $cv->cb(sub {
-            Lim::DEBUG and Log::Log4perl->get_logger->debug('cmd end ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
-            undef($timeout);
-            $args{cb}->(@_);
-        });
+        my $cv = AnyEvent::Util::run_cmd $cmd,
+          %pass_args;
+        $cv->cb(
+            sub {
+                Lim::DEBUG and Log::Log4perl->get_logger->debug('cmd end ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
+                undef($timeout);
+                $args{cb}->(@_);
+            }
+        );
         return;
     }
 
     Lim::DEBUG and Log::Log4perl->get_logger->debug('run_cmd ', (ref($cmd) eq 'ARRAY' ? join(' ', @$cmd) : $cmd));
 
-    return AnyEvent::Util::run_cmd
-        $cmd,
-        %pass_args;
+    return AnyEvent::Util::run_cmd $cmd,
+      %pass_args;
 }
 
 =item Lim::Util::resolve_host $host, $port, $cb->($ipAddress, $port);
@@ -622,6 +622,7 @@ sub resolve_host {
         }
 
         unless (ref($_[0]) eq 'ARRAY') {
+
             # TODO: warn?
             $cb->();
             return;
@@ -643,8 +644,8 @@ sub resolve_hosts {
         confess __PACKAGE__, ': Missing host';
     }
 
-    if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot}.'/system32/drivers/etc/hosts' : '/etc/hosts')) {
-        while(<HOSTS>) {
+    if (open(HOSTS, $^O eq 'MSWin32' ? $ENV{SystemRoot} . '/system32/drivers/etc/hosts' : '/etc/hosts')) {
+        while (<HOSTS>) {
             s/[\r\n]+$//o;
             s/#.*//o;
             s/^\s+//o;
@@ -703,4 +704,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::Util
+1;    # End of Lim::Util
