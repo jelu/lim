@@ -219,7 +219,7 @@ sub _connect {
                     return;
                 }
 
-                if ((length($self->{rbuf}) + length($handle->{rbuf})) > MAX_RESPONSE_LEN) {
+                if ((length($self->{headers}) + (exists $self->{content} ? length($self->{content}) : 0) + length($handle->{rbuf})) > MAX_RESPONSE_LEN) {
                     if (exists $self->{cb}) {
                         $self->{cb}->($self, Lim::Error->new(
                             code => HTTP_REQUEST_ENTITY_TOO_LARGE,
