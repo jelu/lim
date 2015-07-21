@@ -199,7 +199,7 @@ Returns a string that describes the error.
 =cut
 
 sub toString {
-    'Module: ', $_[0]->{module}, ' Code: ', $_[0]->{code}, ' Message: ', $_[0]->{message};
+    'Module: ' . $_[0]->{module} . ' Code: ' . $_[0]->{code} . ' Message: ' . $_[0]->{message};
 }
 
 =back
