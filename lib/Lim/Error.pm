@@ -62,7 +62,7 @@ sub new {
     my %args = ( @_ );
     my $self = {
         code => 500,
-        message => 'Generic Error',
+        message => 'Unknown Error',
         module => 'UNKNOWN'
     };
     bless $self, $class;
@@ -73,7 +73,9 @@ sub new {
         }
         $self->{code} = $args{code};
     }
-    $self->{message} = $args{message};
+    if (defined $args{message}) {
+        $self->{message} = $args{message};
+    }
     if (defined $args{module}) {
         if (blessed($args{module})) {
             $self->{module} = ref($args{module});
@@ -199,7 +201,7 @@ Returns a string that describes the error.
 =cut
 
 sub toString {
-    'Module: ', $_[0]->{module}, ' Code: ', $_[0]->{code}, ' Message: ', $_[0]->{message};
+    'Module: ' . $_[0]->{module} . ' Code: ' . $_[0]->{code} . ' Message: ' . $_[0]->{message};
 }
 
 =back
