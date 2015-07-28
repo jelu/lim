@@ -178,15 +178,22 @@ sub new {
         confess __PACKAGE__, ': Data is not a hash';
     }
     if (exists $self->{call_def}->{in}) {
+        undef $@;
         eval {
             Lim::RPC::V(defined $data ? $data : {}, $self->{call_def}->{in});
         };
         if ($@) {
-            use Data::Dumper;
-            confess __PACKAGE__, ': Unable to verify data ', "\n",
-                Dumper(defined $data ? $data : {}), "\n",
-                Dumper($self->{call_def}->{in}), "\n",
-                $@;
+            undef $@;
+            eval {
+                eval 'use Data::Dumper;';
+                confess __PACKAGE__, ': Unable to verify data ', "\n",
+                    Dumper(defined $data ? $data : {}), "\n",
+                    Dumper($self->{call_def}->{in}), "\n",
+                    $@;
+            };
+            if ($@) {
+                confess __PACKAGE__, ': Unable to verify data';
+            }
         }
     }
     elsif (defined $data and %$data) {
