@@ -47,7 +47,12 @@ lib/Lim/Util/DBI.pm
 Makefile.PL
 MANIFEST			This list of files
 README
+RPC_API
+TODO
+INSTALL
+PLUGIN
 t/00-load.t
+t/boilerplate.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t
