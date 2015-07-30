@@ -1,3 +1,14 @@
+lim (0.20-2~unstable+1) unstable; urgency=low
+
+  * New release 0.20 candidate 02.
+    BIG CHANGES:
+    - Merge arrays in configuration instead of overwriting allowing for
+      plugin/module specific URI configurations etc.
+    - No default URI configured in agent.yaml.
+    - Object debug, RPC debug and debug logging is now default off.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Thu, 30 Jul 2015 10:35:58 +0200
+
 lim (0.20-1~unstable+1) unstable; urgency=low
 
   * New release 0.20 candidate 01.

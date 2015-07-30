@@ -1,6 +1,6 @@
 Name:           perl-Lim
 Version:        0.20
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 Group:          Development/Libraries
@@ -21,6 +21,7 @@ BuildRequires:  perl(Module::Find)
 BuildRequires:  perl(Digest::SHA)
 BuildRequires:  perl(JSON::XS)
 BuildRequires:  perl(LWP::MediaTypes)
+BuildRequires:  perl(AnyEvent::RabbitMQ)
 
 Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires:  perl(Net::SSLeay) >= 1.35
@@ -489,6 +490,13 @@ fi
 
 
 %changelog
+* Wed Jul 30 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-2
+- Release 0.20 candidate 02.
+  BIG CHANGES:
+  - Merge arrays in configuration instead of overwriting allowing for
+    plugin/module specific URI configurations etc.
+  - No default URI configured in agent.yaml.
+  - Object debug, RPC debug and debug logging is now default off.
 * Wed Jul 29 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-1
 - Release 0.20 candidate 01.
   BIG CHANGES:

@@ -1,5 +1,14 @@
 Revision history for Lim
 
+0.20_02 2015-07-30
+        - Release 0.20 candidate 02
+
+        BIG CHANGES:
+        - Merge arrays in configuration instead of overwriting allowing for
+          plugin/module specific URI configurations etc.
+        - No default URI configured in agent.yaml.
+        - Object debug, RPC debug and debug logging is now default off.
+
 0.20_01 2015-07-28
         - Release 0.20 candidate 01
 
