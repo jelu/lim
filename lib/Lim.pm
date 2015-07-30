@@ -200,7 +200,12 @@ sub MergeConfig {
                         next;
                     }
                 }
-                $to->{$key} = $from->{$key};
+                if (ref($to->{$key}) eq 'ARRAY') {
+                    push(@{$to->{$key}}, @{$from->{$key}});
+                }
+                else {
+                    $to->{$key} = $from->{$key};
+                }
             }
         }
     }
@@ -216,10 +221,10 @@ configuration.
 
 sub LoadConfig {
     my ($filename) = @_;
-    
+
     if (defined $filename and -r $filename) {
         my $yaml;
-        
+
         Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $filename);
         eval {
             $yaml = YAML::Any::LoadFile($filename);
@@ -242,7 +247,7 @@ configuration.
 
 sub LoadConfigDirectory {
     my ($directory) = @_;
-    
+
     if (defined $directory and -r $directory and -x $directory and -d $directory) {
         unless(opendir(CONFIGS, $directory)) {
             confess __PACKAGE__, ': Unable to read configurations in directory ', $directory, ': ', $!, "\n";
@@ -250,11 +255,11 @@ sub LoadConfigDirectory {
 
         foreach my $entry (sort readdir(CONFIGS)) {
             my $yaml;
-            
+
             unless(-r $directory.'/'.$entry and $entry =~ /\.yaml$/o) {
                 next;
             }
-            
+
             Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry, ' from directory ', $directory);
             eval {
                 $yaml = YAML::Any::LoadFile($directory.'/'.$entry);
@@ -283,14 +288,14 @@ sub ParseOptions {
         unless ($name and defined $value) {
             confess __PACKAGE__, ': Invalid or unknown option: ', $option, "\n";
         }
-        
+
         my @parts = split(/\./o, $name);
         my $ref = $CONFIG;
         while (defined(my $part = shift(@parts))) {
             unless (scalar @parts) {
                 if ($part =~ /^(.+)\[\]$/o) {
                     $part = $1;
-                    
+
                     if (exists $ref->{$part}) {
                         if (ref($ref->{$part}) eq 'ARRAY') {
                             push(@{$ref->{$part}}, $value);
@@ -308,7 +313,7 @@ sub ParseOptions {
                 }
                 last;
             }
-            
+
             unless (exists $ref->{$part}) {
                 $ref->{$part} = {};
             }
