@@ -11,7 +11,8 @@ use Digest::SHA ();
 use Scalar::Util qw(blessed);
 eval 'use URI::Escape::XS qw(uri_unescape);';
 if ($@) {
-    use URI::Escape qw(uri_unescape);
+    eval 'use URI::Escape qw(uri_unescape);';
+    die $@ if $@;
 }
 use AnyEvent ();
 use AnyEvent::Util ();

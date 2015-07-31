@@ -1,5 +1,12 @@
 Revision history for Lim
 
+0.20_04 2015-07-30
+        - Release 0.20 candidate 04
+
+        Changes:
+        - Correct URI::Escape::XS/URI::Escape use to prevent redefined
+          warnings.
+
 0.20_03 2015-07-30
         - Release 0.20 candidate 03
 

@@ -1,6 +1,6 @@
 Name:           perl-Lim
 Version:        0.20
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 Group:          Development/Libraries
@@ -490,6 +490,11 @@ fi
 
 
 %changelog
+* Wed Jul 31 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-4
+- Release 0.20 candidate 04
+  Changes:
+  - Correct URI::Escape::XS/URI::Escape use to prevent redefined
+    warnings.
 * Wed Jul 31 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-3
 - Release 0.20 candidate 03.
   Changes:
