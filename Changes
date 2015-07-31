@@ -1,5 +1,12 @@
 Revision history for Lim
 
+0.20_03 2015-07-30
+        - Release 0.20 candidate 03
+
+        Changes:
+        - Do not start unless we got URIs.
+        - RabbitMQ transport will now re-resolve/connect on failure.
+
 0.20_02 2015-07-30
         - Release 0.20 candidate 02
 

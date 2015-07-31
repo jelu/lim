@@ -1,6 +1,6 @@
 Name:           perl-Lim
 Version:        0.20
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 Group:          Development/Libraries
@@ -490,6 +490,11 @@ fi
 
 
 %changelog
+* Wed Jul 31 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-3
+- Release 0.20 candidate 03.
+  Changes:
+  - Do not start unless we got URIs.
+  - RabbitMQ transport will now re-resolve/connect on failure.
 * Wed Jul 30 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-2
 - Release 0.20 candidate 02.
   BIG CHANGES:

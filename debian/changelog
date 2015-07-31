@@ -1,3 +1,12 @@
+lim (0.20-3~unstable+1) unstable; urgency=low
+
+  * New release 0.20 candidate 03.
+    Changes:
+    - Do not start unless we got URIs.
+    - RabbitMQ transport will now re-resolve/connect on failure.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Fri, 31 Jul 2015 11:45:07 +0200
+
 lim (0.20-2~unstable+1) unstable; urgency=low
 
   * New release 0.20 candidate 02.

@@ -61,13 +61,14 @@ sub Init {
     $self->{prefetch_count} = 1;
     $self->{broadcast} = 0;
     $self->{exchange_prefix} = 'lim_exchange_';
+    $self->{retry_interval} = 5;
 
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix retry_interval)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
         }
     }
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix retry_interval)) {
         if (defined $args{$_}) {
             $self->{$_} = $args{$_};
         }
@@ -92,6 +93,20 @@ sub Init {
         confess 'unable to create AnyEvent::RabbitMQ object';
     }
 
+    $self->_resolve;
+}
+
+=head2 _resolve
+
+=cut
+
+sub _resolve {
+    my ($self) = @_;
+    my $real_self = $self;
+    weaken($self);
+
+    Lim::RPC_DEBUG and $self->{logger}->debug('Resolving ', $self->{host}, '...');
+
     Lim::Util::resolve_host $self->{host}, $self->{port}, sub {
         my ($host, $port) = @_;
 
@@ -101,6 +116,13 @@ sub Init {
 
         unless (defined $host and defined $port) {
             Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
+            $self->{retry} = AnyEvent->timer(after => $self->{retry_interval}, cb => sub {
+                unless (defined $self) {
+                    return;
+                }
+
+                $self->_resolve;
+            });
             return;
         }
 
@@ -119,6 +141,12 @@ sub _connect {
     my ($self) = @_;
     my $real_self = $self;
     weaken($self);
+
+    Lim::RPC_DEBUG and $self->{logger}->debug('Server connecting...');
+
+    unless (exists $self->{rabbitmq}) {
+        $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
+    }
 
     $self->{rabbitmq}->connect(
         (map { $_ => $self->{$_} } qw(host port user pass vhost timeout)),
@@ -149,6 +177,19 @@ sub _connect {
             else {
                 Lim::WARN and $self->{logger}->warn('Server connection failure: '.$message);
             }
+            $self->{retry} = AnyEvent->timer(after => $self->{retry_interval}, cb => sub {
+                unless (defined $self) {
+                    return;
+                }
+
+                $self->close(sub {
+                    unless ($self->{rabbitmq}->{_state}) {
+                        $self->{rabbitmq}->{_state} = 1;
+                    }
+                    delete $self->{rabbitmq};
+                    $self->_connect;
+                });
+            });
         },
         on_close => sub {
             my ($frame) = @_;
@@ -171,6 +212,19 @@ sub _connect {
             }
 
             Lim::INFO and $self->{logger}->info('Server connection closed: '.$message);
+            $self->{retry} = AnyEvent->timer(after => $self->{retry_interval}, cb => sub {
+                unless (defined $self) {
+                    return;
+                }
+
+                $self->close(sub {
+                    unless ($self->{rabbitmq}->{_state}) {
+                        $self->{rabbitmq}->{_state} = 1;
+                    }
+                    delete $self->{rabbitmq};
+                    $self->_connect;
+                });
+            });
         },
         on_read_failure => sub {
             unless (defined $self) {
@@ -188,6 +242,12 @@ sub _connect {
 =cut
 
 sub Destroy {
+    my ($self) = @_;
+
+    unless ($self->{rabbitmq}->{_state}) {
+        $self->{rabbitmq}->{_state} = 1;
+    }
+    delete $self->{rabbitmq};
 }
 
 =head2 name
