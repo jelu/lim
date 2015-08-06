@@ -62,6 +62,7 @@ sub Init {
     $self->{broadcast} = 0;
     $self->{exchange_prefix} = 'lim_exchange_';
     $self->{retry_interval} = 5;
+    $self->{closing} = 0;
 
     foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix retry_interval)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
@@ -148,6 +149,7 @@ sub _connect {
         $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
     }
 
+    $self->{closing} = 0;
     $self->{rabbitmq}->connect(
         (map { $_ => $self->{$_} } qw(host port user pass vhost timeout)),
         on_success => sub {
@@ -480,6 +482,7 @@ sub _exchange {
     $channel->{obj}->declare_exchange(
         exchange => $self->{exchange_prefix}.$channel->{module},
         type => 'fanout',
+        auto_delete => 1,
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -523,6 +526,7 @@ sub _declare {
         ) : (
             queue => $self->{queue_prefix}.$channel->{module}
         )),
+        auto_delete => 1,
         on_success => sub {
             my ($method) = @_;
 
@@ -738,7 +742,12 @@ sub _consume {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+            if ($self->{closing}) {
+                Lim::RPC_DEBUG and $self->{logger}->debug('Channel cancelled for '.$channel->{module});
+            }
+            else {
+                Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+            }
         },
         on_failure => sub {
             my ($message) = @_;
@@ -773,47 +782,27 @@ sub close {
         $cv = undef;
     });
 
+    $self->{closing} = 1;
     foreach my $channel (values %{$self->{channel}}) {
         unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel') and defined $channel->{queue}) {
             next;
         }
 
-        # TODO: Close exchange?
-
-        my $delete = sub {
-            $channel->{obj}->delete_queue(
-                queue => $channel->{queue},
-                on_success => sub {
-                    Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
-                    $cv->end;
-                },
-                on_failure => sub {
-                    my ($message) = @_;
-
-                    Lim::ERR and defined $self and $self->{logger}->error('Channel delete failure for ', $channel->{module}, ': '.$message);
-                    $cv->end;
-                }
-            );
-        };
-
-        $cv->begin;
         if ($channel->{consumer_tag}) {
+            $cv->begin;
             $channel->{obj}->cancel(
                 consumer_tag => $channel->{consumer_tag},
                 on_success => sub {
                     Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel cancel successfully');
-                    $delete->();
+                    $cv->end;
                 },
                 on_failure => sub {
                     my ($message) = @_;
 
                     Lim::ERR and defined $self and $self->{logger}->error('Channel cancel failure: '.$message);
-                    $delete->();
+                    $cv->end;
                 }
             );
-        }
-        else {
-            $delete->();
         }
     }
     $cv->end;

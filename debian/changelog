@@ -1,3 +1,13 @@
+lim (0.20-5~unstable+1) unstable; urgency=low
+
+  * New release 0.20 candidate 05.
+    Changes:
+    - Use auto_delete for RabbitMQ exchanges and channels instead of
+      trying to cleanup that ourselves. This prevents one lim-agentd
+      to prematurely end exchanges and channels that others might use.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Thu, 06 Aug 2015 15:53:16 +0200
+
 lim (0.20-4~unstable+1) unstable; urgency=low
 
   * New release 0.20 candidate 04.

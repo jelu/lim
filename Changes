@@ -1,5 +1,13 @@
 Revision history for Lim
 
+0.20_05 2015-08-06
+        - Release 0.20 candidate 05
+
+        Changes:
+        - Use auto_delete for RabbitMQ exchanges and channels instead of
+          trying to cleanup that ourselves. This prevents one lim-agentd
+          to prematurely end exchanges and channels that others might use.
+
 0.20_04 2015-07-30
         - Release 0.20 candidate 04
 
