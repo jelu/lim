@@ -747,6 +747,7 @@ sub _consume {
             }
             else {
                 Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+                $self->_reopen($channel);
             }
         },
         on_failure => sub {
