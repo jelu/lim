@@ -57,10 +57,11 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         status => 0
     };
     bless $self, $class;
+    weaken($self->{logger});
     my $real_self = $self;
     weaken($self);
 

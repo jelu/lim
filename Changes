@@ -1,5 +1,14 @@
 Revision history for Lim
 
+0.20_07 2015-08-10
+        - Release 0.20 candidate 07
+
+        Changes:
+        - Weaken logger object in all classes to hopefully prevent weird
+          situations where logger still exists in global destruction
+          (Log4perl: Seems like no initialization happened.).
+        - Use class as category for all logger to enable better filtering.
+
 0.20_06 2015-08-07
         - Release 0.20 candidate 06
 

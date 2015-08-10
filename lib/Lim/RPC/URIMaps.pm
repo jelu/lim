@@ -37,11 +37,12 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         maps => []
     };
     bless $self, $class;
-    
+    weaken($self->{logger});
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -78,11 +79,11 @@ sub add {
         push(@{$self->{maps}}, $_MAP_CACHE_CODE{$map_key});
         return $call;
     }
-    
+
     #
     # Validate and pull out parts of the map used to generate regexp and code
     #
-    
+
     foreach my $map_part (split(/\//o, $map)) {
         if ($map_part =~ /^\w+$/o) {
             push(@regexps, $map_part);
@@ -97,7 +98,7 @@ sub add {
             return;
         }
     }
-    
+
     #
     # Validate the regexp made from the map by compiling it with qr
     #
@@ -110,7 +111,7 @@ sub add {
         Lim::DEBUG and $self->{logger}->debug('Regexp compilation of map "', $map, '" failed: ', $@);
         return;
     }
-    
+
     #
     # Generate the code that checked given URI with generated regexp and adds
     # data gotten by the regexp to the data structure defined by the map
@@ -135,23 +136,23 @@ sub add {
 
     if (scalar @variables) {
         $code .= 'my (';
-    
+
         $n = 1;
         while ($n <= scalar @variables) {
             $code .= '$v'.$n.($n != scalar @variables ? ',' : '');
             $n++;
         }
-        
+
         $code .= ')=(';
-    
+
         $n = 1;
         while ($n <= scalar @variables) {
             $code .= '$'.$n.($n != scalar @variables ? ',' : '');
             $n++;
         }
-        
+
         $code .= ');';
-    
+
         $n = 1;
         foreach my $variable (@variables) {
             $code .= '$data->{'.join('}->{', split(/\./o, $variable)).'} = $v'.($n++).';';
@@ -161,17 +162,17 @@ sub add {
     #
     # Create the subroutine from the generated code
     #
-    
+
     eval '$code = sub { my ($uri, $data)=@_; if($uri =~ /'.$regexp.'/o) { '.$code.' return \''.$call.'\';} return; };';
     if ($@) {
         Lim::DEBUG and $self->{logger}->debug('Code generation of map "', $map, '" failed: ', $@);
         return;
     }
-    
+
     #
     # Verify code by calling it in eval
     #
-    
+
     eval {
         $code->('', {});
     };
@@ -179,7 +180,7 @@ sub add {
         Lim::DEBUG and $self->{logger}->debug('Verify code of map "', $map, '" failed: ', $@);
         return;
     }
-    
+
     #
     # Store the generated subroutine and return success
     #
@@ -196,11 +197,11 @@ sub add {
 
 sub process {
     my ($self, $uri, $data) = @_;
-    
+
     unless (ref($data) eq 'HASH') {
         confess '$data parameter is not a hash';
     }
-    
+
     foreach my $map (@{$self->{maps}}) {
         if (defined (my $ret = $map->($uri, $data))) {
             return $ret;

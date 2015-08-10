@@ -1,3 +1,14 @@
+lim (0.20-7~unstable+1) unstable; urgency=low
+
+  * New release 0.20 candidate 07.
+    Changes:
+    - Weaken logger object in all classes to hopefully prevent weird
+      situations where logger still exists in global destruction
+      (Log4perl: Seems like no initialization happened.).
+    - Use class as category for all logger to enable better filtering.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Mon, 10 Aug 2015 11:43:46 +0200
+
 lim (0.20-6~unstable+1) unstable; urgency=low
 
   * New release 0.20 candidate 06.

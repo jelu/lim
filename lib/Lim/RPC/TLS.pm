@@ -4,6 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
+use Scalar::Util qw(weaken);
 
 use AnyEvent::TLS ();
 use Net::SSLeay ();
@@ -39,10 +40,11 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
     };
     bless $self, $class;
-    
+    weaken($self->{logger});
+
     eval {
         if (!defined Lim::Config->{rpc}->{tls}->{key_file}) {
             $@ = 'No key_file set';

@@ -1,6 +1,6 @@
 Name:           perl-Lim
 Version:        0.20
-Release:        6%{?dist}
+Release:        7%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 Group:          Development/Libraries
@@ -490,6 +490,12 @@ fi
 
 
 %changelog
+* Mon Aug 10 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-7
+- Release 0.20 candidate 07
+  - Weaken logger object in all classes to hopefully prevent weird
+    situations where logger still exists in global destruction
+    (Log4perl: Seems like no initialization happened.).
+  - Use class as category for all logger to enable better filtering.
 * Fri Aug 07 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-6
 - Release 0.20 candidate 06
   Changes:
