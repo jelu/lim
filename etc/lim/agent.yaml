@@ -1,9 +1,9 @@
---- 
+#---
 #
-agent:
+#agent:
 #  config_file:
-  uri:
-    - https+rest+soap+xmlrpc+jsonrpc2://0.0.0.0:5353
+#  uri:
+#    - https+rest+soap+xmlrpc+jsonrpc2://0.0.0.0:5353
 #   - uri: http+rest://localhost:8080
 #     plugin: Name
 #     transport:
@@ -18,12 +18,12 @@ agent:
 #  warn: 1
 #  err: 1
 #
-#prefix: 
+#prefix:
 #  - ''
 #  - /usr
 #  - /usr/local
 #
-#rpc: 
+#rpc:
 #  srv_listen: 10
 #  call_timeout: 300
 #  timeout: 30

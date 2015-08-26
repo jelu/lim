@@ -49,14 +49,14 @@ sub _set_user_group {
         my $user = $user;
         my $gid = $gid;
         my $putback;
-        
+
         unless (defined $user) {
             unless (defined ($user = getpwuid($uid))) {
                 print STDERR 'Unable to get user name for id ', $uid, ': ', $!;
                 exit(3);
             }
         }
-        
+
         unless (defined $gid) {
             (undef, undef, undef, $gid) = getpwnam($user);
             unless (defined $gid) {
@@ -65,7 +65,7 @@ sub _set_user_group {
             }
             $putback=1;
         }
-        
+
         setgrent;
         while (my ($gname,undef,$_gid,$members) = getgrent) {
             foreach (split(/\s+/o, $members)) {
@@ -79,7 +79,7 @@ sub _set_user_group {
             }
         }
         endgrent;
-        
+
         if (defined $putback) {
             unshift(@gids, $gid);
         }
@@ -102,7 +102,7 @@ sub _set_user_group {
             exit(3);
         }
     }
-    
+
     if (defined $user and !defined $uid) {
         unless (defined ($uid = getpwnam($user))) {
             print STDERR 'Unable to get user id for ', $user, ': ', $!;
@@ -185,7 +185,7 @@ unless ($foreground) {
     elsif ($pid) {
         exit 0;
     }
-    
+
     if ($pidfile) {
         unless(open(PIDFILE, '>', $pidfile,)) {
             print STDERR 'Unable to open pidfile "', $pidfile, '" for writing: ', $!, "\n";
@@ -193,7 +193,7 @@ unless ($foreground) {
         }
         print PIDFILE POSIX::getpid, "\n";
         close(PIDFILE);
-        
+
         unless(open(PIDFILE, $pidfile)) {
             print STDERR 'Unable to open pidfile "', $pidfile, '" for verifying pid: ', $!, "\n";
             exit(2);
@@ -201,7 +201,7 @@ unless ($foreground) {
         my $pidinfile = <PIDFILE>;
         chomp($pidinfile);
         close(PIDFILE);
-        
+
         unless (POSIX::getpid == $pidinfile) {
             print STDERR 'Unable to correctly write my pid to pidfile "', $pidfile, "\"\n";
             exit(2);
@@ -213,7 +213,7 @@ unless ($foreground) {
 
     # Change the gid and/or uid if set
     _set_user_group;
-    
+
     # Daemonize the process
     unless (chdir('/')) {
         print STDERR 'Unable to chdir to / : ', $!;
@@ -264,11 +264,14 @@ unless (scalar @uris) {
     @uris = @{Lim::Config->{agent}->{uri}};
 }
 
-my $server = Lim::RPC::Server->new(
-    uri => (@uris == 1 ? $uris[0] : \@uris)
-);
-$server->serve(qw(Lim::Agent));
-$server->serve(Lim::Plugins->instance->LoadedModules);
+my $server;
+if (scalar @uris) {
+    $server = Lim::RPC::Server->new(
+        uri => (@uris == 1 ? $uris[0] : \@uris)
+    );
+    $server->serve(qw(Lim::Agent));
+    $server->serve(Lim::Plugins->instance->LoadedModules);
+}
 
 if (defined $server) {
     push(@watchers, $server);
@@ -316,7 +319,7 @@ Specify the configuration file to use (default /etc/lim/agent.yaml).
 Specify configuration on the command line, these settings overrides settings in
 configuration files. Syntax <name>=<value> will set <name> to <value> and
 <name>[]=<value> will treat <name> as an multi option array and append <value>.
-Option subgroups are seperated by . (for example log.obj_debug=0). 
+Option subgroups are seperated by . (for example log.obj_debug=0).
 
 =item B<--log4perl <file>>
 
@@ -355,4 +358,3 @@ Print a brief help message and exits.
 ...
 
 =cut
-

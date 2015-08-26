@@ -1,2 +1,8 @@
 MANIFEST.SKIP
 .travis.yml
+.git
+debian
+html
+etc
+tools
+epel

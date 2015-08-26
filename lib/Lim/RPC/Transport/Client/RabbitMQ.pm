@@ -347,6 +347,7 @@ sub _exchange {
     $self->{channel}->declare_exchange(
         exchange => $self->{exchange_prefix}.lc($self->{plugin}),
         type => 'fanout',
+        auto_delete => 1,
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -390,6 +391,7 @@ sub _declare {
 
     $self->{channel}->declare_queue(
         exclusive => 1,
+        auto_delete => 1,
         on_success => sub {
             my ($method) = @_;
 
@@ -698,7 +700,11 @@ sub _cancel {
             }
 
             Lim::RPC_DEBUG and $self->{logger}->debug('Channel cancel successfully');
-            $self->_delete;
+
+            if (exists $self->{cb}) {
+                $self->{cb}->($self, $self->{response});
+                delete $self->{cb};
+            }
         },
         on_failure => sub {
             my ($message) = @_;
@@ -708,53 +714,6 @@ sub _cancel {
             }
 
             Lim::ERR and $self->{logger}->error('Channel cancel failure: '.$message);
-
-            if (exists $self->{cb}) {
-                $self->{cb}->($self, $self->{response});
-                delete $self->{cb};
-            }
-        }
-    );
-}
-
-=head2 _delete
-
-=cut
-
-sub _delete {
-    my ($self) = @_;
-    my $real_self = $self;
-    weaken($self);
-
-    unless (defined $self->{queue}) {
-        confess '$self->{queue} not defined';
-    }
-    unless (blessed $self->{channel} and $self->{channel}->isa('AnyEvent::RabbitMQ::Channel')) {
-        confess '$self->{channel} is not AnyEvent::RabbitMQ::Channel';
-    }
-
-    $self->{channel}->delete_queue(
-        queue => $self->{queue},
-        on_success => sub {
-            unless (defined $self) {
-                return;
-            }
-
-            Lim::RPC_DEBUG and $self->{logger}->debug('Channel delete successfully');
-
-            if (exists $self->{cb}) {
-                $self->{cb}->($self, $self->{response});
-                delete $self->{cb};
-            }
-        },
-        on_failure => sub {
-            my ($message) = @_;
-
-            unless (defined $self) {
-                return;
-            }
-
-            Lim::ERR and $self->{logger}->error('Channel delete failure: '.$message);
 
             if (exists $self->{cb}) {
                 $self->{cb}->($self, $self->{response});

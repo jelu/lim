@@ -2,7 +2,7 @@ package Lim::RPC::Callback;
 
 use common::sense;
 use Carp;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 
 use Log::Log4perl ();
 
@@ -59,10 +59,11 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         request => undef
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     unless (defined $args{cb} and ref($args{cb}) eq 'CODE') {
         confess __PACKAGE__, ': cb not given or invalid';
@@ -73,7 +74,7 @@ sub new {
     if (exists $args{request} and (!blessed $args{request} or !$args{request}->isa('HTTP::Request'))) {
         confess __PACKAGE__, ': request is not HTTP::Request';
     }
-    
+
     $self->{cb} = $args{cb};
     $self->{reset_timeout} = $args{reset_timeout};
     if (exists $args{request}) {
@@ -88,9 +89,9 @@ sub new {
 
 sub DESTROY {
     my ($self) = @_;
-    
+
     $self->Destroy;
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
 }
 
@@ -148,7 +149,7 @@ sub set_call_def {
     if (ref($_[1]) eq 'HASH') {
         $_[0]->{call_def} = $_[1];
     }
-    
+
     $_[0];
 }
 

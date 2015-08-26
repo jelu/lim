@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
@@ -40,11 +40,12 @@ sub _new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         transport => {},
         transport_name => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     $self->load;
 

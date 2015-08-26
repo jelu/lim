@@ -13,16 +13,16 @@ Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.19
+Version 0.20
 
 =cut
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 our $CONFIG = {
     log => {
-        obj_debug => 1,
-        rpc_debug => 1,
-        debug => 1,
+        obj_debug => 0,
+        rpc_debug => 0,
+        debug => 0,
         info => 1,
         warn => 1,
         err => 1

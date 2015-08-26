@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
@@ -40,11 +40,12 @@ sub _new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         protocol => {},
         protocol_name => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     $self->load;
 
@@ -55,7 +56,7 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     delete $self->{protocol};
 }
 
@@ -82,13 +83,13 @@ the reference to itself even on error.
 
 sub load {
     my ($self) = @_;
-    
+
     foreach my $module (findsubmod Lim::RPC::Protocol) {
         if (exists $self->{protocol}->{$module}) {
             Lim::WARN and $self->{logger}->warn('Protocol ', $module, ' already loaded');
             next;
         }
-        
+
         if ($module =~ /^([\w:]+)$/o) {
             $module = $1;
         }
@@ -102,7 +103,7 @@ sub load {
             die $@ if $@;
             $name = $module->name;
         };
-        
+
         if ($@) {
             Lim::WARN and $self->{logger}->warn('Unable to load protocol ', $module, ': ', $@);
             $self->{protocol}->{$module} = {
@@ -112,7 +113,7 @@ sub load {
             };
             next;
         }
-        
+
         unless ($name =~ /^[a-z0-9_\-\.]+$/o) {
             Lim::WARN and $self->{logger}->warn('Unable to load protocol ', $module, ': Illegal characters in protocol name');
             $self->{protocol}->{$module} = {
@@ -127,7 +128,7 @@ sub load {
             Lim::WARN and $self->{logger}->warn('Protocol name ', $name, ' already loaded by module ', $self->{protocol_name}->{$name});
             next;
         }
-        
+
         Lim::DEBUG and $self->{logger}->debug('Loaded ', $module);
         $self->{protocol}->{$module} = {
             name => $name,
@@ -151,14 +152,14 @@ sub protocol {
 
     if (defined $name) {
         my $module;
-        
+
         foreach (keys %{$self->{protocol}}) {
             if ($self->{protocol}->{$_}->{loaded} and $self->{protocol}->{$_}->{name} eq $name) {
                 $module = $self->{protocol}->{$_}->{module};
                 last;
             }
         }
-        
+
         if (defined $module) {
             my $protocol;
             eval {

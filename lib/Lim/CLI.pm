@@ -88,13 +88,14 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         cli => {},
         busy => 0,
         no_completion => 0,
         prompt => 'lim> '
     };
     bless $self, $class;
+    weaken($self->{logger});
     my $real_self = $self;
     weaken($self);
 
@@ -108,7 +109,7 @@ sub new {
 
     foreach my $module (qw(Lim::Agent)) {
         my $name = lc($module->Name);
-        
+
         if (exists $self->{cli}->{$name}) {
             Lim::WARN and $self->{logger}->warn('Can not load internal CLI module ', $module, ': name ', $name, ' already in use');
             next;
@@ -122,15 +123,15 @@ sub new {
             };
         }
     }
-    
+
     foreach my $module (Lim::Plugins->instance->LoadedModules) {
         my $name = lc($module->Name);
-        
+
         if (exists $self->{cli}->{$name}) {
             Lim::WARN and $self->{logger}->warn('Can not use CLI module ', $module, ': name ', $name, ' already in use');
             next;
         }
-        
+
         if (defined (my $obj = $module->CLI(cli => $self))) {
             $self->{cli}->{$name} = {
                 name => $name,
@@ -139,7 +140,7 @@ sub new {
             };
         }
     }
-    
+
     eval {
         require AnyEvent::ReadLine::Gnu;
     };
@@ -150,10 +151,10 @@ sub new {
                 unless (defined $self) {
                     return;
                 }
-                
+
                 $self->process(@_);
             });
-    
+
         $self->{rl}->Attribs->{completion_entry_function} = $self->{rl}->Attribs->{list_completion_function};
         $self->{rl}->Attribs->{attempted_completion_function} = sub {
             my ($text, $line, $start, $end) = @_;
@@ -161,21 +162,21 @@ sub new {
             unless (defined $self) {
                 return;
             }
-            
+
             my @parts = split(/\s+/o, substr($line, 0, $start));
             my $builtins = 0;
-            
+
             if ($self->{current}) {
                 unshift(@parts, $self->{current}->{name});
                 $builtins = 1;
             }
-            
+
             if (scalar @parts) {
                 my $part = shift(@parts);
-    
+
                 if (exists $self->{cli}->{$part}) {
                     my $cmd = $self->{cli}->{$part}->{module}->Commands;
-                    
+
                     while (defined ($part = shift(@parts))) {
                         unless (exists $cmd->{$part} and ref($cmd->{$part}) eq 'HASH') {
                             if ($self->{no_completion}++ == 2) {
@@ -197,7 +198,7 @@ sub new {
                             $self->{rl}->Attribs->{completion_word} = [];
                             return ();
                         }
-                        
+
                         $builtins = 0;
                         $cmd = $cmd->{$part};
                     }
@@ -259,7 +260,7 @@ sub new {
                 $self->process(@_);
             });
         });
-    
+
         IO::Handle::autoflush STDOUT 1;
     }
 
@@ -268,7 +269,7 @@ sub new {
         $appender->{cli} = $self;
         weaken($appender->{cli});
     }
-    
+
     $self->println('Welcome to LIM ', $Lim::VERSION, ' command line interface');
     $self->prompt;
 
@@ -279,13 +280,13 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     if (exists $self->{rl}) {
         if (Lim::Config->{cli}->{history_file}) {
             $self->{rl}->WriteHistory(Lim::Config->{cli}->{history_file});
         }
     }
-    
+
     delete $self->{current};
     delete $self->{rl};
     delete $self->{stdin_watcher};
@@ -302,7 +303,7 @@ Process a line of input, called from the input watcher
 sub process {
     my ($self, $line) = @_;
     my ($cmd, $args);
-    
+
     if ($self->{busy}) {
         return;
     }
@@ -314,7 +315,7 @@ sub process {
     else {
         $cmd = 'quit';
     }
-     
+
     if ($cmd eq 'quit') {
         $self->{on_quit}($self);
         return;
@@ -360,7 +361,7 @@ sub process {
                     my $current = $self->{cli}->{$cmd};
                     ($cmd, $args) = split(/\s+/o, $args, 2);
                     $cmd = lc($cmd);
-                    
+
                     if ($current->{module}->Commands->{$cmd} and
                         $current->{obj}->can($cmd))
                     {
@@ -396,11 +397,11 @@ Print the prompt, called from C<process>.
 
 sub prompt {
     my ($self) = @_;
-    
+
     if (exists $self->{rl}) {
         return;
     }
-    
+
     $self->print($self->{prompt});
     IO::Handle::flush STDOUT;
 }
@@ -413,7 +414,7 @@ Set the prompt, called from C<process>.
 
 sub set_prompt {
     my ($self, $prompt) = @_;
-    
+
     $self->{prompt} = $prompt;
 
     if (exists $self->{rl}) {
@@ -421,7 +422,7 @@ sub set_prompt {
         $AnyEvent::ReadLine::Gnu::prompt = $prompt;
         $self->{rl}->show;
     }
-    
+
     $self;
 }
 
@@ -444,7 +445,7 @@ sub clear_line {
         print "\r";
         IO::Handle::flush STDOUT;
     }
-    
+
     $self;
 }
 
@@ -456,10 +457,10 @@ Prints the "unknown command" error if the command can not be found.
 
 sub unknown_command {
     my ($self, $cmd) = @_;
-    
+
     $self->println('unknown command: ', $cmd);
     $self->prompt;
-    
+
     $self;
 }
 
@@ -471,7 +472,7 @@ Print some output, called from L<Lim::Component::CLI> and here.
 
 sub print {
     my $self = shift;
-    
+
     if (exists $self->{rl}) {
         $self->{rl}->print(@_);
     }
@@ -481,7 +482,7 @@ sub print {
             IO::Handle::flush STDOUT;
         }
     }
-    
+
     $self;
 }
 
@@ -494,7 +495,7 @@ here.
 
 sub println {
     my $self = shift;
-    
+
     if (exists $self->{rl}) {
         $self->{rl}->hide;
         $self->{rl}->print(@_, "\n");
@@ -521,7 +522,7 @@ Print the help for all commands from a plugin.
 sub print_command_help {
     my ($self, $commands, $level) = @_;
     my $space = ' ' x ($level * 4);
-    
+
     if (ref($commands) eq 'HASH') {
         foreach my $key (sort (keys %$commands)) {
             if (ref($commands->{$key}) eq 'HASH') {
@@ -544,7 +545,7 @@ sub print_command_help {
             }
         }
     }
-    
+
     $self;
 }
 
@@ -556,7 +557,7 @@ Called from L<Lim::Component::CLI> when a command was successful.
 
 sub Successful {
     my ($self) = @_;
-    
+
     $self->{busy} = 0;
     if (exists $self->{current}) {
         $self->set_prompt('lim'.$self->{current}->{obj}->Prompt.'> ');
@@ -578,7 +579,7 @@ error string.
 
 sub Error {
     my $self = shift;
-    
+
     $self->print('Command Error: ', ( scalar @_ > 0 ? '' : 'unknown' ));
     foreach (@_) {
         if (blessed $_ and $_->isa('Lim::Error')) {
@@ -589,7 +590,7 @@ sub Error {
         }
     }
     $self->println;
-    
+
     $self->{busy} = 0;
     if (exists $self->{current}) {
         $self->set_prompt('lim'.$self->{current}->{obj}->Prompt.'> ');
@@ -614,14 +615,14 @@ sub Editor {
     my ($self, $content) = @_;
     my $tmp = File::Temp->new;
     my $sha = Digest::SHA::sha1_base64($content);
-    
+
     Lim::DEBUG and $self->{logger}->debug('Editing ', $tmp->filename, ', hash before ', $sha);
-    
+
     print $tmp $content;
     $tmp->flush;
 
     # TODO check if editor exists
-    
+
     if (system(Lim::Config->{cli}->{editor}, $tmp->filename)) {
         Lim::DEBUG and $self->{logger}->debug('EDITOR returned failure');
         return;
@@ -632,7 +633,7 @@ sub Editor {
         Lim::DEBUG and $self->{logger}->debug('Unable to reopen temp file');
         return;
     }
-        
+
     $fh->seek(0, SEEK_END);
     my $tell = $fh->tell;
     $fh->seek(0, SEEK_SET);
@@ -640,12 +641,12 @@ sub Editor {
         Lim::DEBUG and $self->{logger}->debug('Unable to read temp file');
         return;
     }
-    
+
     if ($sha eq Digest::SHA::sha1_base64($content)) {
         Lim::DEBUG and $self->{logger}->debug('No change detected, checksum is the same');
         return;
     }
-    
+
     return $content;
 }
 

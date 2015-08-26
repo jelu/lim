@@ -61,13 +61,15 @@ sub Init {
     $self->{prefetch_count} = 1;
     $self->{broadcast} = 0;
     $self->{exchange_prefix} = 'lim_exchange_';
+    $self->{retry_interval} = 5;
+    $self->{closing} = 0;
 
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix retry_interval)) {
         if (defined Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_}) {
             $self->{$_} = Lim::Config->{rpc}->{transport}->{rabbitmq}->{$_};
         }
     }
-    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix)) {
+    foreach (qw(host port user pass vhost timeout queue_prefix verbose prefetch_count broadcast exchange_prefix retry_interval)) {
         if (defined $args{$_}) {
             $self->{$_} = $args{$_};
         }
@@ -92,6 +94,20 @@ sub Init {
         confess 'unable to create AnyEvent::RabbitMQ object';
     }
 
+    $self->_resolve;
+}
+
+=head2 _resolve
+
+=cut
+
+sub _resolve {
+    my ($self) = @_;
+    my $real_self = $self;
+    weaken($self);
+
+    Lim::RPC_DEBUG and $self->{logger}->debug('Resolving ', $self->{host}, '...');
+
     Lim::Util::resolve_host $self->{host}, $self->{port}, sub {
         my ($host, $port) = @_;
 
@@ -101,6 +117,13 @@ sub Init {
 
         unless (defined $host and defined $port) {
             Lim::WARN and $self->{logger}->warn('Unable to resolve host ', $self->{host});
+            $self->{retry} = AnyEvent->timer(after => $self->{retry_interval}, cb => sub {
+                unless (defined $self) {
+                    return;
+                }
+
+                $self->_resolve;
+            });
             return;
         }
 
@@ -120,6 +143,13 @@ sub _connect {
     my $real_self = $self;
     weaken($self);
 
+    Lim::RPC_DEBUG and $self->{logger}->debug('Server connecting...');
+
+    unless (exists $self->{rabbitmq}) {
+        $self->{rabbitmq} = AnyEvent::RabbitMQ->new(verbose => $self->{verbose})->load_xml_spec;
+    }
+
+    $self->{closing} = 0;
     $self->{rabbitmq}->connect(
         (map { $_ => $self->{$_} } qw(host port user pass vhost timeout)),
         on_success => sub {
@@ -149,6 +179,19 @@ sub _connect {
             else {
                 Lim::WARN and $self->{logger}->warn('Server connection failure: '.$message);
             }
+            $self->{retry} = AnyEvent->timer(after => $self->{retry_interval}, cb => sub {
+                unless (defined $self) {
+                    return;
+                }
+
+                $self->close(sub {
+                    unless ($self->{rabbitmq}->{_state}) {
+                        $self->{rabbitmq}->{_state} = 1;
+                    }
+                    delete $self->{rabbitmq};
+                    $self->_connect;
+                });
+            });
         },
         on_close => sub {
             my ($frame) = @_;
@@ -171,6 +214,19 @@ sub _connect {
             }
 
             Lim::INFO and $self->{logger}->info('Server connection closed: '.$message);
+            $self->{retry} = AnyEvent->timer(after => $self->{retry_interval}, cb => sub {
+                unless (defined $self) {
+                    return;
+                }
+
+                $self->close(sub {
+                    unless ($self->{rabbitmq}->{_state}) {
+                        $self->{rabbitmq}->{_state} = 1;
+                    }
+                    delete $self->{rabbitmq};
+                    $self->_connect;
+                });
+            });
         },
         on_read_failure => sub {
             unless (defined $self) {
@@ -188,6 +244,12 @@ sub _connect {
 =cut
 
 sub Destroy {
+    my ($self) = @_;
+
+    unless ($self->{rabbitmq}->{_state}) {
+        $self->{rabbitmq}->{_state} = 1;
+    }
+    delete $self->{rabbitmq};
 }
 
 =head2 name
@@ -420,6 +482,7 @@ sub _exchange {
     $channel->{obj}->declare_exchange(
         exchange => $self->{exchange_prefix}.$channel->{module},
         type => 'fanout',
+        auto_delete => 1,
         on_success => sub {
             unless (defined $self) {
                 return;
@@ -463,6 +526,7 @@ sub _declare {
         ) : (
             queue => $self->{queue_prefix}.$channel->{module}
         )),
+        auto_delete => 1,
         on_success => sub {
             my ($method) = @_;
 
@@ -678,7 +742,13 @@ sub _consume {
                 return;
             }
 
-            Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+            if ($self->{closing}) {
+                Lim::RPC_DEBUG and $self->{logger}->debug('Channel cancelled for '.$channel->{module});
+            }
+            else {
+                Lim::ERR and $self->{logger}->error('Channel cancelled for '.$channel->{module});
+                $self->_reopen($channel);
+            }
         },
         on_failure => sub {
             my ($message) = @_;
@@ -713,47 +783,27 @@ sub close {
         $cv = undef;
     });
 
+    $self->{closing} = 1;
     foreach my $channel (values %{$self->{channel}}) {
         unless (blessed $channel->{obj} and $channel->{obj}->isa('AnyEvent::RabbitMQ::Channel') and defined $channel->{queue}) {
             next;
         }
 
-        # TODO: Close exchange?
-
-        my $delete = sub {
-            $channel->{obj}->delete_queue(
-                queue => $channel->{queue},
-                on_success => sub {
-                    Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel delete successfully for ', $channel->{module});
-                    $cv->end;
-                },
-                on_failure => sub {
-                    my ($message) = @_;
-
-                    Lim::ERR and defined $self and $self->{logger}->error('Channel delete failure for ', $channel->{module}, ': '.$message);
-                    $cv->end;
-                }
-            );
-        };
-
-        $cv->begin;
         if ($channel->{consumer_tag}) {
+            $cv->begin;
             $channel->{obj}->cancel(
                 consumer_tag => $channel->{consumer_tag},
                 on_success => sub {
                     Lim::RPC_DEBUG and defined $self and $self->{logger}->debug('Channel cancel successfully');
-                    $delete->();
+                    $cv->end;
                 },
                 on_failure => sub {
                     my ($message) = @_;
 
                     Lim::ERR and defined $self and $self->{logger}->error('Channel cancel failure: '.$message);
-                    $delete->();
+                    $cv->end;
                 }
             );
-        }
-        else {
-            $delete->();
         }
     }
     $cv->end;

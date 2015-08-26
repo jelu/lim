@@ -45,9 +45,10 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger($class),
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     $self->Init(@_);
 

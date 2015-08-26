@@ -37,10 +37,11 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         server => undef
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     if (exists $args{server}) {
         unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
@@ -59,7 +60,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
     delete $self->{__server};
 }

@@ -46,13 +46,14 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         protocol => {},
         transports => [],
         module => {},
         transport_modules => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     unless (defined $args{uri}) {
         confess __PACKAGE__, ': No uri specified';
