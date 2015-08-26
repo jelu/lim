@@ -1,6 +1,6 @@
 Name:           perl-Lim
-Version:        0.19
-Release:        1%{?dist}
+Version:        0.20
+Release:        8%{?dist}
 Summary:        Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 Group:          Development/Libraries
@@ -21,6 +21,7 @@ BuildRequires:  perl(Module::Find)
 BuildRequires:  perl(Digest::SHA)
 BuildRequires:  perl(JSON::XS)
 BuildRequires:  perl(LWP::MediaTypes)
+BuildRequires:  perl(AnyEvent::RabbitMQ)
 
 Requires:  perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
 Requires:  perl(Net::SSLeay) >= 1.35
@@ -33,14 +34,14 @@ for processing protocol messages.
 %package -n perl-Lim-Common
 Summary: Common perl libraries for Lim
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Common
 Common Lim perl libraries depended by all Lim packages.
 
 %package -n perl-Lim-Server
 Summary: Lim server perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Server
 Lim server perl libraries for communicating with Lim via many different
 protocols.
@@ -48,35 +49,35 @@ protocols.
 %package -n perl-Lim-CLI
 Summary: Lim CLI perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-CLI
 Lim CLI perl libraries for controlling a local or remote Lim server.
 
 %package -n perl-Lim-Agent-Common
 Summary: Common perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Agent-Common
 Common lim-agentd perl libraries.
 
 %package -n perl-Lim-Agent-Server
 Summary: Server perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Agent-Server
 Server perl libraries for lim-agentd.
 
 %package -n perl-Lim-Agent-Client
 Summary: Client perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Agent-Client
 Client perl libraries for communicating with lim-agentd.
 
 %package -n perl-Lim-Agent-CLI
 Summary: CLI perl libraries for lim-agentd
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Agent-CLI
 CLI perl libraries for controlling lim-agentd via lim-cli.
 
@@ -92,7 +93,7 @@ Requires(postun): initscripts
 Requires: lim-common
 Summary: Lim agent daemon
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n lim-agentd
 The Lim agent daemon that serves all plugins.
 
@@ -103,56 +104,63 @@ Requires(post): openssl-perl
 Requires: lim-common
 Summary: Lim command line interface
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n lim-cli
 The Lim CLI used to control a local or remote Lim agent.
 
 %package -n lim-common
 Summary: Lim common files
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n lim-common
 Common Lim files and directories.
 
 %package -n perl-Lim-Transport-HTTP
 Summary: Lim HTTP/HTTPS transport perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Transport-HTTP
 Lim perl libraries for HTTP/HTTPS transport.
+
+%package -n perl-Lim-Transport-RabbitMQ
+Summary: Lim RabbitMQ transport perl libraries
+Group: Development/Libraries
+Version: 0.20
+%description -n perl-Lim-Transport-RabbitMQ
+Lim perl libraries for RabbitMQ transport.
 
 %package -n perl-Lim-Protocol-REST
 Summary: Lim REST protocol perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Protocol-REST
 Lim perl libraries for REST protocol.
 
 %package -n perl-Lim-Protocol-SOAP
 Summary: Lim SOAP protocol perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Protocol-SOAP
 Lim perl libraries for SOAP protocol.
 
 %package -n perl-Lim-Protocol-XMLRPC
 Summary: Lim XMLRPC protocol perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Protocol-XMLRPC
 Lim perl libraries for XMLRPC protocol.
 
 %package -n perl-Lim-Protocol-JSONRPC
 Summary: Lim JSONRPC protocol perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Protocol-JSONRPC
 Lim perl libraries for JSONRPC protocol.
 
 %package -n perl-Lim-Protocol-HTTP
 Summary: Lim HTTP protocol perl libraries
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n perl-Lim-Protocol-HTTP
 Lim perl libraries for HTTP protocol.
 
@@ -160,7 +168,7 @@ Lim perl libraries for HTTP protocol.
 Requires: lim-agentd
 Summary: Lim Management Console common files
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n lim-management-console-common
 Common Lim Management Console files and directories.
 
@@ -168,7 +176,7 @@ Common Lim Management Console files and directories.
 Requires: lim-management-console-common
 Summary: Lim Agent Daemon's Management Console files
 Group: Development/Libraries
-Version: 0.19
+Version: 0.20
 %description -n lim-management-console-agent
 Lim Agent Daemon's Management Console files.
 
@@ -247,7 +255,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Value.3*
 %{_mandir}/man3/Lim::Plugins.3*
 %{_mandir}/man3/Lim::Component::Client.3*
-%{_mandir}/man3/Lim::RPC::Client.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client.3*
+%{_mandir}/man3/Lim::RPC::Transport::Clients.3*
+%{_mandir}/man3/Lim::RPC::Protocol.3*
+%{_mandir}/man3/Lim::RPC::Protocols.3*
 %{_mandir}/man3/Lim::Util.3*
 %{_mandir}/man3/Lim::Util::DBI.3*
 %{_mandir}/man3/Lim.3*
@@ -259,7 +270,10 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/Component/Client.pm
 %{perl_vendorlib}/Lim/Util.pm
 %{perl_vendorlib}/Lim/Util/DBI.pm
-%{perl_vendorlib}/Lim/RPC/Client.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Client.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Clients.pm
+%{perl_vendorlib}/Lim/RPC/Protocol.pm
+%{perl_vendorlib}/Lim/RPC/Protocols.pm
 %{perl_vendorlib}/Lim/RPC/TLS.pm
 %{perl_vendorlib}/Lim/RPC/Value/Collection.pm
 %{perl_vendorlib}/Lim/RPC/Call.pm
@@ -274,16 +288,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::RPC::Server.3*
 %{_mandir}/man3/Lim::RPC::Transport.3*
 %{_mandir}/man3/Lim::RPC::Transports.3*
-%{_mandir}/man3/Lim::RPC::Protocol.3*
-%{_mandir}/man3/Lim::RPC::Protocols.3*
 %{_mandir}/man3/Lim::RPC::URIMaps.3*
 %{perl_vendorlib}/Lim/Component/Server.pm
 %{perl_vendorlib}/Lim/RPC/Callback.pm
 %{perl_vendorlib}/Lim/RPC/Server.pm
 %{perl_vendorlib}/Lim/RPC/Transport.pm
 %{perl_vendorlib}/Lim/RPC/Transports.pm
-%{perl_vendorlib}/Lim/RPC/Protocol.pm
-%{perl_vendorlib}/Lim/RPC/Protocols.pm
 %{perl_vendorlib}/Lim/RPC/URIMaps.pm
 %{_datadir}/lim/html
 
@@ -343,9 +353,19 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 %{_mandir}/man3/Lim::RPC::Transport::HTTP.3*
 %{_mandir}/man3/Lim::RPC::Transport::HTTPS.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client::HTTP.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client::HTTPS.3*
 %{perl_vendorlib}/Lim/RPC/Transport/HTTP.pm
 %{perl_vendorlib}/Lim/RPC/Transport/HTTPS.pm
-%config %{_sysconfdir}/lim/agent.d/lim-rpc-transport-http.yaml
+%{perl_vendorlib}/Lim/RPC/Transport/Client/HTTP.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Client/HTTPS.pm
+
+%files -n perl-Lim-Transport-RabbitMQ
+%defattr(-,root,root,-)
+%{_mandir}/man3/Lim::RPC::Transport::RabbitMQ.3*
+%{_mandir}/man3/Lim::RPC::Transport::Client::RabbitMQ.3*
+%{perl_vendorlib}/Lim/RPC/Transport/RabbitMQ.pm
+%{perl_vendorlib}/Lim/RPC/Transport/Client/RabbitMQ.pm
 
 %files -n perl-Lim-Protocol-REST
 %defattr(-,root,root,-)
@@ -470,6 +490,173 @@ fi
 
 
 %changelog
+* Tue Aug 26 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-8
+- Release 0.20.
+  BIG CHANGES:
+  - Change REST HTTP method convention, a HTTP POST is now mapped to
+    Create and HTTP PUT is mapped to Update. This affects all non-Lim
+    clients API calls.
+  - Gone with the old Module, in with the 'new' Name... for
+    Lim::Component (affects all modules).
+  - Added transport for RabbitMQ.
+  - Added support for transports for clients.
+  - Add single option to RPC collection definition.
+  - Use UTF8 in JSON since we return the tag that its in UTF8.
+  - Merge arrays in configuration instead of overwriting allowing for
+    plugin/module specific URI configurations etc.
+  - No default URI configured in agent.yaml.
+  - Object debug, RPC debug and debug logging is now default off.
+  Other changes:
+  - Reworked handling groups for lim-agentd, trying to get all
+    secondary groups in also. Use setsid when daemonizing the process
+    and added user/group options to lim-agentd.
+  - Fixed plugins() call in Lim::Agent::CLI.
+  - Use hosts manually if AnyEvent < 6.01.
+  - Implement resolve helper functions that can be configured to skip
+    DNS. Use them in Lim::RPC::Transport::HTTP and Lim::RPC::Client.
+  - Try to force detection of event backend for old AnyEvents (< 6.01).
+  - Lim::RPC::V() now gives the key where data is missing.
+  - Dump data on validation error in Lim::RPC::Call.
+  - Bugfix URIMaps, was not including call in map key so that same map
+    could be used with different calls resulting in wrong call.
+  - Add more debug to Lim::Util::run_cmd.
+  - Only exit on INT in lim-agentd if we are foregrounded (not daemon).
+  - Allow alpha numeric in REST calls.
+  - Fix predata in URIMaps.
+  - Add config rpc.json.pretty to configure REST and JSONRPC transports
+    to print pretty JSON.
+  - Add HTTP::Request object to Lim::RPC::Callback that all calls get
+    and add X-Lim-Base-URL header to the request so it can be used in
+    REST HATEOAS.
+  - Autoflush if foreground.
+  - Added serve() in Lim::RPC::Transport and called when serving
+    a module.
+  - Handle Connection header and keep-alive more correct.
+  - Use correct Content-Type for REST requests
+  - Debug output for loaded modules
+  - Extract user/pass information from URI and give more information to
+    the Transport for calls.
+  - Use localhost 80/443 as default values in HTTP Client Transport.
+  - Do not croak if the configuration directory isnt readable by the
+    current user.
+  - New plugin.load_all setting to load all plugins, otherwise only load
+    plugins in plugin.load.
+  - Add configuration option to specify what plugin should be served on
+    which URI.
+  - Specify URI specific transport configuration.
+  - Server can now close Transports nicely.
+  - A bit better handling of Component calls CLI, Client and Server.
+  - Better error on RPC::Server->serve when a plugin only have client
+    part installed.
+  - If there is no def and no data it should be ok.
+  - Make sure HTTP::Status code is integer.
+  - Use URI::Escape::XS if exists.
+  - Fix maximum request length check for HTTP.
+  - Fix Lim::Error::toString() return and Lim::Error handling of message.
+  - Do not start unless we got URIs.
+  - RabbitMQ transport will now re-resolve/connect on failure.
+  - Correct URI::Escape::XS/URI::Escape use to prevent redefined
+    warnings.
+  - Use auto_delete for RabbitMQ exchanges and channels instead of
+    trying to cleanup that ourselves. This prevents one lim-agentd
+    to prematurely end exchanges and channels that others might use.
+  - Reopen RabbitMQ channels if they are cancels outside our control.
+  - Weaken logger object in all classes to hopefully prevent weird
+    situations where logger still exists in global destruction
+    (Log4perl: Seems like no initialization happened.).
+  - Use class as category for all logger to enable better filtering.
+* Mon Aug 10 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-7
+- Release 0.20 candidate 07
+  - Weaken logger object in all classes to hopefully prevent weird
+    situations where logger still exists in global destruction
+    (Log4perl: Seems like no initialization happened.).
+  - Use class as category for all logger to enable better filtering.
+* Fri Aug 07 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-6
+- Release 0.20 candidate 06
+  Changes:
+  - Reopen RabbitMQ channels if they are cancels outside our control.
+* Thu Aug 06 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-5
+- Release 0.20 candidate 05
+  Changes:
+  - Use auto_delete for RabbitMQ exchanges and channels instead of
+    trying to cleanup that ourselves. This prevents one lim-agentd
+    to prematurely end exchanges and channels that others might use.
+* Fri Jul 31 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-4
+- Release 0.20 candidate 04
+  Changes:
+  - Correct URI::Escape::XS/URI::Escape use to prevent redefined
+    warnings.
+* Thu Jul 31 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-3
+- Release 0.20 candidate 03.
+  Changes:
+  - Do not start unless we got URIs.
+  - RabbitMQ transport will now re-resolve/connect on failure.
+* Thu Jul 30 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-2
+- Release 0.20 candidate 02.
+  BIG CHANGES:
+  - Merge arrays in configuration instead of overwriting allowing for
+    plugin/module specific URI configurations etc.
+  - No default URI configured in agent.yaml.
+  - Object debug, RPC debug and debug logging is now default off.
+* Wed Jul 29 2015 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.20-1
+- Release 0.20 candidate 01.
+  BIG CHANGES:
+  - Change REST HTTP method convention, a HTTP POST is now mapped to
+    Create and HTTP PUT is mapped to Update. This affects all non-Lim
+    clients API calls.
+  - Gone with the old Module, in with the 'new' Name... for
+    Lim::Component (affects all modules).
+  - Added transport for RabbitMQ.
+  - Added support for transports for clients.
+  - Add single option to RPC collection definition.
+  - Use UTF8 in JSON since we return the tag that its in UTF8.
+  Other changes:
+  - Reworked handling groups for lim-agentd, trying to get all
+    secondary groups in also. Use setsid when daemonizing the process
+    and added user/group options to lim-agentd.
+  - Fixed plugins() call in Lim::Agent::CLI.
+  - Use hosts manually if AnyEvent < 6.01.
+  - Implement resolve helper functions that can be configured to skip
+    DNS. Use them in Lim::RPC::Transport::HTTP and Lim::RPC::Client.
+  - Try to force detection of event backend for old AnyEvents (< 6.01).
+  - Lim::RPC::V() now gives the key where data is missing.
+  - Dump data on validation error in Lim::RPC::Call.
+  - Bugfix URIMaps, was not including call in map key so that same map
+    could be used with different calls resulting in wrong call.
+  - Add more debug to Lim::Util::run_cmd.
+  - Only exit on INT in lim-agentd if we are foregrounded (not daemon).
+  - Allow alpha numeric in REST calls.
+  - Fix predata in URIMaps.
+  - Add config rpc.json.pretty to configure REST and JSONRPC transports
+    to print pretty JSON.
+  - Add HTTP::Request object to Lim::RPC::Callback that all calls get
+    and add X-Lim-Base-URL header to the request so it can be used in
+    REST HATEOAS.
+  - Autoflush if foreground.
+  - Added serve() in Lim::RPC::Transport and called when serving
+    a module.
+  - Handle Connection header and keep-alive more correct.
+  - Use correct Content-Type for REST requests
+  - Debug output for loaded modules
+  - Extract user/pass information from URI and give more information to
+    the Transport for calls.
+  - Use localhost 80/443 as default values in HTTP Client Transport.
+  - Do not croak if the configuration directory isnt readable by the
+    current user.
+  - New plugin.load_all setting to load all plugins, otherwise only load
+    plugins in plugin.load.
+  - Add configuration option to specify what plugin should be served on
+    which URI.
+  - Specify URI specific transport configuration.
+  - Server can now close Transports nicely.
+  - A bit better handling of Component calls CLI, Client and Server.
+  - Better error on RPC::Server->serve when a plugin only have client
+    part installed.
+  - If there is no def and no data it should be ok.
+  - Make sure HTTP::Status code is integer.
+  - Use URI::Escape::XS if exists.
+  - Fix maximum request length check for HTTP.
+  - Fix Lim::Error::toString() return and Lim::Error handling of message.
 * Mon Sep 02 2013 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.19-1
 - Release 0.19
   - New module Lim::Util::DBI - Create a DBH that is executed in a forked
@@ -494,4 +681,3 @@ fi
 - Release 0.13
 * Tue Aug 07 2012 Jerry Lundström < lundstrom.jerry at gmail.com > - 0.12-1
 - Initial package for Fedora
-

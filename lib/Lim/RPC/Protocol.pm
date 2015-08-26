@@ -37,15 +37,19 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger($class),
+        server => undef
     };
     bless $self, $class;
+    weaken($self->{logger});
 
-    unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
-        confess __PACKAGE__, ': No server specified or invalid';
+    if (exists $args{server}) {
+        unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
+            confess __PACKAGE__, ': No server specified or invalid';
+        }
+        $self->{__server} = $args{server};
+        weaken($self->{__server});
     }
-    $self->{__server} = $args{server};
-    weaken($self->{__server});
 
     $self->Init(@_);
 
@@ -56,7 +60,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
     delete $self->{__server};
 }
@@ -123,6 +127,22 @@ sub precall {
     shift; # $self
     shift; # $call
     return @_;
+}
+
+=head2 request
+
+=cut
+
+sub request {
+    confess 'function request not overloaded';
+}
+
+=head2 response
+
+=cut
+
+sub response {
+    confess 'function response not overloaded';
 }
 
 =head1 AUTHOR

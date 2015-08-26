@@ -8,6 +8,16 @@ $Log::Log4perl::JOIN_MSG_ARRAY_CHAR = '';
 use POSIX;
 
 use AnyEvent ();
+if (AnyEvent->VERSION < 6.01) {
+    # Try and force detection of modules for old AnyEvents
+    foreach (qw(EV Event Glib EventLib POE)) {
+        eval "use $_ ();";
+        unless ($@) {
+            last;
+        }
+    }
+    AnyEvent::detect;
+}
 
 use Lim ();
 use Lim::RPC::Server ();
@@ -26,6 +36,86 @@ my $uid;
 my $gid;
 my $user;
 my $group;
+
+sub _set_user_group {
+    if (defined $group and !defined $gid) {
+        unless (defined ($gid = getgrnam($group))) {
+            print STDERR 'Unable to get group id for ', $group, ': ', $!;
+            exit(3);
+        }
+    }
+    my @gids;
+    if (defined $user or defined $uid) {
+        my $user = $user;
+        my $gid = $gid;
+        my $putback;
+
+        unless (defined $user) {
+            unless (defined ($user = getpwuid($uid))) {
+                print STDERR 'Unable to get user name for id ', $uid, ': ', $!;
+                exit(3);
+            }
+        }
+
+        unless (defined $gid) {
+            (undef, undef, undef, $gid) = getpwnam($user);
+            unless (defined $gid) {
+                print STDERR 'Unable to get group id for user ', $user, ': ', $!;
+                exit(3);
+            }
+            $putback=1;
+        }
+
+        setgrent;
+        while (my ($gname,undef,$_gid,$members) = getgrent) {
+            foreach (split(/\s+/o, $members)) {
+                if (defined $gid and $_gid == $gid) {
+                    next;
+                }
+                if ($_ eq $user) {
+                    push(@gids, $_gid);
+                    last;
+                }
+            }
+        }
+        endgrent;
+
+        if (defined $putback) {
+            unshift(@gids, $gid);
+        }
+    }
+    if (defined $gid) {
+        $) = join(' ', $gid, @gids);
+        if ($!) {
+            print STDERR 'Unable to set groups to ', join(' ', $gid, @gids), ': ', $!;
+            exit(3);
+        }
+        unless (POSIX::setgid($gid)) {
+            print STDERR 'Unable to set group id to ', $gid, ': ', $!;
+            exit(3);
+        }
+    }
+    elsif (scalar @gids > 0) {
+        $) = join(' ', $gid, @gids);
+        if ($!) {
+            print STDERR 'Unable to set groups to ', join(' ', $gid, @gids), ': ', $!;
+            exit(3);
+        }
+    }
+
+    if (defined $user and !defined $uid) {
+        unless (defined ($uid = getpwnam($user))) {
+            print STDERR 'Unable to get user id for ', $user, ': ', $!;
+            exit(3);
+        }
+    }
+    if (defined $uid) {
+        unless (POSIX::setuid($uid)) {
+            print STDERR 'Unable to set user id to ', $uid, ': ', $!;
+            exit(3);
+        }
+    }
+}
 
 Getopt::Long::GetOptions(
     'help|?' => \$help,
@@ -46,6 +136,7 @@ if (defined $log4perl and -f $log4perl) {
     Log::Log4perl->init($log4perl);
 }
 elsif ($foreground) {
+    STDOUT->autoflush(1);
     Log::Log4perl->init( \q(
     log4perl.logger                   = DEBUG, Screen
     log4perl.appender.Screen          = Log::Log4perl::Appender::Screen
@@ -94,7 +185,7 @@ unless ($foreground) {
     elsif ($pid) {
         exit 0;
     }
-    
+
     if ($pidfile) {
         unless(open(PIDFILE, '>', $pidfile,)) {
             print STDERR 'Unable to open pidfile "', $pidfile, '" for writing: ', $!, "\n";
@@ -102,7 +193,7 @@ unless ($foreground) {
         }
         print PIDFILE POSIX::getpid, "\n";
         close(PIDFILE);
-        
+
         unless(open(PIDFILE, $pidfile)) {
             print STDERR 'Unable to open pidfile "', $pidfile, '" for verifying pid: ', $!, "\n";
             exit(2);
@@ -110,14 +201,25 @@ unless ($foreground) {
         my $pidinfile = <PIDFILE>;
         chomp($pidinfile);
         close(PIDFILE);
-        
+
         unless (POSIX::getpid == $pidinfile) {
             print STDERR 'Unable to correctly write my pid to pidfile "', $pidfile, "\"\n";
             exit(2);
         }
     }
-    
-    chdir('/');
+
+    # Initiate TLS/SSL context if configured
+    Lim::RPC::TLS->instance;
+
+    # Change the gid and/or uid if set
+    _set_user_group;
+
+    # Daemonize the process
+    unless (chdir('/')) {
+        print STDERR 'Unable to chdir to / : ', $!;
+        exit(2);
+    }
+    POSIX::setsid();
     umask(0);
     foreach (0 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024)) {
         POSIX::close($_);
@@ -127,35 +229,12 @@ unless ($foreground) {
     open(STDOUT, '>', '/dev/null');
     open(STDERR, '>', '/dev/null');
 }
+else {
+    # Initiate TLS/SSL context if configured
+    Lim::RPC::TLS->instance;
 
-# Initiate TLS/SSL context if configured
-Lim::RPC::TLS->instance;
-
-# Change the gid and/or uid if set
-if (defined $group and !defined $gid) {
-    unless (defined ($gid = getgrnam($group))) {
-        print STDERR 'Unable to get group id for ', $group, ': ', $!;
-        exit(3);
-    }
-}
-if (defined $gid) {
-    unless (POSIX::setgid($gid)) {
-        print STDERR 'Unable to set group id to ', $gid, ': ', $!;
-        exit(3);
-    }
-}
-
-if (defined $user and !defined $uid) {
-    unless (defined ($uid = getpwnam($user))) {
-        print STDERR 'Unable to get user id for ', $user, ': ', $!;
-        exit(3);
-    }
-}
-if (defined $uid) {
-    unless (POSIX::setuid($uid)) {
-        print STDERR 'Unable to set user id to ', $uid, ': ', $!;
-        exit(3);
-    }
+    # Change the gid and/or uid if set
+    _set_user_group;
 }
 
 # Initiate the signals
@@ -168,7 +247,9 @@ push(@watchers,
     AnyEvent->signal(signal => "PIPE", cb => sub {
     }),
     AnyEvent->signal(signal => "INT", cb => sub {
-        $cv->send;
+        if ($foreground) {
+            $cv->send;
+        }
     }),
     AnyEvent->signal(signal => "QUIT", cb => sub {
         $cv->send;
@@ -183,14 +264,22 @@ unless (scalar @uris) {
     @uris = @{Lim::Config->{agent}->{uri}};
 }
 
-my $server = Lim::RPC::Server->new(
-    uri => (@uris == 1 ? $uris[0] : \@uris)
-);
-$server->serve(qw(Lim::Agent));
-$server->serve(Lim::Plugins->instance->LoadedModules);
+my $server;
+if (scalar @uris) {
+    $server = Lim::RPC::Server->new(
+        uri => (@uris == 1 ? $uris[0] : \@uris)
+    );
+    $server->serve(qw(Lim::Agent));
+    $server->serve(Lim::Plugins->instance->LoadedModules);
+}
 
 if (defined $server) {
     push(@watchers, $server);
+    $cv->recv;
+    $cv = AnyEvent->condvar;
+    $server->close(sub {
+        $cv->send;
+    });
     $cv->recv;
 }
 
@@ -225,12 +314,12 @@ once.
 
 Specify the configuration file to use (default /etc/lim/agent.yaml).
 
-=item B<--option <name>=<value>>
+=item B<--option <name>>=<value>
 
 Specify configuration on the command line, these settings overrides settings in
 configuration files. Syntax <name>=<value> will set <name> to <value> and
 <name>[]=<value> will treat <name> as an multi option array and append <value>.
-Option subgroups are seperated by . (for example log.obj_debug=0). 
+Option subgroups are seperated by . (for example log.obj_debug=0).
 
 =item B<--log4perl <file>>
 
@@ -245,6 +334,19 @@ configuration file is used.
 
 Use the given file as pidfile (default /var/run/lim-agentd.pid).
 
+=item B<--group <group>> | --gid <gid>
+
+Specify a group to change to upon start.
+
+If used with --user, this will also specify the primary/effective group.
+
+=item B<--user <user>> | --uid <id>
+
+Specify a user to change to upon start.
+
+This will also add access to all the groups the user is a member for so it is
+unnessisary to specify the group with --group if the user is already a member.
+
 =item B<--help>
 
 Print a brief help message and exits.
@@ -256,4 +358,3 @@ Print a brief help message and exits.
 ...
 
 =cut
-

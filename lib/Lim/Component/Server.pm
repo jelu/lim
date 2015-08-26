@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 
 use Lim ();
 use Lim::RPC ();
@@ -38,9 +38,10 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger
+        logger => Log::Log4perl->get_logger($class),
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     eval {
         $self->Init(@_);
@@ -49,7 +50,7 @@ sub new {
         Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
         return;
     }
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -57,7 +58,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
 }
 
@@ -81,7 +82,7 @@ sub Destroy {
 
 sub Successful {
     my ($self, $cb, $data) = @_;
-    
+
     eval {
         Lim::RPC::R($cb, $data);
     };
@@ -102,7 +103,7 @@ sub Successful {
 
 sub Error {
     my ($self, $cb, $error, @rest) = @_;
-    
+
     if (blessed($error) and $error->isa('Lim::Error')) {
         Lim::RPC::R($cb, $error);
     }

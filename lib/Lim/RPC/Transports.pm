@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
@@ -40,11 +40,12 @@ sub _new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         transport => {},
         transport_name => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     $self->load;
 
@@ -55,7 +56,7 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     delete $self->{transport};
 }
 
@@ -82,8 +83,11 @@ the reference to itself even on error.
 
 sub load {
     my ($self) = @_;
-    
+
     foreach my $module (findsubmod Lim::RPC::Transport) {
+        if ($module =~ /::Clients?$/o) {
+            next;
+        }
         if (exists $self->{transport}->{$module}) {
             Lim::WARN and $self->{logger}->warn('Transport ', $module, ' already loaded');
             next;
@@ -102,7 +106,7 @@ sub load {
             die $@ if $@;
             $name = $module->name;
         };
-        
+
         if ($@) {
             Lim::WARN and $self->{logger}->warn('Unable to load transport ', $module, ': ', $@);
             $self->{transport}->{$module} = {
@@ -113,7 +117,7 @@ sub load {
             };
             next;
         }
-        
+
         unless ($name =~ /^[a-z0-9_\-\.]+$/o) {
             Lim::WARN and $self->{logger}->warn('Unable to load transport ', $module, ': Illegal characters in transport name');
             $self->{transport}->{$module} = {
@@ -129,6 +133,7 @@ sub load {
             next;
         }
 
+        Lim::DEBUG and $self->{logger}->debug('Loaded ', $module);
         $self->{transport}->{$module} = {
             name => $name,
             module => $module,
@@ -151,14 +156,14 @@ sub transport {
 
     if (defined $name) {
         my $module;
-        
+
         foreach (keys %{$self->{transport}}) {
             if ($self->{transport}->{$_}->{loaded} and $self->{transport}->{$_}->{name} eq $name) {
                 $module = $self->{transport}->{$_}->{module};
                 last;
             }
         }
-        
+
         if (defined $module) {
             my $transport;
             eval {

@@ -59,21 +59,22 @@ sub new {
     my $password = shift;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
-        json => JSON::XS->new->ascii->convert_blessed,
+        logger => Log::Log4perl->get_logger($class),
+        json => JSON::XS->new->utf8->convert_blessed,
         busy => 0
     };
     bless $self, $class;
+    weaken($self->{logger});
     my $real_self = $self;
     weaken($self);
-    
+
     unless (defined $dbi) {
         confess __PACKAGE__, ': Missing dbi connection string';
     }
     unless (defined $args{on_connect} and ref($args{on_connect}) eq 'CODE') {
         confess __PACKAGE__, ': Missing on_connect or it is not CODE';
     }
-    
+
     my $on_connect = delete $args{on_connect};
 
     if (defined $args{on_error}) {
@@ -92,12 +93,12 @@ sub new {
     $self->{child} = $child;
 
     my $pid = fork;
-    
+
     if ($pid) {
         #
         # Parent process
         #
-        
+
         close $parent;
 
         $self->{child_pid} = $pid;
@@ -108,12 +109,12 @@ sub new {
                 unless (defined $self and exists $self->{child}) {
                     return;
                 }
-                
+
                 my $response;
                 my $len = sysread $self->{child}, my $buf, 64*1024;
                 if ($len > 0) {
                     undef $@;
-                    
+
                     eval {
                         $response = $self->{json}->incr_parse($buf);
                     };
@@ -131,7 +132,7 @@ sub new {
                 elsif (defined $len) {
                     $@ = 'Unexpected EOF';
                     Lim::DEBUG and $self->{logger}->debug($@);
-                    
+
                     shutdown($self->{child}, 2);
                     close(delete $self->{child});
                     $response = [];
@@ -144,14 +145,14 @@ sub new {
                     close(delete $self->{child});
                     $response = [];
                 }
-                
+
                 if (defined $response and exists $self->{cb}) {
                     unless (ref($response) eq 'ARRAY') {
                         $@ = 'Invalid response';
                         Lim::DEBUG and $self->{logger}->debug($@);
                         $response = [];
                     }
-                    
+
                     my $cb = delete $self->{cb};
                     $self->{busy} = 0;
                     $cb->($self, @$response);
@@ -181,20 +182,20 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
 
         if (exists $self->{close_fds} and $self->{close_fds}) {
             my $parent_fno = fileno $parent;
-            
+
             foreach ($^F+1 .. (POSIX::sysconf (&POSIX::_SC_OPEN_MAX) || 1024)) {
                 unless ($_ == $parent_fno) {
                     POSIX::close($_);
                 }
             }
         }
-        
+
         while () {
             my $request;
             my $len = sysread $parent, my $buf, 64*1024;
             if ($len > 0) {
                 undef $@;
-                
+
                 eval {
                     $request = $self->{json}->incr_parse($buf);
                 };
@@ -208,14 +209,14 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
             else {
                 last;
             }
-            
+
             if (defined $request) {
                 unless (ref($request) eq 'ARRAY') {
                     last;
                 }
-                
+
                 my $response = $self->process(@$request);
-                
+
                 undef $@;
                 eval {
                     $response = $self->{json}->encode($response);
@@ -230,7 +231,7 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
                         last;
                     }
                 }
-                
+
                 my $wrote = 0;
                 my $res_len = length $response;
                 while () {
@@ -238,13 +239,13 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
                     unless (defined $len and $len > 0) {
                         last;
                     }
-                    
+
                     $wrote += $len;
-                    
+
                     if ($wrote >= $res_len) {
                         last;
                     }
-                    
+
                     $response = substr $response, $len;
                 }
                 if ($wrote != $res_len) {
@@ -259,7 +260,7 @@ log4perl.appender.Screen.layout.ConversionPattern = %d %F [%L] %p: %m%n
     else {
         confess __PACKAGE__, ': Unable to fork: ', $!;
     }
-    
+
     $self->connect($on_connect, $dbi, $user, $password, %args);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -277,7 +278,7 @@ sub DESTROY {
                 undef $child_watcher;
             });
     }
-    
+
     if (exists $self->{child}) {
         shutdown($self->{child}, 2);
         close($self->{child});
@@ -292,11 +293,11 @@ sub process {
     my $self = shift;
     my $method = shift;
     my $response;
-    
+
     unless (exists $METHOD{$method}) {
         return ['Method '.$method.' is not allowed'];
     }
-    
+
     $method = 'child_'.$method;
     eval {
         $response = $self->$method(@_);
@@ -304,7 +305,7 @@ sub process {
     if ($@) {
         return [$@];
     }
-    
+
     return $response;
 }
 
@@ -318,9 +319,9 @@ sub request {
     my ($method) = @_;
     my $request;
     weaken($self);
-    
+
     undef $@;
-    
+
     unless (ref($cb) eq 'CODE') {
         confess __PACKAGE__, 'cb is not CODE';
     }
@@ -330,19 +331,19 @@ sub request {
         $cb->();
         return;
     }
-    
+
     unless (exists $self->{child}) {
         $@ = 'No connection to the DBI process';
         $cb->();
         return;
     }
-    
+
     if ($self->{busy}) {
         $@ = 'DBH is busy, multiple command execution is not allowed';
         $cb->();
         return;
     }
-    
+
     eval {
         $request = $self->{json}->encode(\@_);
     };
@@ -350,10 +351,10 @@ sub request {
         $cb->();
         return;
     }
-    
+
     $self->{busy} = 1;
     $self->{cb} = $cb;
-    
+
     Lim::DEBUG and $self->{logger}->debug('Sending DBI request ', $method);
 
     my $len = syswrite $self->{child}, $request;
@@ -363,10 +364,10 @@ sub request {
         $cb->();
         return;
     }
-    
+
     unless ($len >= length $request) {
         $request = substr $request, $len;
-        
+
         $self->{request_watcher} = AnyEvent->io(
             fh => $request,
             poll => 'w',
@@ -374,7 +375,7 @@ sub request {
                 unless (defined $self) {
                     return;
                 }
-                
+
                 $len = syswrite $self->{child}, $request;
                 unless (defined $len and $len > 0) {
                     $@ = 'Connection broken';
@@ -383,16 +384,16 @@ sub request {
                     $cb->();
                     return;
                 }
-                
+
                 unless ($len >= length $request) {
                     $request = substr $request, $len;
                     return;
                 }
-                
+
                 delete $self->{request_watcher};
             });
     }
-    
+
     return 1;
 }
 
@@ -402,12 +403,12 @@ sub request {
 
 sub kill {
     my ($self) = @_;
-    
+
     if (exists $self->{child}) {
         shutdown($self->{child}, 2);
         close(delete $self->{child});
     }
-    
+
     delete $self->{child_watcher};
     delete $self->{request_watcher};
     $self->{busy} = 0;
@@ -420,7 +421,7 @@ sub kill {
 
 sub child_connect {
     my ($self, $dbi, $user, $pass, $attr) = @_;
-    
+
     unless (($self->{dbh} = DBI->connect($dbi, $user, $pass, $attr))) {
         return [$DBI::errstr];
     }
@@ -434,14 +435,14 @@ sub child_connect {
 
 sub child_disconnect {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
-    
+
     $self->{dbh}->disconnect;
     delete $self->{dbh};
-    
+
     [0, 1];
 }
 
@@ -452,22 +453,22 @@ sub child_disconnect {
 sub child_execute {
     my ($self, $statement, @args) = @_;
     my ($sth, $rv, $rows);
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
-    
+
     unless (($sth = $self->{dbh}->prepare_cached($statement, undef, 1))) {
         return [$DBI::errstr];
     }
-    
+
     unless (($rv = $sth->execute(@args))) {
         return [$sth->errstr];
     }
-    
+
     $rows = $sth->fetchall_arrayref;
     $sth->finish;
-    
+
     [0, $rows, $rv];
 }
 
@@ -477,7 +478,7 @@ sub child_execute {
 
 sub child_begin_work {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
@@ -495,7 +496,7 @@ sub child_begin_work {
 
 sub child_commit {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
@@ -513,7 +514,7 @@ sub child_commit {
 
 sub child_rollback {
     my ($self) = @_;
-    
+
     unless (defined $self->{dbh}) {
         return ['No connect to the database exists'];
     }
@@ -531,7 +532,7 @@ sub child_rollback {
 
 sub connect {
     my ($self, $cb, $dbi, $user, $pass, %attr) = @_;
-    
+
     $self->request($cb, 'connect', $dbi, $user, $pass, \%attr);
 }
 
@@ -541,7 +542,7 @@ sub connect {
 
 sub disconnect {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'disconnect');
 }
 
@@ -552,7 +553,7 @@ sub disconnect {
 sub execute {
     my $cb = pop(@_);
     my ($self, $statement, @args) = @_;
-    
+
     $self->request($cb, 'execute', $statement, @args);
 }
 
@@ -562,7 +563,7 @@ sub execute {
 
 sub begin_work {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'begin_work');
 }
 
@@ -572,7 +573,7 @@ sub begin_work {
 
 sub commit {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'commit');
 }
 
@@ -582,7 +583,7 @@ sub commit {
 
 sub rollback {
     my ($self, $cb) = @_;
-    
+
     $self->request($cb, 'rollback');
 }
 

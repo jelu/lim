@@ -39,16 +39,16 @@ sub version {
     
     weaken($self);
     $agent->ReadVersion(sub {
-		my ($call, $response) = @_;
-		
-		if ($call->Successful) {
-			$self->cli->println('agent version ', $response->{version});
-			$self->Successful;
-		}
-		else {
-			$self->Error($call->Error);
-		}
-		undef($agent);
+        my ($call, $response) = @_;
+        
+        if ($call->Successful) {
+            $self->cli->println('agent version ', $response->{version});
+            $self->Successful;
+        }
+        else {
+            $self->Error($call->Error);
+        }
+        undef($agent);
     });
 }
 
@@ -62,19 +62,21 @@ sub plugins {
     
     weaken($self);
     $agent->ReadPlugins(sub {
-		my ($call, $response) = @_;
-		
-		if ($call->Successful) {
-		    $self->cli->println(join("\t", qw(Name Description Module Version)));
-		    foreach my $plugin (@{$response->{plugin}}) {
-		        $self->cli->println(join("\t", $plugin->{name}, $plugin->{description}, $plugin->{module}, $plugin->{version}));
-		    }
-			$self->Successful;
-		}
-		else {
-			$self->Error($call->Error);
-		}
-		undef($agent);
+        my ($call, $response) = @_;
+        
+        if ($call->Successful) {
+            if (exists $response->{plugin}) {
+                $self->cli->println(join("\t", qw(Name Description Module Version)));
+                foreach my $plugin (ref($response->{plugin}) eq 'ARRAY' ? @{$response->{plugin}} : $response->{plugin}) {
+                    $self->cli->println(join("\t", $plugin->{name}, $plugin->{description}, $plugin->{module}, $plugin->{version}));
+                }
+            }
+            $self->Successful;
+        }
+        else {
+            $self->Error($call->Error);
+        }
+        undef($agent);
     });
 }
 

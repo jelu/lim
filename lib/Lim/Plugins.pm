@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 use Module::Find qw(findsubmod);
 
 use Lim ();
@@ -45,10 +45,11 @@ sub _new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         plugin => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     $self->Load;
 
@@ -59,7 +60,7 @@ sub _new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     delete $self->{plugin};
 }
 
@@ -86,14 +87,30 @@ reference to itself even on error.
 
 sub Load {
     my ($self) = @_;
-    
-    foreach my $module (findsubmod Lim::Plugin) {
+    my @modules;
+
+    if (Lim::Config->{plugin}->{load_all}) {
+        @modules = findsubmod Lim::Plugin;
+    }
+    else {
+        foreach (findsubmod Lim::Plugin) {
+            my $name = $_;
+            $name =~ s/.*:://o;
+            if (exists Lim::Config->{plugin}->{load}->{$_}
+                or exists Lim::Config->{plugin}->{load}->{$name})
+            {
+                push(@modules, $_);
+            }
+        }
+    }
+
+    foreach my $module (@modules) {
         if (exists Lim::Config->{plugin} and exists Lim::Config->{plugin}->{load}) {
             if (exists Lim::Config->{plugin}->{load}->{$module} and !Lim::Config->{plugin}->{load}->{$module}) {
                 Lim::WARN and $self->{logger}->warn('Skipping ', $module, ' configured not to load.');
                 next;
             }
-            
+
             my $name = $module;
             $name =~ s/.*:://o;
             if (exists Lim::Config->{plugin}->{load}->{$name} and !Lim::Config->{plugin}->{load}->{$name}) {
@@ -101,7 +118,7 @@ sub Load {
                 next;
             }
         }
-            
+
         if (exists $self->{plugin}->{$module}) {
             Lim::WARN and $self->{logger}->warn('Plugin ', $module, ' already loaded');
             next;
@@ -121,7 +138,7 @@ sub Load {
             $name = $module->Name;
             $description = $module->Description;
         };
-        
+
         if ($@) {
             Lim::WARN and $self->{logger}->warn('Unable to load plugin ', $module, ': ', $@);
             $self->{plugin}->{$module} = {
@@ -134,7 +151,7 @@ sub Load {
             };
             next;
         }
-        
+
         $self->{plugin}->{$module} = {
             name => $name,
             description => $description,
@@ -143,20 +160,20 @@ sub Load {
             loaded => 1
         };
     }
-    
+
     if (exists Lim::Config->{plugin} and exists Lim::Config->{plugin}->{load}) {
         foreach my $module (keys %{Lim::Config->{plugin}->{load}}) {
             unless (Lim::Config->{plugin}->{load}->{$module}) {
                 next;
             }
-            
+
             unless (exists $self->{plugin}->{$module} or exists $self->{plugin}->{'Lim::Plugin::'.$module}) {
                 Lim::ERR and $self->{logger}->error('Required module ', $module, ' not found');
                 # TODO Should we die here?
             }
         }
     }
-    
+
     $self;
 }
 
@@ -169,13 +186,13 @@ Returns a list of loaded plugin's module name (eg Lim::Plugin::Example).
 sub LoadedModules {
     my ($self) = @_;
     my @modules;
-    
+
     foreach my $module (values %{$self->{plugin}}) {
         if ($module->{loaded}) {
             push(@modules, $module->{module});
         }
     }
-    
+
     return @modules;
 }
 
@@ -199,13 +216,13 @@ Returns a list of hash references of loaded plugins.
 sub Loaded {
     my ($self) = @_;
     my @modules;
-    
+
     foreach my $module (values %{$self->{plugin}}) {
         if ($module->{loaded}) {
             push(@modules, $module);
         }
     }
-    
+
     return @modules;
 }
 

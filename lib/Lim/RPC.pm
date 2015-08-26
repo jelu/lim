@@ -48,12 +48,12 @@ RPC definition in C<$def>. On an error it will L<confess>.
 
 sub V {
     my ($q, $def) = @_;
-    
+
     if (defined $q and defined $def) {
         unless (ref($q) eq 'HASH' and ref($def) eq 'HASH') {
             confess __PACKAGE__, ': Can not verify data, invalid parameters given';
         }
-        
+
         my @v = ([$q, $def]);
         while (defined (my $v = shift(@v))) {
             ($q, $def) = @$v;
@@ -65,29 +65,29 @@ sub V {
             else {
                 $a = [$q];
             }
-            
+
             foreach $q (@{$a}) {
                 unless (ref($q) eq 'HASH') {
                     confess __PACKAGE__, ': Can not verify data, invalid data given';
                 }
-                
+
                 # check required
                 foreach my $k (keys %$def) {
                     if (blessed($def->{$k}) and $def->{$k}->required and !exists $q->{$k}) {
-                        confess __PACKAGE__, ': required data missing, does not match definition';
+                        confess __PACKAGE__, ': required data (', $k, ') missing, does not match definition';
                     }
                 }
-                
+
                 # check data
                 foreach my $k (keys %$q) {
                     unless (exists $def->{$k}) {
-                        confess __PACKAGE__, ': invalid data, no definition exists';
+                        confess __PACKAGE__, ': invalid data (', $k, '), no definition exists';
                     }
-                    
+
                     if (blessed($def->{$k}) and !$def->{$k}->comform($q->{$k})) {
-                        confess __PACKAGE__, ': invalid data, validation failed';
+                        confess __PACKAGE__, ': invalid data (', $k, '), validation failed';
                     }
-                    
+
                     if (ref($q->{$k}) eq 'HASH' or ref($q->{$k}) eq 'ARRAY') {
                         if (ref($def->{$k}) eq 'HASH') {
                             push(@v, [$q->{$k}, $def->{$k}]);
@@ -98,7 +98,7 @@ sub V {
                             }
                         }
                         else {
-                            confess __PACKAGE__, ': invalid definition, can not validate data';
+                            confess __PACKAGE__, ': invalid definition (', $k, '), can not validate data';
                         }
                     }
                 }
@@ -110,18 +110,18 @@ sub V {
 
 =item Lim::RPC::R($cb, $data)
 
-R is for Result, called when a RPC call finish and convert the given C<$data> to 
+R is for Result, called when a RPC call finish and convert the given C<$data> to
 the corresponding protocol.
 
 =cut
 
 sub R {
     my ($cb, $data) = @_;
-    
+
     unless (blessed($cb)) {
         confess __PACKAGE__, ': cb not blessed';
     }
-    
+
     if (blessed($data)) {
         if ($data->isa('Lim::Error')) {
             return $cb->cb->($data);
@@ -131,7 +131,7 @@ sub R {
         unless (ref($data) eq 'HASH') {
             confess __PACKAGE__, ': data not a hash';
         }
-        
+
         if ($cb->call_def and exists $cb->call_def->{out}) {
             Lim::RPC::V($data, $cb->call_def->{out});
         }
@@ -144,7 +144,7 @@ sub R {
             Lim::RPC::V({}, $cb->call_def->{out});
         }
     }
-    
+
     return $cb->cb->(defined $data ? $data : {});
 }
 

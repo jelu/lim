@@ -21,6 +21,8 @@ See L<Lim> for version.
 
 =item OPT_SWALLOW
 
+=item OPT_SINGLE
+
 =back
 
 =cut
@@ -29,10 +31,12 @@ our $VERSION = $Lim::VERSION;
 
 sub OPT_REQUIRED (){ 0x00000001 }
 sub OPT_SWALLOW (){ 0x00000002 }
+sub OPT_SINGLE (){ 0x00000004 }
 
 our %OPTIONS = (
     'required' => OPT_REQUIRED,
-    'swallow' => OPT_SWALLOW
+    'swallow' => OPT_SWALLOW,
+    'single' => OPT_SINGLE
 );
 
 =head1 SYNOPSIS
@@ -52,7 +56,7 @@ sub new {
     my $self = {
         options => 0
     };
-    
+
     if (exists $args{textual}) {
         foreach (split(/\s+/o, lc($args{textual}))) {
             if (exists $OPTIONS{$_}) {
@@ -68,12 +72,12 @@ sub new {
             confess __PACKAGE__, ': No children specified or invalid';
         }
         $self->{children} = $args{children};
-    
+
         if (defined $args{options}) {
             unless (ref($args{options}) eq 'ARRAY') {
                 confess __PACKAGE__, ': Invalid options specified';
             }
-            
+
             foreach (@{$args{options}}) {
                 if (exists $OPTIONS{$_}) {
                     $self->{options} |= $OPTIONS{$_};
@@ -84,7 +88,7 @@ sub new {
             }
         }
     }
-    
+
     bless $self, $class;
 }
 
@@ -108,7 +112,7 @@ sub set_children {
     if (defined $_[1] and ref($_[1]) eq 'HASH') {
         $_[0]->{children} = $_[1];
     }
-    
+
     $_[0];
 }
 
@@ -128,12 +132,28 @@ sub swallow {
     $_[0]->{options} & OPT_SWALLOW ? 1 : 0;
 }
 
+=head2 single
+
+=cut
+
+sub single {
+    $_[0]->{options} & OPT_SINGLE ? 1 : 0;
+}
+
 =head2 comform
 
 =cut
 
 sub comform {
-    unless (defined $_[1] and (ref($_[1]) eq 'HASH' or ref($_[1]) eq 'ARRAY')) {
+    unless (defined $_[1]) {
+        return 0;
+    }
+    if ($_[0]->single) {
+        unless (ref($_[1]) eq 'HASH') {
+            return 0;
+        }
+    }
+    unless (ref($_[1]) eq 'HASH' or ref($_[1]) eq 'ARRAY') {
         return 0;
     }
     return 1;

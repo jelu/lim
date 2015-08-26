@@ -18,7 +18,6 @@ lib/Lim/Plugins.pm
 lib/Lim/RPC.pm
 lib/Lim/RPC/Call.pm
 lib/Lim/RPC/Callback.pm
-lib/Lim/RPC/Client.pm
 lib/Lim/RPC/Protocol.pm
 lib/Lim/RPC/Protocol/HTTP.pm
 lib/Lim/RPC/Protocol/JSONRPC1.pm
@@ -32,7 +31,13 @@ lib/Lim/RPC/TLS.pm
 lib/Lim/RPC/Transport.pm
 lib/Lim/RPC/Transport/HTTP.pm
 lib/Lim/RPC/Transport/HTTPS.pm
+lib/Lim/RPC/Transport/RabbitMQ.pm
 lib/Lim/RPC/Transports.pm
+lib/Lim/RPC/Transport/Client.pm
+lib/Lim/RPC/Transport/Clients.pm
+lib/Lim/RPC/Transport/Client/HTTP.pm
+lib/Lim/RPC/Transport/Client/HTTPS.pm
+lib/Lim/RPC/Transport/Client/RabbitMQ.pm
 lib/Lim/RPC/URIMaps.pm
 lib/Lim/RPC/Value.pm
 lib/Lim/RPC/Value/Collection.pm
@@ -42,7 +47,12 @@ lib/Lim/Util/DBI.pm
 Makefile.PL
 MANIFEST			This list of files
 README
+RPC_API
+TODO
+INSTALL
+PLUGIN
 t/00-load.t
+t/boilerplate.t
 t/manifest.t
 t/pod-coverage.t
 t/pod.t

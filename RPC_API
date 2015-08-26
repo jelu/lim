@@ -1,8 +1,8 @@
 RESTful
 
 	GET = Get request
-	POST = Partial update of an object
-	PUT = Create new object
+	POST = Create new object
+	PUT = Partial update of an object
 	DELETE = Delete object
 	
 	HTTP:
@@ -30,8 +30,8 @@ SOAP 1.1
 
 	RESTful to CRUD name conversion:
 	GET => READ
-	POST => UPDATE
-	PUT => CREATE
+	POST => CREATE
+	PUT => UPDATE
 	DELETE => DELETE
 		
 	Function name conversion:

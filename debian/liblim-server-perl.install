@@ -1,16 +1,12 @@
 usr/share/man/man3/Lim::Component::Server.3pm
 usr/share/man/man3/Lim::RPC::Callback.3pm
 usr/share/man/man3/Lim::RPC::Server.3pm
-usr/share/man/man3/Lim::RPC::Protocol.3pm
-usr/share/man/man3/Lim::RPC::Protocols.3pm
 usr/share/man/man3/Lim::RPC::Transport.3pm
 usr/share/man/man3/Lim::RPC::Transports.3pm
 usr/share/man/man3/Lim::RPC::URIMaps.3pm
 usr/share/perl5/Lim/Component/Server.pm
 usr/share/perl5/Lim/RPC/Callback.pm
 usr/share/perl5/Lim/RPC/Server.pm
-usr/share/perl5/Lim/RPC/Protocol.pm
-usr/share/perl5/Lim/RPC/Protocols.pm
 usr/share/perl5/Lim/RPC/Transport.pm
 usr/share/perl5/Lim/RPC/Transports.pm
 usr/share/perl5/Lim/RPC/URIMaps.pm

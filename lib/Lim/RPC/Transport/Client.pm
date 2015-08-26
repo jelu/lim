@@ -1,13 +1,10 @@
-package Lim::RPC::TLS;
+package Lim::RPC::Transport::Client;
 
 use common::sense;
 use Carp;
 
+use Scalar::Util qw(blessed weaken);
 use Log::Log4perl ();
-use Scalar::Util qw(weaken);
-
-use AnyEvent::TLS ();
-use Net::SSLeay ();
 
 use Lim ();
 
@@ -21,10 +18,17 @@ use Lim ();
 
 See L<Lim> for version.
 
+=over 4
+
+=item OK
+
+=item ERROR
+
+=back
+
 =cut
 
 our $VERSION = $Lim::VERSION;
-our $INSTANCE;
 
 =head1 SYNOPSIS
 
@@ -39,27 +43,14 @@ our $INSTANCE;
 sub new {
     my $this = shift;
     my $class = ref($this) || $this;
+    my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger($class),
     };
     bless $self, $class;
     weaken($self->{logger});
 
-    eval {
-        if (!defined Lim::Config->{rpc}->{tls}->{key_file}) {
-            $@ = 'No key_file set';
-        }
-        elsif (!defined Lim::Config->{rpc}->{tls}->{cert_file}) {
-            $@ = 'No cert_file set';
-        }
-        else {
-            $self->{tls_ctx} = AnyEvent::TLS->new(%{Lim::Config->{rpc}->{tls}});
-        }
-    };
-    if ($@) {
-        Lim::OBJ_DEBUG and $self->{logger}->debug('Unable to initialize TLS context, will not use TLS/SSL: ', $@);
-        $self->{tls_ctx} = undef;
-    }
+    $self->Init(@_);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
@@ -68,26 +59,38 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
+
+    $self->Destroy;
 }
 
-END {
-    undef($INSTANCE);
-}
-
-=head2 instance
+=head2 Init
 
 =cut
 
-sub instance {
-    $INSTANCE ||= Lim::RPC::TLS->new;
+sub Init {
 }
 
-=head2 tls_ctx
+=head2 Destroy
 
 =cut
 
-sub tls_ctx {
-    $_[0]->{tls_ctx};
+sub Destroy {
+}
+
+=head2 name
+
+=cut
+
+sub name {
+    confess 'function name not overloaded';
+}
+
+=head2 request
+
+=cut
+
+sub request {
+    confess 'function serve not overloaded';
 }
 
 =head1 AUTHOR
@@ -129,4 +132,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::TLS
+1; # End of Lim::RPC::Transport::Client

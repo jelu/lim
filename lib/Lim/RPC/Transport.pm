@@ -37,17 +37,18 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         __protocols => []
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     unless (blessed($args{server}) and $args{server}->isa('Lim::RPC::Server')) {
         confess __PACKAGE__, ': No server specified or invalid';
     }
     $self->{__server} = $args{server};
     weaken($self->{__server});
-    
+
     $self->Init(@_);
 
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
@@ -57,7 +58,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
     delete $self->{__protocols};
     delete $self->{__server};
@@ -99,14 +100,14 @@ sub uri {
 
 sub add_protocol {
     my $self = shift;
-    
+
     foreach (@_) {
         unless (blessed($_) and $_->isa('Lim::RPC::Protocol')) {
             confess 'Argument is not a Lim::RPC::Protocol';
         }
     }
     push(@{$self->{__protocols}}, @_);
-    
+
     $self;
 }
 
@@ -140,6 +141,30 @@ sub host {
 
 sub port {
     confess 'function port not overloaded';
+}
+
+=head2 serve
+
+=cut
+
+sub serve {
+    confess 'function serve not overloaded';
+}
+
+=head2 close
+
+=cut
+
+sub close {
+    my ($self, $cb) = @_;
+
+    unless (ref($cb) eq 'CODE') {
+        confess '$cb is not CODE';
+    }
+
+    $cb->();
+
+    $self;
 }
 
 =head1 AUTHOR

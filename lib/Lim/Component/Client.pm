@@ -4,7 +4,7 @@ use common::sense;
 use Carp;
 
 use Log::Log4perl ();
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken);
 
 use Lim ();
 
@@ -36,10 +36,11 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         call => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     eval {
         $self->Init(@_);
@@ -48,7 +49,7 @@ sub new {
         Lim::WARN and $self->{logger}->warn('Unable to initialize module '.$class.': '.$@);
         return;
     }
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $self;
 }
@@ -56,7 +57,7 @@ sub new {
 sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
-    
+
     $self->Destroy;
 }
 
@@ -84,11 +85,11 @@ sub _addCall {
     unless (blessed $call and $call->isa('Lim::RPC::Call')) {
         confess __PACKAGE__, ': call is not a Lim::RPC::Call';
     }
-    
+
     unless (exists $self->{call}->{$call}) {
         $self->{call}->{$call} = $call;
     }
-    
+
     $self;
 }
 
@@ -102,11 +103,11 @@ sub _deleteCall {
     unless (blessed $call and $call->isa('Lim::RPC::Call')) {
         confess __PACKAGE__, ': call is not a Lim::RPC::Call';
     }
-    
+
     if (exists $self->{call}->{$call}) {
         delete $self->{call}->{$call};
     }
-    
+
     $self;
 }
 

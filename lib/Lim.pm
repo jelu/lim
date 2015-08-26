@@ -13,16 +13,16 @@ Lim - Framework for RESTful JSON/XML, JSON-RPC, XML-RPC and SOAP
 
 =head1 VERSION
 
-Version 0.19
+Version 0.20
 
 =cut
 
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 our $CONFIG = {
     log => {
-        obj_debug => 1,
-        rpc_debug => 1,
-        debug => 1,
+        obj_debug => 0,
+        rpc_debug => 0,
+        debug => 0,
         info => 1,
         warn => 1,
         err => 1
@@ -32,6 +32,7 @@ our $CONFIG = {
         srv_listen => 10,
         timeout => 30,
         call_timeout => 300,
+        skip_dns => 0,
         transport => {
             http => {
                 host => undef,
@@ -48,6 +49,9 @@ our $CONFIG = {
             verify => 1,
             verify_require_client_cert => 1,
             ca_path => '/etc/lim/ssl/certs'
+        },
+        json => {
+            pretty => 0
         }
     },
     agent => {
@@ -60,9 +64,12 @@ our $CONFIG = {
         config_file => defined $ENV{HOME} ? $ENV{HOME}.($ENV{HOME} =~ /\/$/o ? '' : '/').'.limrc' : '',
         editor => $ENV{EDITOR},
         host => 'localhost',
-        port => 5353
+        port => 5353,
+        transport => 'http',
+        protocol => 'rest'
     },
     plugin => {
+        load_all => 1,
         load => {}
     }
 };
@@ -193,7 +200,12 @@ sub MergeConfig {
                         next;
                     }
                 }
-                $to->{$key} = $from->{$key};
+                if (ref($to->{$key}) eq 'ARRAY') {
+                    push(@{$to->{$key}}, @{$from->{$key}});
+                }
+                else {
+                    $to->{$key} = $from->{$key};
+                }
             }
         }
     }
@@ -209,10 +221,10 @@ configuration.
 
 sub LoadConfig {
     my ($filename) = @_;
-    
+
     if (defined $filename and -r $filename) {
         my $yaml;
-        
+
         Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $filename);
         eval {
             $yaml = YAML::Any::LoadFile($filename);
@@ -235,19 +247,19 @@ configuration.
 
 sub LoadConfigDirectory {
     my ($directory) = @_;
-    
-    if (defined $directory and -d $directory) {
+
+    if (defined $directory and -r $directory and -x $directory and -d $directory) {
         unless(opendir(CONFIGS, $directory)) {
             confess __PACKAGE__, ': Unable to read configurations in directory ', $directory, ': ', $!, "\n";
         }
 
         foreach my $entry (sort readdir(CONFIGS)) {
             my $yaml;
-            
+
             unless(-r $directory.'/'.$entry and $entry =~ /\.yaml$/o) {
                 next;
             }
-            
+
             Lim::DEBUG and Log::Log4perl->get_logger->debug('Loading config ', $entry, ' from directory ', $directory);
             eval {
                 $yaml = YAML::Any::LoadFile($directory.'/'.$entry);
@@ -276,14 +288,14 @@ sub ParseOptions {
         unless ($name and defined $value) {
             confess __PACKAGE__, ': Invalid or unknown option: ', $option, "\n";
         }
-        
+
         my @parts = split(/\./o, $name);
         my $ref = $CONFIG;
         while (defined(my $part = shift(@parts))) {
             unless (scalar @parts) {
                 if ($part =~ /^(.+)\[\]$/o) {
                     $part = $1;
-                    
+
                     if (exists $ref->{$part}) {
                         if (ref($ref->{$part}) eq 'ARRAY') {
                             push(@{$ref->{$part}}, $value);
@@ -301,7 +313,7 @@ sub ParseOptions {
                 }
                 last;
             }
-            
+
             unless (exists $ref->{$part}) {
                 $ref->{$part} = {};
             }

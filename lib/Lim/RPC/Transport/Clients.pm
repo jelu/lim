@@ -1,4 +1,4 @@
-package Lim::RPC::Protocols;
+package Lim::RPC::Transport::Clients;
 
 use common::sense;
 use Carp;
@@ -13,7 +13,7 @@ use Lim ();
 
 =head1 NAME
 
-Lim::RPC::Protocols - Lim's RPC protocol loader and container
+Lim::RPC::Transport::Clients - Lim's RPC transport client loader and container
 
 =head1 VERSION
 
@@ -26,8 +26,8 @@ our $INSTANCE;
 
 =head1 SYNOPSIS
 
-  use Lim::RPC::Protocols;
-  $protocol = Lim::RPC::Protocols->instance->protocol('name');
+  use Lim::RPC::Transport::Clients;
+  $transport = Lim::RPC::Transport::Clients->instance->transport('name');
 
 =head1 METHODS
 
@@ -41,8 +41,8 @@ sub _new {
     my %args = ( @_ );
     my $self = {
         logger => Log::Log4perl->get_logger($class),
-        protocol => {},
-        protocol_name => {}
+        transport => {},
+        transport_name => {}
     };
     bless $self, $class;
     weaken($self->{logger});
@@ -57,36 +57,36 @@ sub DESTROY {
     my ($self) = @_;
     Lim::OBJ_DEBUG and $self->{logger}->debug('destroy ', __PACKAGE__, ' ', $self);
 
-    delete $self->{protocol};
+    delete $self->{transport};
 }
 
 END {
     undef($INSTANCE);
 }
 
-=item $instance = Lim::RPC::Protocols->instance
+=item $instance = Lim::RPC::Transport::Clients->instance
 
 Returns the singelton instance of this class.
 
 =cut
 
 sub instance {
-    $INSTANCE ||= Lim::RPC::Protocols->_new;
+    $INSTANCE ||= Lim::RPC::Transport::Clients->_new;
 }
 
 =item $instance->load
 
-Loads all classes that exists on the system under Lim::RPC::Protocol::. Returns
-the reference to itself even on error.
+Loads all classes that exists on the system under Lim::RPC::Transport::Client::.
+Returns the reference to itself even on error.
 
 =cut
 
 sub load {
     my ($self) = @_;
 
-    foreach my $module (findsubmod Lim::RPC::Protocol) {
-        if (exists $self->{protocol}->{$module}) {
-            Lim::WARN and $self->{logger}->warn('Protocol ', $module, ' already loaded');
+    foreach my $module (findsubmod Lim::RPC::Transport::Client) {
+        if (exists $self->{transport}->{$module}) {
+            Lim::WARN and $self->{logger}->warn('Transport client ', $module, ' already loaded');
             next;
         }
 
@@ -105,8 +105,9 @@ sub load {
         };
 
         if ($@) {
-            Lim::WARN and $self->{logger}->warn('Unable to load protocol ', $module, ': ', $@);
-            $self->{protocol}->{$module} = {
+            Lim::WARN and $self->{logger}->warn('Unable to load transport client ', $module, ': ', $@);
+            $self->{transport}->{$module} = {
+                name => $name,
                 module => $module,
                 loaded => 0,
                 error => $@
@@ -115,61 +116,61 @@ sub load {
         }
 
         unless ($name =~ /^[a-z0-9_\-\.]+$/o) {
-            Lim::WARN and $self->{logger}->warn('Unable to load protocol ', $module, ': Illegal characters in protocol name');
-            $self->{protocol}->{$module} = {
+            Lim::WARN and $self->{logger}->warn('Unable to load transport client ', $module, ': Illegal characters in transport name');
+            $self->{transport}->{$module} = {
                 module => $module,
                 loaded => 0,
-                error => 'Illegal characters in protocol name'
+                error => 'Illegal characters in transport name'
             };
             next;
         }
 
-        if (exists $self->{protocol_name}->{$name}) {
-            Lim::WARN and $self->{logger}->warn('Protocol name ', $name, ' already loaded by module ', $self->{protocol_name}->{$name});
+        if (exists $self->{transport_name}->{$name}) {
+            Lim::WARN and $self->{logger}->warn('Transport name ', $name, ' already loaded by module ', $self->{transport_name}->{$name});
             next;
         }
 
         Lim::DEBUG and $self->{logger}->debug('Loaded ', $module);
-        $self->{protocol}->{$module} = {
+        $self->{transport}->{$module} = {
             name => $name,
             module => $module,
             version => $module->VERSION,
             loaded => 1
         };
-        $self->{protocol_name}->{$name} = $module;
+        $self->{transport_name}->{$name} = $module;
     }
 
     $self;
 }
 
-=item $protocol = $instance->protocol($name, ...)
+=item $transport = $instance->transport($name, ...)
 
 =cut
 
-sub protocol {
+sub transport {
     my $self = shift;
     my $name = shift;
 
     if (defined $name) {
         my $module;
 
-        foreach (keys %{$self->{protocol}}) {
-            if ($self->{protocol}->{$_}->{loaded} and $self->{protocol}->{$_}->{name} eq $name) {
-                $module = $self->{protocol}->{$_}->{module};
+        foreach (keys %{$self->{transport}}) {
+            if ($self->{transport}->{$_}->{loaded} and $self->{transport}->{$_}->{name} eq $name) {
+                $module = $self->{transport}->{$_}->{module};
                 last;
             }
         }
 
         if (defined $module) {
-            my $protocol;
+            my $transport;
             eval {
-                $protocol = $module->new(@_);
+                $transport = $module->new(@_);
             };
             if ($@) {
-                Lim::WARN and $self->{logger}->warn('Unable to create new instance of protocol ', $name, '(', $module, '): ', $@);
+                Lim::WARN and $self->{logger}->warn('Unable to create new instance of transport client ', $name, '(', $module, '): ', $@);
             }
             else {
-                return $protocol;
+                return $transport;
             }
         }
     }
@@ -190,7 +191,7 @@ Please report any bugs or feature requests to L<https://github.com/jelu/lim/issu
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Lim::RPC::Protocols
+    perldoc Lim::RPC::Transport::Clients
 
 You can also look for information at:
 
@@ -217,4 +218,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 =cut
 
-1; # End of Lim::RPC::Protocols
+1; # End of Lim::RPC::Transport::Clients

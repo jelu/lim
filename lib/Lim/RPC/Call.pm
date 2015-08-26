@@ -5,12 +5,18 @@ use Carp;
 
 use Log::Log4perl ();
 use Scalar::Util qw(blessed weaken);
+use URI::Split ();
 
 use Lim ();
 use Lim::Error ();
 use Lim::Util ();
 use Lim::RPC ();
-use Lim::RPC::Client ();
+use Lim::RPC::Protocols ();
+use Lim::RPC::Transport::Clients ();
+
+use HTTP::Request ();
+use HTTP::Response ();
+use HTTP::Status ();
 
 =encoding utf8
 
@@ -51,10 +57,11 @@ sub new {
     my $this = shift;
     my $class = ref($this) || $this;
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         status => 0
     };
     bless $self, $class;
+    weaken($self->{logger});
     my $real_self = $self;
     weaken($self);
 
@@ -63,13 +70,13 @@ sub new {
     $self->{call_def} = shift;
     $self->{component} = shift;
     my ($data, $cb, $args, $method, $uri);
-    
+
     $args = {};
     if (scalar @_ == 1) {
         unless (ref($_[0]) eq 'CODE') {
             confess __PACKAGE__, ': Given one argument but its not a CODE callback';
         }
-        
+
         $cb = $_[0];
     }
     elsif (scalar @_ == 2) {
@@ -89,15 +96,24 @@ sub new {
         unless (ref($_[1]) eq 'CODE') {
             confess __PACKAGE__, ': Given three argument but second its not a CODE callback';
         }
-        
+
         $data = $_[0];
         $cb = $_[1];
         $args = $_[2];
     }
+    elsif (scalar @_ > 3) {
+        unless (ref($_[1]) eq 'CODE') {
+            confess __PACKAGE__, ': Given three argument but second its not a CODE callback';
+        }
+
+        $data = shift;
+        $cb = shift;
+        $args = { @_ };
+    }
     else {
         confess __PACKAGE__, ': Too many arguments';
     }
-    
+
     unless (ref($args) eq 'HASH') {
         confess __PACKAGE__, ': Given an arguments argument but its not an hash';
     }
@@ -115,93 +131,180 @@ sub new {
         confess __PACKAGE__, ': No cb specified';
     }
 
-    if (defined $args->{host}) {
-        $self->{host} = $args->{host};
+    if (defined $args->{uri}) {
+        my ($scheme, $auth, $path) = URI::Split::uri_split(delete $args->{uri});
+        my ($transport, $protocol);
+
+        if ($scheme =~ /^([a-z0-9_\-\.]+)\+([a-z0-9_\-\.\+]+)/o) {
+            ($transport, $protocol) = ($1, $2);
+        }
+        else {
+            confess __PACKAGE__, ': Invalid schema in uri '.$uri;
+        }
+
+        $uri = URI->new('', 'http');
+        $uri->path($path);
+        $uri->authority($auth);
+        my ($user, $pass) = split(/:/o, $uri->userinfo);
+
+        $self->{host} = $uri->host;
+        $self->{port} = $uri->_port;
+        $self->{user} = $user;
+        $self->{pass} = $pass;
+        $self->{path} = $uri->path;
+        $self->{transport} = $transport;
+        $self->{protocol} = $protocol;
     }
     else {
-        $self->{host} = Lim::Config->{host};
-    }
-    if (defined $args->{port}) {
-        $self->{port} = $args->{port};
-    }
-    else {
-        $self->{port} = Lim::Config->{port};
+        foreach (qw(host port user pass path transport protocol)) {
+            $self->{$_} = defined $args->{$_} ? delete $args->{$_} : Lim::Config->{cli}->{$_};
+        }
     }
     $self->{cb} = $cb;
-    
-    unless (defined $self->{host}) {
-        confess __PACKAGE__, ': No host specified';
+
+    foreach (qw(host transport protocol)) {
+        unless (defined $self->{$_}) {
+            confess __PACKAGE__, ': No '.$_.' specified';
+        }
     }
-    unless (defined $self->{port}) {
-        confess __PACKAGE__, ': No port specified';
+
+    unless (defined ($self->{protocol_obj} = Lim::RPC::Protocols->instance->protocol($self->{protocol}))) {
+        confess __PACKAGE__, ': Unsupported protocol '.$self->{protocol};
     }
-    
+    unless (defined ($self->{transport_obj} = Lim::RPC::Transport::Clients->instance->transport($self->{transport}))) {
+        confess __PACKAGE__, ': Unsupported transport '.$self->{transport};
+    }
+
     if (defined $data and ref($data) ne 'HASH') {
         confess __PACKAGE__, ': Data is not a hash';
     }
     if (exists $self->{call_def}->{in}) {
-        Lim::RPC::V(defined $data ? $data : {}, $self->{call_def}->{in});
+        undef $@;
+        eval {
+            Lim::RPC::V(defined $data ? $data : {}, $self->{call_def}->{in});
+        };
+        if ($@) {
+            undef $@;
+            eval {
+                eval 'use Data::Dumper;';
+                confess __PACKAGE__, ': Unable to verify data ', "\n",
+                    Dumper(defined $data ? $data : {}), "\n",
+                    Dumper($self->{call_def}->{in}), "\n",
+                    $@;
+            };
+            if ($@) {
+                confess __PACKAGE__, ': Unable to verify data';
+            }
+        }
     }
     elsif (defined $data and %$data) {
         confess __PACKAGE__, ': Data given without in parameter definition';
     }
-    
-    ($method, $uri) = Lim::Util::URIize($self->{call});
-    
-    $uri = '/'.lc($self->{plugin}).$uri;
 
-    $self->{component}->_addCall($real_self);
-    $self->{client} = Lim::RPC::Client->new(
-        host => $self->{host},
-        port => $self->{port},
-        method => $method,
-        uri => $uri,
-        data => $data,
+    my $request;
+    eval {
+        $request = $self->{protocol_obj}->request(
+            (map { $_ => $self->{$_} } qw(plugin call path)),
+            data => $data
+        );
+    };
+    if ($@ or !defined $request) {
+        confess __PACKAGE__, ': Protocol request creation failed: '.(($@) ? $@ : 'Unknown');
+    }
+
+    $self->{component}->_addCall($self);
+    $self->{transport_obj}->request(
+        %$args,
+        (map { $_ => $self->{$_} } qw(plugin call host port user pass)),
+        request => $request,
         cb => sub {
-            my (undef, $data) = @_;
+            my (undef, $response) = @_;
+            my $data;
 
-            if ($self->{client}->status == Lim::RPC::Client::OK) {
-                $self->{status} = OK;
-                if (exists $self->{call_def}->{out}) {
-                    eval {
-                        Lim::RPC::V($data, $self->{call_def}->{out});
-                    };
-                    if ($@) {
-                        $self->{error} = Lim::Error->new(
-                            message => $@,
-                            module => $self
-                        );
-                        $self->{status} = ERROR;
-                    }
-                }
-                elsif (%$data) {
+            unless (defined $self) {
+                return;
+            }
+
+            unless (blessed $response) {
+                $self->{error} = Lim::Error->new(
+                    message => 'Transport returned invalid response',
+                    module => $self
+                );
+                $self->{status} = ERROR;
+            }
+            elsif ($response->isa('Lim::Error')) {
+                $self->{error} = $response;
+                $self->{status} = ERROR;
+            }
+            elsif ($response->isa('HTTP::Response')) {
+                eval {
+                    $data = $self->{protocol_obj}->response($response);
+                };
+
+                if ($@) {
                     $self->{error} = Lim::Error->new(
-                        message => 'Invalid data return, does not match definition',
+                        message => 'Protocol response failure: '.$@,
                         module => $self
                     );
                     $self->{status} = ERROR;
+                    $data = undef;
+                }
+                elsif (blessed $data and $data->isa('Lim::Error')) {
+                    $self->{error} = $data;
+                    $self->{status} = ERROR;
+                    $data = undef;
+                }
+                elsif (ref($data) ne 'HASH') {
+                    $self->{error} = Lim::Error->new(
+                        message => 'Protocol returned invalid data from response',
+                        module => $self
+                    );
+                    $self->{status} = ERROR;
+                    $data = undef;
+                }
+                else {
+                    if (exists $self->{call_def}->{out}) {
+                        eval {
+                            Lim::RPC::V($data, $self->{call_def}->{out});
+                        };
+                        if ($@) {
+                            $self->{error} = Lim::Error->new(
+                                message => $@,
+                                module => $self
+                            );
+                            $self->{status} = ERROR;
+                            $data = undef;
+                        }
+                        else {
+                            $self->{status} = OK;
+                        }
+                    }
+                    elsif (%$data) {
+                        $self->{error} = Lim::Error->new(
+                            message => 'Invalid data return, does not match definition',
+                            module => $self
+                        );
+                        $self->{status} = ERROR;
+                        $data = undef;
+                    }
+                    else {
+                        $self->{status} = OK;
+                    }
                 }
             }
             else {
+                $self->{error} = Lim::Error->new(
+                    message => 'Transport returned invalid response',
+                    module => $self
+                );
                 $self->{status} = ERROR;
-                if (blessed $data and $data->isa('Lim::Error')) {
-                    $self->{error} = $data;
-                }
-                else {
-                    $self->{error} = Lim::Error->new(
-                        message => $data,
-                        module => $self
-                    );
-                }
-                undef($data);
             }
-            
-            delete $self->{client};
+
             $self->{cb}->($self, $data);
             $self->{component}->_deleteCall($self);
         }
     );
-    
+
     Lim::OBJ_DEBUG and $self->{logger}->debug('new ', __PACKAGE__, ' ', $self);
     $real_self;
 }

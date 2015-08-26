@@ -33,7 +33,7 @@ package Lim::Plugin::MyPlugin;
 
 use base qw(Lim::Component);
 
-sub Module {
+sub Name {
     'MyPlugin';
 }
 
@@ -125,14 +125,20 @@ L<Lim::Component::CLI>.
 
 sub CLI {
     my $self = shift;
-    
+
     if (ref($self)) {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
     }
+    unless (defined $self) {
+        confess __PACKAGE__, ': CLI not called correctly, should be Module->CLI';
+    }
     $self .= '::CLI';
-    
+
     eval 'use '.$self.' ();';
-    die $self.' : '.$@ if $@;
+    if ($@) {
+        return;
+    }
+
     $self->new(@_);
 }
 
@@ -145,22 +151,29 @@ L<Lim::Component::Client>.
 
 sub Client {
     my $self = shift;
-    
+
     if (ref($self)) {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
     }
+    unless (defined $self) {
+        confess __PACKAGE__, ': Client not called correctly, should be Module->Client';
+    }
+
+    # TODO: Can we check if $self->can(...) ?
     my $calls = $self->Calls;
     my $plugin = $self->Name;
     $self .= '::Client';
-    
+
     eval 'use '.$self.' ();';
-    die $self.' : '.$@ if $@;
+    if ($@) {
+        return;
+    }
 
     if ($self->can('__lim_bootstrapped')) {
         return $self->new(@_);
     }
-    
-    no strict 'refs';    
+
+    no strict 'refs';
     foreach my $call (keys %$calls) {
         unless ($self->can($call)) {
             my $sub = $self.'::'.$call;
@@ -169,17 +182,17 @@ sub Client {
             unless (ref($call_def) eq 'HASH') {
                 confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid definition';
             }
-            
+
             if (exists $call_def->{in}) {
                 unless (ref($call_def->{in}) eq 'HASH') {
                     confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid in parameter definition';
                 }
-                
+
                 my @keys = keys %{$call_def->{in}};
                 unless (scalar @keys) {
                     confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid in parameter definition';
                 }
-                
+
                 my @values = ($call_def->{in});
                 while (defined (my $value = shift(@values))) {
                     foreach my $key (keys %$value) {
@@ -213,12 +226,12 @@ sub Client {
                     }
                 }
             }
-            
+
             if (exists $call_def->{out}) {
                 unless (ref($call_def->{out}) eq 'HASH') {
                     confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid out parameter definition';
                 }
-                
+
                 my @keys = keys %{$call_def->{out}};
                 unless (scalar @keys) {
                     confess __PACKAGE__, ': Can not create client: call ', $call, ' has invalid out parameter definition';
@@ -257,7 +270,7 @@ sub Client {
                     }
                 }
             }
-            
+
             *$sub = sub {
                 unless (Lim::RPC::Call->new($plugin, $call, $call_def, @_)) {
                     confess __PACKAGE__, ': Unable to create Lim::RPC::Call for ', $sub;
@@ -265,12 +278,12 @@ sub Client {
             };
         }
     }
-    
+
     my $sub = $self.'::__lim_bootstrapped';
     *$sub = sub {
         1;
     };
-    
+
     $self->new(@_);
 }
 
@@ -283,14 +296,20 @@ L<Lim::Component::Server>.
 
 sub Server {
     my $self = shift;
-    
+
     if (ref($self)) {
         confess __PACKAGE__, ': Should not be called with refered/blessed argument';
     }
+    unless (defined $self) {
+        confess __PACKAGE__, ': Server not called correctly, should be Module->Server';
+    }
     $self .= '::Server';
-    
+
     eval 'use '.$self.' ();';
-    die $self.' : '.$@ if $@;
+    if ($@) {
+        return;
+    }
+
     $self->new(@_);
 }
 

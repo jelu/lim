@@ -46,18 +46,36 @@ sub new {
     my $class = ref($this) || $this;
     my %args = ( @_ );
     my $self = {
-        logger => Log::Log4perl->get_logger,
+        logger => Log::Log4perl->get_logger($class),
         protocol => {},
         transports => [],
-        module => {}
+        module => {},
+        transport_modules => {}
     };
     bless $self, $class;
+    weaken($self->{logger});
 
     unless (defined $args{uri}) {
         confess __PACKAGE__, ': No uri specified';
     }
 
     foreach my $uri (ref($args{uri}) eq 'ARRAY' ? @{$args{uri}} : $args{uri}) {
+        my $modules;
+        my $transport_config = {};
+
+        if (ref($uri) eq 'HASH') {
+            if (ref($uri->{plugin}) eq 'ARRAY') {
+                $modules = { map { $_ => 1 } @{$uri->{plugin}} };
+            }
+            unless (defined $uri->{uri}) {
+                next;
+            }
+            if (ref($uri->{transport}) eq 'HASH') {
+                $transport_config = $uri->{transport};
+            }
+            $uri = $uri->{uri};
+        }
+
         my ($scheme, $auth, $path, $query, $frag) = URI::Split::uri_split($uri);
 
         if ($scheme =~ /^([a-z0-9_\-\.]+)(?:\+([a-z0-9_\-\.\+]+))*/o) {
@@ -66,7 +84,7 @@ sub new {
             $uri = URI->new('', 'http');
             $uri->query($query);
             $uri->host_port($auth);
-            
+
             foreach my $protocol_name (split(/\+/o, $protocols)) {
                 unless (exists $self->{protocol}->{$protocol_name}) {
                     my $protocol;
@@ -74,7 +92,7 @@ sub new {
                     unless (defined ($protocol = Lim::RPC::Protocols->instance->protocol($protocol_name, server => $self))) {
                         confess __PACKAGE__, ': Protocol ', $protocol_name, ' does not exists';
                     }
-                    
+
                     $self->{protocol}->{$protocol_name} = $protocol;
                     push(@protocols, $protocol);
                 }
@@ -82,13 +100,19 @@ sub new {
                     push(@protocols, $self->{protocol}->{$protocol_name});
                 }
             }
-            
-            unless (defined ($transport = Lim::RPC::Transports->instance->transport($transport_name, server => $self, uri => $uri))) {
+
+            unless (defined ($transport = Lim::RPC::Transports->instance->transport($transport_name,
+                (ref($transport_config->{$transport_name}) eq 'HASH' ? (%{$transport_config->{$transport_name}}) : ()),
+                server => $self, uri => $uri)))
+            {
                 confess __PACKAGE__, ': Transport ', $transport_name, ' does not exists';
             }
-            
+
             $transport->add_protocol(@protocols);
             push(@{$self->{transports}}, $transport);
+            if ($modules) {
+                $self->{transport_modules}->{$transport} = $modules;
+            }
         }
         else {
             confess __PACKAGE__, ': Unable to parse URI schema: ', $uri;
@@ -121,24 +145,28 @@ sub serve {
         eval {
             $obj = $module->Server;
         };
-        if (!defined $obj or $@) {
-            Lim::WARN and $self->{logger}->warn('Can not serve ', $module, (defined $@ ? ': '.$@ : ''));
+        if ($@) {
+            Lim::WARN and $self->{logger}->warn('Can not serve ', $module, ': ', $@);
+            next;
+        }
+        unless (defined $obj) {
+            Lim::DEBUG and $self->{logger}->debug('Can not serve ', $module, ': no object from Module->Server so may only have Client installed');
             next;
         }
 
         if ($obj->isa('Lim::Component::Server')) {
             my $name = lc($module->Name);
-            
+
             if (exists $self->{module}->{$name}) {
                 Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': plugin already served');
                 next;
             }
-            
+
             unless ($module->VERSION) {
                 Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': no VERSION specified in plugin');
                 next;
             }
-            
+
             my $calls = $module->Calls;
             unless ($calls) {
                 Lim::INFO and $self->{logger}->info('Not serving ', $name, ', nothing to serve');
@@ -152,9 +180,9 @@ sub serve {
                 Lim::INFO and $self->{logger}->info('Not serving ', $name, ', nothing to serve');
                 next;
             }
-            
+
             my $uri_maps = {};
-            
+
             foreach my $call (keys %$calls) {
                 unless ($obj->can($call)) {
                     Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': Missing specified call ', $call, ' function');
@@ -176,22 +204,22 @@ sub serve {
 
                 if ($create_call) {
                     my $call_def = $calls->{$call};
-                    
+
                     unless (ref($call_def) eq 'HASH') {
                         Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid definition');
                         undef($calls);
                         last;
                     }
-                    
+
                     if (exists $call_def->{uri_map}) {
                         unless (ref($call_def->{uri_map}) eq 'ARRAY') {
                             Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid uri_map parameter definition');
                             undef($calls);
                             last;
                         }
-                        
+
                         my $uri_map = Lim::RPC::URIMaps->new;
-                        
+
                         foreach my $map (@{$call_def->{uri_map}}) {
                             if (defined (my $redirect_call = $uri_map->add($map))) {
                                 if ($redirect_call) {
@@ -211,24 +239,24 @@ sub serve {
                         unless (defined $calls) {
                             last;
                         }
-                        
+
                         $uri_maps->{$call} = $uri_map;
                     }
-                    
+
                     if (exists $call_def->{in}) {
                         unless (ref($call_def->{in}) eq 'HASH') {
                             Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
-                        
+
                         my @keys = keys %{$call_def->{in}};
                         unless (scalar @keys) {
                             Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid in parameter definition');
                             undef($calls);
                             last;
                         }
-                                                
+
                         my @values = ($call_def->{in});
                         while (defined $calls and (my $value = shift(@values))) {
                             foreach my $key (keys %$value) {
@@ -273,19 +301,19 @@ sub serve {
                                 undef($calls);
                             }
                         }
-                        
+
                         unless (defined $calls) {
                             last;
                         }
                     }
-                    
+
                     if (exists $call_def->{out}) {
                         unless (ref($call_def->{out}) eq 'HASH') {
                             Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
                             undef($calls);
                             last;
                         }
-                        
+
                         my @keys = keys %{$call_def->{out}};
                         unless (scalar @keys) {
                             Lim::WARN and $self->{logger}->warn('Can not serve ', $name, ': call ', $call, ' has invalid out parameter definition');
@@ -337,12 +365,12 @@ sub serve {
                                 undef($calls);
                             }
                         }
-                        
+
                         unless (defined $calls) {
                             last;
                         }
                     }
-                    
+
                     my $logger = $self->{logger};
                     weaken($logger);
 
@@ -358,7 +386,7 @@ sub serve {
                         if ($base->isa('UNIVERSAL') and $base->can($call)) {
                             next;
                         }
-                        
+
                         no strict 'refs';
                         *$protocol_call = sub {
                             unless (defined $protocol and defined $weak_obj and defined $call_def) {
@@ -373,7 +401,7 @@ sub serve {
                                 $weak_obj->Error($cb);
                                 return;
                             }
-                            
+
                             Lim::RPC_DEBUG and defined $logger and $logger->debug('Call to ', $weak_obj, ' ', $call);
 
                             if (!defined $q) {
@@ -384,7 +412,7 @@ sub serve {
                                 $weak_obj->Error($cb);
                                 return;
                             }
-                            
+
                             if (exists $call_def->{in}) {
                                 eval {
                                     Lim::RPC::V($q, $call_def->{in});
@@ -406,7 +434,7 @@ sub serve {
                                 return;
                             }
                             $cb->set_call_def($call_def);
-                            
+
                             eval {
                                 $weak_obj->$call($cb, $q, @args);
                             };
@@ -424,7 +452,7 @@ sub serve {
             }
 
             Lim::DEBUG and $self->{logger}->debug('serving ', $name);
-            
+
             $self->{module}->{$name} = {
                 name => $name,
                 module => $module,
@@ -434,11 +462,21 @@ sub serve {
             };
 
             foreach my $protocol (values %{$self->{protocol}}) {
+                Lim::DEBUG and $self->{logger}->debug('serving ', $name, ' to protocol ', $protocol->name);
                 $protocol->serve($module, $name);
+            }
+            foreach my $transport (@{$self->{transports}}) {
+                if (exists $self->{transport_modules}->{$transport}
+                    and !exists $self->{transport_modules}->{$transport}->{$module->Name})
+                {
+                    next;
+                }
+                Lim::DEBUG and $self->{logger}->debug('serving ', $name, ' to transport ', $transport->name, ' at ', $transport->uri);
+                $transport->serve($module, $name);
             }
         }
     }
-    
+
     $self;
 }
 
@@ -448,11 +486,11 @@ sub serve {
 
 sub have_module {
     my ($self, $module) = @_;
-    
+
     unless (exists $self->{module}->{$module}) {
         return;
     }
-    
+
     return 1;
 }
 
@@ -470,7 +508,7 @@ sub have_module_call {
     unless (exists $self->{module}->{$module}->{calls}->{$call}) {
         return;
     }
-    
+
     return 1;
 }
 
@@ -508,7 +546,7 @@ sub module_class {
 
 sub module_obj_by_protocol {
     my ($self, $module, $protocol) = @_;
-    
+
     unless (exists $self->{module}->{$module}) {
         return;
     }
@@ -516,7 +554,7 @@ sub module_obj_by_protocol {
     unless (exists $self->{protocol}->{$protocol}) {
         return;
     }
-    
+
     bless {}, 'Lim::RPC::ProtocolCall::'.$protocol.'::'.$self->{module}->{$module}->{module}.'::Server';
 }
 
@@ -530,7 +568,7 @@ sub process_module_call_uri_map {
     unless (exists $self->{module}->{$module}) {
         return;
     }
-    
+
     unless (ref($data) eq 'HASH') {
         return;
     }
@@ -548,6 +586,35 @@ sub process_module_call_uri_map {
 
 sub transports {
     @{$_[0]->{transports}};
+}
+
+=head2 close
+
+=cut
+
+sub close {
+    my ($self, $cb) = @_;
+
+    unless (ref($cb) eq 'CODE') {
+        confess '$cb is not CODE';
+    }
+
+    my $cv = AnyEvent->condvar;
+    $cv->begin(sub {
+        $cb->();
+        $cv = undef;
+    });
+
+    foreach my $transport (@{$self->{transports}}) {
+        $cv->begin;
+        Lim::DEBUG and $self->{logger}->debug('Closing transport ', $transport->name);
+        $transport->close(sub {
+            $cv->end;
+        });
+    }
+    $cv->end;
+
+    $self;
 }
 
 =head1 AUTHOR

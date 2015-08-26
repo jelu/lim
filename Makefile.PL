@@ -18,6 +18,7 @@ WriteMakefile(
             'Test::More' => 0,
             'common::sense' => 3,
             'AnyEvent' => 5,
+            ( $^V gt v5.10 ?  ('AnyEvent::RabbitMQ' => 1.15) : ()),
             'Data::Dumper' => 2.124,
             'Digest::SHA' => 5,
             'Fcntl' => 1.06,
@@ -49,6 +50,7 @@ WriteMakefile(
         PREREQ_PM => {
             'common::sense' => 3,
             'AnyEvent' => 5,
+            ( $^V gt v5.10 ?  ('AnyEvent::RabbitMQ' => 1.15) : ()),
             'Data::Dumper' => 2.124,
             'Digest::SHA' => 5,
             'Fcntl' => 1.06,
@@ -83,6 +85,7 @@ WriteMakefile(
             'Test::More' => 0,
             'common::sense' => 3,
             'AnyEvent' => 5,
+            ( $^V gt v5.10 ?  ('AnyEvent::RabbitMQ' => 1.15) : ()),
             'Data::Dumper' => 2.124,
             'Digest::SHA' => 5,
             'Fcntl' => 1.06,
@@ -115,7 +118,8 @@ WriteMakefile(
     )),
     META_MERGE => {
         recommends => {
-            'AnyEvent::ReadLine::Gnu' => 1
+            'AnyEvent::ReadLine::Gnu' => 1,
+            'URI::Escape::XS' => 0.11,
         }
     },
     (! eval { ExtUtils::MakeMaker->VERSION(6.46) } ? () :
