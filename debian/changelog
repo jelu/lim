@@ -1,3 +1,9 @@
+lim (0.20-10~unstable+1) unstable; urgency=low
+
+  * Separate RabbitMQ transport.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Tue, 16 Feb 2016 14:56:32 +0100
+
 lim (0.20-8~unstable+1) unstable; urgency=low
 
   * New release 0.20.

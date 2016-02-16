@@ -31,13 +31,11 @@ lib/Lim/RPC/TLS.pm
 lib/Lim/RPC/Transport.pm
 lib/Lim/RPC/Transport/HTTP.pm
 lib/Lim/RPC/Transport/HTTPS.pm
-lib/Lim/RPC/Transport/RabbitMQ.pm
 lib/Lim/RPC/Transports.pm
 lib/Lim/RPC/Transport/Client.pm
 lib/Lim/RPC/Transport/Clients.pm
 lib/Lim/RPC/Transport/Client/HTTP.pm
 lib/Lim/RPC/Transport/Client/HTTPS.pm
-lib/Lim/RPC/Transport/Client/RabbitMQ.pm
 lib/Lim/RPC/URIMaps.pm
 lib/Lim/RPC/Value.pm
 lib/Lim/RPC/Value/Collection.pm
