@@ -1,3 +1,9 @@
+lim (0.20-11~unstable+1) unstable; urgency=low
+
+  * Fix debian/control.
+
+ -- Jerry Lundström <lundstrom.jerry@gmail.com>  Wed, 17 Feb 2016 16:28:54 +0100
+
 lim (0.20-10~unstable+1) unstable; urgency=low
 
   * Separate RabbitMQ transport.
