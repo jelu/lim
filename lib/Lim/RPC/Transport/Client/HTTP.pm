@@ -16,7 +16,7 @@ use HTTP::Status qw(:constants);
 
 use Lim ();
 use Lim::Error ();
-use Lim::RPC::TLS ();
+use Lim::RPC::TLS::Client ();
 use Lim::Util ();
 
 use base qw(Lim::RPC::Transport::Client);
@@ -56,7 +56,7 @@ sub MAX_RESPONSE_LEN (){ 8 * 1024 * 1024 }
 sub Init {
     my ($self) = @_;
 
-    if ($self->isa('Lim::RPC::Transport::Client::HTTPS') and !defined Lim::RPC::TLS->instance->tls_ctx) {
+    if ($self->isa('Lim::RPC::Transport::Client::HTTPS') and !defined Lim::RPC::TLS::Client->instance->tls_ctx) {
         confess 'using HTTPS but can not create TLS context';
     }
 }
@@ -97,6 +97,7 @@ sub request {
     }
     $self->{request} = $args{request};
     $self->{request}->protocol('HTTP/1.1');
+    $self->{request}->header( 'Host' => $self->{host} );
 
     Lim::Util::resolve_host $self->{host}, $self->{port}, sub {
         my ($host, $port) = @_;
@@ -155,7 +156,7 @@ sub _connect {
         my $handle;
         $handle = AnyEvent::Handle->new(
             fh => $fh,
-            ($self->isa('Lim::RPC::Transport::Client::HTTPS') ? (tls => 'connect', tls_ctx => Lim::RPC::TLS->instance->tls_ctx) : ()),
+            ($self->isa('Lim::RPC::Transport::Client::HTTPS') ? (tls => 'connect', tls_ctx => Lim::RPC::TLS::Client->instance->tls_ctx) : ()),
             timeout => Lim::Config->{rpc}->{timeout},
             on_error => sub {
                 my ($handle, $fatal, $message) = @_;

@@ -28,6 +28,7 @@ lib/Lim/RPC/Protocol/XMLRPC.pm
 lib/Lim/RPC/Protocols.pm
 lib/Lim/RPC/Server.pm
 lib/Lim/RPC/TLS.pm
+lib/Lim/RPC/TLS/Client.pm
 lib/Lim/RPC/Transport.pm
 lib/Lim/RPC/Transport/HTTP.pm
 lib/Lim/RPC/Transport/HTTPS.pm

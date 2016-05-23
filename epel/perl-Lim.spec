@@ -251,6 +251,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man3/Lim::Component.3*
 %{_mandir}/man3/Lim::RPC::Value::Collection.3*
 %{_mandir}/man3/Lim::RPC::TLS.3*
+%{_mandir}/man3/Lim::RPC::TLS::Client.3*
 %{_mandir}/man3/Lim::RPC::Call.3*
 %{_mandir}/man3/Lim::RPC::Value.3*
 %{_mandir}/man3/Lim::Plugins.3*
@@ -275,6 +276,7 @@ rm -rf $RPM_BUILD_ROOT
 %{perl_vendorlib}/Lim/RPC/Protocol.pm
 %{perl_vendorlib}/Lim/RPC/Protocols.pm
 %{perl_vendorlib}/Lim/RPC/TLS.pm
+%{perl_vendorlib}/Lim/RPC/TLS/Client.pm
 %{perl_vendorlib}/Lim/RPC/Value/Collection.pm
 %{perl_vendorlib}/Lim/RPC/Call.pm
 %{perl_vendorlib}/Lim/RPC/Value.pm
